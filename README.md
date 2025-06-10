@@ -2,3 +2,5 @@
   cd app
   npm install
   npm run dev
+#Link del miro para la logica 
+https://miro.com/welcomeonboard/ODBUNjZlRVZRY29PNTBoazlnUTJ0MjdBdHg1eUZaLy9jeWYvazA4Z3Q4WmtTaVQ1b0xCNnF5RVREZHVKZzFqZHIvTStzRXR5d0VFcE83OHRKZWRpZjF4K1FPVUFyNTNiZTdHNjhoYktIbHh0VUR3L3IvS1laRW5VeEdhcWpmK09yVmtkMG5hNDA3dVlncnBvRVB2ZXBnPT0hdjE=?share_link_id=748762425185
