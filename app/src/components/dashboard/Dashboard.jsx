@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { DashboardContent } from './DashboardContent';
+import { CallManagementContent } from './CallManagementContent';
 import { MassUploadsContent } from './MassUploadsContent';
 import { UserManagementContent } from './UserManagementContent';
 
@@ -12,12 +13,29 @@ export const Dashboard = ({ user, onLogout }) => {
     switch (activeSection) {
       case 'dashboard':
         return <DashboardContent user={user} />;
+      case 'call-management':
+        return <CallManagementContent user={user} />;
       case 'mass-uploads':
         return <MassUploadsContent user={user} />;
       case 'user-management':
         return <UserManagementContent user={user} />;
       default:
         return <DashboardContent user={user} />;
+    }
+  };
+
+  const getSectionTitle = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return 'Panel de Control';
+      case 'call-management':
+        return 'Gestor de Llamadas';
+      case 'mass-uploads':
+        return 'Cargas Masivas';
+      case 'user-management':
+        return 'Gestión de Usuarios';
+      default:
+        return 'Panel de Control';
     }
   };
 
@@ -50,9 +68,7 @@ export const Dashboard = ({ user, onLogout }) => {
                 </svg>
               </button>
               <h1 className="text-2xl font-semibold text-gray-900">
-                {activeSection === 'dashboard' && 'Panel de Control'}
-                {activeSection === 'mass-uploads' && 'Cargas Masivas'}
-                {activeSection === 'user-management' && 'Gestión de Usuarios'}
+                {getSectionTitle()}
               </h1>
             </div>
             
