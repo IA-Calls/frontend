@@ -1,70 +1,147 @@
-# Getting Started with Create React App
+# Sistema de Login Moderno con Clean Architecture
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Una aplicación React moderna con una página de login elegante y arquitectura limpia, construida con Tailwind CSS.
 
-## Available Scripts
+## 🚀 Características
 
-In the project directory, you can run:
+- **Diseño Moderno**: Interfaz elegante con gradientes, efectos de vidrio y animaciones suaves
+- **Arquitectura Limpia**: Estructura de carpetas organizadas siguiendo principios de Clean Architecture
+- **Responsive**: Adaptable a diferentes tamaños de pantalla
+- **Validación Robusta**: Validación de formularios en tiempo real
+- **Componentes Reutilizables**: Sistema de componentes modulares
+- **Estado de Carga**: Indicadores visuales durante las operaciones
+- **Autenticación JWT**: Sistema de autenticación con tokens
+- **TypeScript Ready**: Estructura preparada para TypeScript
 
-### `npm start`
+## 📁 Estructura del Proyecto
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```
+src/
+├── components/
+│   ├── auth/                 # Componentes de autenticación
+│   │   ├── LoginPage.jsx     # Página principal de login
+│   │   ├── LoginForm.jsx     # Formulario de login
+│   │   └── WelcomeSection.jsx # Sección de bienvenida
+│   └── common/               # Componentes reutilizables
+│       ├── Input.jsx         # Componente de entrada
+│       └── Button.jsx        # Componente de botón
+├── hooks/                    # Custom Hooks
+│   └── useAuth.js           # Hook de autenticación
+├── services/                 # Servicios de datos
+│   └── authService.js       # Servicio de autenticación
+├── utils/                    # Utilidades
+│   └── validators.js        # Funciones de validación
+├── assets/                   # Recursos estáticos
+└── styles/                   # Estilos adicionales
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🛠️ Tecnologías Utilizadas
 
-### `npm test`
+- **React 19**: Framework de JavaScript
+- **Tailwind CSS**: Framework de CSS utilitario
+- **PostCSS**: Procesador de CSS
+- **Autoprefixer**: Plugin para prefijos de navegador
+- **Inter Font**: Tipografía moderna
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🎨 Características de Diseño
 
-### `npm run build`
+### Página de Login
+- **Layout dividido**: Sección de bienvenida y formulario
+- **Gradiente atractivo**: Colores morados y azules
+- **Efectos de vidrio**: Elementos con backdrop-filter
+- **Animaciones suaves**: Transiciones y hover effects
+- **Iconos SVG**: Íconos vectoriales incluidos
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Componentes Reutilizables
+- **Input personalizado**: Con iconos, validación y estados
+- **Button moderno**: Con estados de carga y variantes
+- **Validación en tiempo real**: Feedback inmediato al usuario
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🚀 Instalación y Uso
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+1. **Instalar dependencias**:
+   ```bash
+   npm install
+   ```
 
-### `npm run eject`
+2. **Iniciar desarrollo**:
+   ```bash
+   npm start
+   ```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+3. **Construir para producción**:
+   ```bash
+   npm run build
+   ```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 🔐 Sistema de Autenticación
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Servicio de Autenticación
+- Manejo de tokens JWT
+- Almacenamiento local seguro
+- Verificación de expiración
+- Logout automático
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Hook de Autenticación
+- Estado global de autenticación
+- Funciones de login/logout
+- Context API para compartir estado
 
-## Learn More
+## 🎨 Personalización
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Colores Principales
+```css
+primary-50: #eff6ff
+primary-500: #3b82f6
+primary-600: #2563eb
+primary-700: #1d4ed8
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Animaciones Disponibles
+- `fade-in`: Aparición suave
+- `slide-up`: Deslizamiento hacia arriba
+- `bounce`: Rebote sutil
+- `pulse`: Pulsación suave
 
-### Code Splitting
+## 📱 Responsive Design
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- **Mobile First**: Diseño que prioriza dispositivos móviles
+- **Breakpoints**: sm, md, lg, xl siguiendo Tailwind CSS
+- **Componentes adaptables**: Se ajustan automáticamente
 
-### Analyzing the Bundle Size
+## 🔒 Seguridad
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- Validación de entrada
+- Sanitización de datos
+- Almacenamiento seguro de tokens
+- Verificación de autenticación
 
-### Making a Progressive Web App
+## 🧪 Testing
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```bash
+# Ejecutar tests
+npm test
 
-### Advanced Configuration
+# Coverage
+npm run test:coverage
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 📝 Contribución
 
-### Deployment
+1. Fork el proyecto
+2. Crea una rama para tu feature
+3. Commit tus cambios
+4. Push a la rama
+5. Abre un Pull Request
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 📄 Licencia
 
-### `npm run build` fails to minify
+Este proyecto está bajo la Licencia MIT.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🤝 Soporte
+
+Si tienes preguntas o necesitas ayuda, no dudes en crear un issue en el repositorio.
+
+---
+
+**¡Disfruta construyendo aplicaciones increíbles! 🚀**
