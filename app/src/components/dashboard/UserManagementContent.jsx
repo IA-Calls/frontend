@@ -1,100 +1,96 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
+import { useUsers } from '../../hooks/useUsers';
+import { UserModal } from './user-management/UserModal';
+import { PasswordModal } from './user-management/PasswordModal';
+import { UserStats } from './user-management/UserStats';
+import { Pagination } from './user-management/Pagination';
 
-export const UserManagementContent = ({ user }) => {
+export const UserManagementContent = ({ user: currentUser }) => {
+  const {
+    users,
+    stats,
+    loading,
+    error,
+    pagination,
+    filters,
+    createUser,
+    updateUser,
+    deleteUser,
+    activateUser,
+    changeUserPassword,
+    updateFilters,
+    changePage,
+    changeLimit,
+    loadUsers,
+    clearError
+  } = useUsers();
+
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+
+  // Debounce para la búsqueda
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all');
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      updateFilters({ search: searchTerm });
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, updateFilters]);
 
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: 'Ana García',
-      email: 'ana.garcia@plataforma.com',
-      role: 'admin',
-      status: 'active',
-      lastLogin: '2024-01-15 14:30',
-      createdAt: '2023-06-15'
-    },
-    {
-      id: 2,
-      name: 'Carlos López',
-      email: 'carlos.lopez@plataforma.com',
-      role: 'user',
-      status: 'active',
-      lastLogin: '2024-01-14 09:15',
-      createdAt: '2023-08-22'
-    },
-    {
-      id: 3,
-      name: 'María Rodriguez',
-      email: 'maria.rodriguez@plataforma.com',
-      role: 'moderator',
-      status: 'inactive',
-      lastLogin: '2024-01-10 16:45',
-      createdAt: '2023-09-10'
-    },
-    {
-      id: 4,
-      name: 'Juan Martínez',
-      email: 'juan.martinez@plataforma.com',
-      role: 'user',
-      status: 'active',
-      lastLogin: '2024-01-13 11:20',
-      createdAt: '2023-11-05'
-    },
-    {
-      id: 5,
-      name: 'Laura Sánchez',
-      email: 'laura.sanchez@plataforma.com',
-      role: 'user',
-      status: 'pending',
-      lastLogin: 'Nunca',
-      createdAt: '2024-01-15'
-    }
-  ]);
-
-  const [newUser, setNewUser] = useState({
-    name: '',
-    email: '',
-    role: 'user',
-    status: 'active'
-  });
-
-  const filteredUsers = users.filter(u => {
-    const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          u.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === 'all' || u.role === filterRole;
-    return matchesSearch && matchesRole;
-  });
-
-  const handleCreateUser = () => {
-    if (newUser.name && newUser.email) {
-      const newUserData = {
-        id: users.length + 1,
-        ...newUser,
-        lastLogin: 'Nunca',
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-      setUsers([...users, newUserData]);
-      setNewUser({ name: '', email: '', role: 'user', status: 'active' });
-      setShowCreateModal(false);
-    }
+  const handleCreateUser = async (userData) => {
+    await createUser(userData);
   };
 
-  const handleStatusChange = (userId, newStatus) => {
-    setUsers(users.map(u => 
-      u.id === userId ? { ...u, status: newStatus } : u
-    ));
+  const handleUpdateUser = async (userData) => {
+    await updateUser(selectedUser.id, userData);
+    setSelectedUser(null);
   };
 
-  const handleDeleteUser = (userId) => {
+  const handleDeleteUser = async (userId) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
-      setUsers(users.filter(u => u.id !== userId));
+      await deleteUser(userId);
     }
   };
+
+  const handleActivateUser = async (userId) => {
+    await activateUser(userId);
+  };
+
+  const handleChangePassword = async (passwordData) => {
+    await changeUserPassword(selectedUser.id, passwordData);
+    setSelectedUser(null);
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setShowEditModal(true);
+  };
+
+  const handleOpenPasswordModal = (user) => {
+    setSelectedUser(user);
+    setShowPasswordModal(true);
+  };
+
+  const closeModals = () => {
+    setShowCreateModal(false);
+    setShowEditModal(false);
+    setShowPasswordModal(false);
+    setSelectedUser(null);
+  };
+
+  const handleRoleFilterChange = (role) => {
+    updateFilters({ role: role === 'all' ? '' : role });
+  };
+
+  const handleStatusFilterChange = (status) => {
+    updateFilters({ status: status === 'all' ? '' : status });
+  };
+
+  const isAdmin = currentUser?.role === 'admin';
 
   const getRoleColor = (role) => {
     switch (role) {
@@ -143,19 +139,41 @@ export const UserManagementContent = ({ user }) => {
               Administra usuarios, roles y permisos de la plataforma.
             </p>
           </div>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Nuevo Usuario
-          </Button>
+          {isAdmin && (
+            <Button onClick={() => setShowCreateModal(true)}>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Nuevo Usuario
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Estadísticas */}
+      {isAdmin && <UserStats stats={stats} loading={loading} />}
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+            <Button variant="secondary" size="sm" onClick={clearError}>
+              Cerrar
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Input
                 placeholder="Buscar usuarios..."
@@ -167,8 +185,8 @@ export const UserManagementContent = ({ user }) => {
             
             <div>
               <select
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
+                value={filters.role || 'all'}
+                onChange={(e) => handleRoleFilterChange(e.target.value)}
                 className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">Todos los roles</option>
@@ -178,9 +196,22 @@ export const UserManagementContent = ({ user }) => {
               </select>
             </div>
 
+            <div>
+              <select
+                value={filters.status || 'all'}
+                onChange={(e) => handleStatusFilterChange(e.target.value)}
+                className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">Todos los estados</option>
+                <option value="active">Activos</option>
+                <option value="inactive">Inactivos</option>
+                <option value="pending">Pendientes</option>
+              </select>
+            </div>
+
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-700">
-                {filteredUsers.length} usuario(s) encontrado(s)
+                {pagination.total} usuario(s) encontrado(s)
               </span>
             </div>
           </div>
@@ -214,13 +245,13 @@ export const UserManagementContent = ({ user }) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((userItem) => (
+              {users.map((userItem) => (
                 <tr key={userItem.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
                         <span className="text-white font-medium text-sm">
-                          {userItem.name.charAt(0).toUpperCase()}
+                          {userItem.name?.charAt(0)?.toUpperCase() || 'U'}
                         </span>
                       </div>
                       <div className="ml-4">
@@ -240,132 +271,118 @@ export const UserManagementContent = ({ user }) => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {userItem.lastLogin}
+                    {userItem.lastLogin || 'Nunca'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {userItem.createdAt}
+                    {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setSelectedUser(userItem)}
-                        className="text-blue-600 hover:text-blue-500"
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleEditUser(userItem)}
+                        title="Editar usuario"
                       >
-                        Editar
-                      </button>
-                      
-                      {userItem.status === 'active' ? (
-                        <button
-                          onClick={() => handleStatusChange(userItem.id, 'inactive')}
-                          className="text-yellow-600 hover:text-yellow-500"
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </Button>
+
+                      {isAdmin && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleOpenPasswordModal(userItem)}
+                          title="Cambiar contraseña"
                         >
-                          Desactivar
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleStatusChange(userItem.id, 'active')}
-                          className="text-green-600 hover:text-green-500"
-                        >
-                          Activar
-                        </button>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                          </svg>
+                        </Button>
                       )}
-                      
-                      <button
-                        onClick={() => handleDeleteUser(userItem.id)}
-                        className="text-red-600 hover:text-red-500"
-                      >
-                        Eliminar
-                      </button>
+
+                      {isAdmin && userItem.status === 'inactive' && (
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={() => handleActivateUser(userItem.id)}
+                          title="Activar usuario"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </Button>
+                      )}
+
+                      {isAdmin && (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleDeleteUser(userItem.id)}
+                          title="Eliminar usuario"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {loading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Cargando usuarios...</p>
+            </div>
+          ) : users.length === 0 ? (
+            <div className="p-8 text-center">
+              <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              </svg>
+              <p className="text-gray-600">No se encontraron usuarios</p>
+            </div>
+          ) : (
+            <>
+              <Pagination
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                total={pagination.total}
+                limit={pagination.limit}
+                onPageChange={changePage}
+                onLimitChange={changeLimit}
+              />
+            </>
+          )}
         </div>
       </div>
 
-      {/* Create User Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 text-center mb-4">
-                Crear Nuevo Usuario
-              </h3>
-              
-              <div className="space-y-4">
-                <Input
-                  label="Nombre Completo"
-                  value={newUser.name}
-                  onChange={(e) => setNewUser({...newUser, name: e.target.value})}
-                  placeholder="Ingresa el nombre completo"
-                  required
-                />
-                
-                <Input
-                  label="Correo Electrónico"
-                  type="email"
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                  placeholder="usuario@ejemplo.com"
-                  required
-                />
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Rol
-                  </label>
-                  <select
-                    value={newUser.role}
-                    onChange={(e) => setNewUser({...newUser, role: e.target.value})}
-                    className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="user">Usuario</option>
-                    <option value="moderator">Moderador</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Estado
-                  </label>
-                  <select
-                    value={newUser.status}
-                    onChange={(e) => setNewUser({...newUser, status: e.target.value})}
-                    className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="active">Activo</option>
-                    <option value="pending">Pendiente</option>
-                    <option value="inactive">Inactivo</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3 mt-6">
-                <Button
-                  onClick={handleCreateUser}
-                  className="flex-1"
-                  disabled={!newUser.name || !newUser.email}
-                >
-                  Crear Usuario
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setNewUser({ name: '', email: '', role: 'user', status: 'active' });
-                  }}
-                  className="flex-1"
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modales */}
+      <UserModal
+        isOpen={showCreateModal}
+        onClose={closeModals}
+        onSave={handleCreateUser}
+        loading={loading}
+      />
+
+      <UserModal
+        isOpen={showEditModal}
+        onClose={closeModals}
+        onSave={handleUpdateUser}
+        user={selectedUser}
+        loading={loading}
+      />
+
+      <PasswordModal
+        isOpen={showPasswordModal}
+        onClose={closeModals}
+        onSave={handleChangePassword}
+        user={selectedUser}
+        loading={loading}
+      />
     </div>
   );
 };

@@ -3,10 +3,6 @@ import { LoginForm } from './LoginForm';
 import { WelcomeSection } from './WelcomeSection';
 
 export const LoginPage = ({ onLogin }) => {
-  // Debug: Verificar que onLogin llegue correctamente
-  console.log('LoginPage - onLogin type:', typeof onLogin);
-  console.log('LoginPage - onLogin value:', onLogin);
-
   return (
     <div className="min-h-screen flex">
       {/* Welcome Section - Left Side */}

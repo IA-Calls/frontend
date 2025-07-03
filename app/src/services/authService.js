@@ -2,39 +2,7 @@
 export class AuthService {
   constructor() {
     this.tokenKey = 'auth_token';
-    // Credenciales quemadas para desarrollo
-    this.validCredentials = [
-      {
-        email: 'admin@plataforma.com',
-        password: 'admin123',
-        user: {
-          id: 1,
-          name: 'Administrador',
-          email: 'admin@plataforma.com',
-          role: 'admin'
-        }
-      },
-      {
-        email: 'usuario@plataforma.com',
-        password: 'usuario123',
-        user: {
-          id: 2,
-          name: 'Usuario Demo',
-          email: 'usuario@plataforma.com',
-          role: 'user'
-        }
-      },
-      {
-        email: 'demo@plataforma.com',
-        password: 'demo123',
-        user: {
-          id: 3,
-          name: 'Usuario Demo',
-          email: 'demo@plataforma.com',
-          role: 'user'
-        }
-      }
-    ];
+    this.apiUrl = 'http://localhost:5000/api/auth';
   }
 
   /**
@@ -46,49 +14,50 @@ export class AuthService {
    */
   async login(credentials) {
     try {
-      // Simular delay de red
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`${this.apiUrl}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: credentials.email,
+          password: credentials.password
+        })
+      });
 
-      // Buscar credenciales válidas
-      const validUser = this.validCredentials.find(
-        cred => cred.email === credentials.email && cred.password === credentials.password
-      );
+      const responseData = await response.json();
 
-      if (!validUser) {
-        throw new Error('Credenciales inválidas');
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Error al iniciar sesión');
       }
 
-      // Generar token simulado
-      const token = this.generateMockToken(validUser.user);
-      this.setToken(token);
+      // Extraer los datos de la respuesta (puede venir directamente o envuelto en 'data')
+      const data = responseData.data || responseData;
+
+      // Almacenar el token
+      if (data.token) {
+        console.log('AuthService - Storing token:', data.token.substring(0, 20) + '...');
+        this.setToken(data.token);
+      } else {
+        console.error('AuthService - No token found in response:', data);
+      }
 
       return {
         success: true,
-        token,
-        user: validUser.user,
-        message: 'Login exitoso'
+        token: data.token,
+        user: data.user,
+        message: data.message || responseData.message || 'Login exitoso'
       };
     } catch (error) {
       console.error('Login error:', error);
+      
+      // Manejar errores de red
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Error de conexión. Verifica que el servidor esté funcionando.');
+      }
+      
       throw new Error(error.message || 'Error al iniciar sesión. Verifica tus credenciales.');
     }
-  }
-
-  /**
-   * Generar token JWT simulado
-   * @param {Object} user - Datos del usuario
-   * @returns {string} Token simulado
-   */
-  generateMockToken(user) {
-    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-    const payload = btoa(JSON.stringify({
-      ...user,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 horas
-    }));
-    const signature = btoa('mock-signature');
-    
-    return `${header}.${payload}.${signature}`;
   }
 
   /**
@@ -155,27 +124,59 @@ export class AuthService {
 
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log('AuthService - Token payload:', payload);
+      
       return {
         id: payload.id,
-        name: payload.name,
+        name: payload.name || payload.username || `${payload.firstName || ''} ${payload.lastName || ''}`.trim(),
         email: payload.email,
-        role: payload.role
+        role: payload.role,
+        username: payload.username,
+        firstName: payload.firstName,
+        lastName: payload.lastName
       };
     } catch (error) {
+      console.error('AuthService - Error parsing token:', error);
       return null;
     }
   }
 
   /**
-   * Obtener credenciales de ejemplo para mostrar en la UI
-   * @returns {Array} Lista de credenciales de ejemplo
+   * Obtener headers de autorización para las peticiones
+   * @returns {Object} Headers con token de autorización
    */
-  getExampleCredentials() {
-    return this.validCredentials.map(cred => ({
-      email: cred.email,
-      password: cred.password,
-      role: cred.user.role
-    }));
+  getAuthHeaders() {
+    const token = this.getToken();
+    console.log('AuthService - Token for headers:', token ? 'Token present' : 'No token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+  }
+
+  /**
+   * Hacer petición autenticada
+   * @param {string} url - URL de la petición
+   * @param {Object} options - Opciones de fetch
+   * @returns {Promise<Response>} Respuesta de la petición
+   */
+  async authenticatedFetch(url, options = {}) {
+    const headers = {
+      ...this.getAuthHeaders(),
+      ...options.headers
+    };
+
+    const response = await fetch(url, {
+      ...options,
+      headers
+    });
+
+    // Si el token ha expirado, hacer logout
+    if (response.status === 401) {
+      this.logout();
+    }
+
+    return response;
   }
 }
 

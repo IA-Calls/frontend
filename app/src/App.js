@@ -23,20 +23,16 @@ function App() {
   }, []);
 
   const handleLogin = async (credentials) => {
-    console.log('App.js - handleLogin called with:', credentials);
     try {
       const response = await authService.login(credentials);
-      console.log('App.js - authService.login response:', response);
-      
       const userData = authService.getUserFromToken();
-      console.log('App.js - userData from token:', userData);
       
       setUser(userData);
       setIsAuthenticated(true);
       
       return response;
     } catch (error) {
-      console.error('App.js - handleLogin error:', error);
+      console.error('Login error:', error);
       throw error;
     }
   };
@@ -46,9 +42,6 @@ function App() {
     setUser(null);
     setIsAuthenticated(false);
   };
-
-  // Debug: Verificar que handleLogin es una función
-  console.log('App.js - handleLogin type:', typeof handleLogin);
 
   // Mostrar loading mientras verificamos autenticación
   if (isLoading) {
@@ -75,17 +68,12 @@ function App() {
         <div className="space-y-2 text-sm">
           <div>
             <strong>Admin:</strong><br />
-            admin@plataforma.com / admin123
-          </div>
-          <div>
-            <strong>Usuario:</strong><br />
-            usuario@plataforma.com / usuario123
-          </div>
-          <div>
-            <strong>Demo:</strong><br />
-            demo@plataforma.com / demo123
+            admin@iacalls.com / admin123
           </div>
         </div>
+        <p className="text-xs text-gray-500 mt-2">
+          Asegúrate de que el servidor esté ejecutándose en localhost:5000
+        </p>
       </div>
     </div>
   );

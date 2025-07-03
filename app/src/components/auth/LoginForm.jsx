@@ -4,10 +4,6 @@ import { Button } from '../common/Button';
 import { isValidEmail } from '../../utils/validators';
 
 export const LoginForm = ({ onLogin }) => {
-  // Debug: Verificar si onLogin es una función
-  console.log('LoginForm - onLogin type:', typeof onLogin);
-  console.log('LoginForm - onLogin value:', onLogin);
-
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -54,8 +50,6 @@ export const LoginForm = ({ onLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('handleSubmit - onLogin type:', typeof onLogin);
-    
     if (typeof onLogin !== 'function') {
       console.error('onLogin is not a function!');
       setErrors({
@@ -77,6 +71,7 @@ export const LoginForm = ({ onLogin }) => {
         password: formData.password
       });
     } catch (error) {
+      console.error('Login error:', error);
       setErrors({
         submit: error.message || 'Error al iniciar sesión. Verifica tus credenciales.'
       });
