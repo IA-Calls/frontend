@@ -3,7 +3,10 @@ import { Sidebar } from './Sidebar';
 import { DashboardContent } from './DashboardContent';
 import { CallManagementContent } from './CallManagementContent';
 import { MassUploadsContent } from './MassUploadsContent';
+import ExcelMapper from "./excelmap"
+import CallDashboard from './call-twilio/page'
 import { UserManagementContent } from './UserManagementContent';
+
 
 export const Dashboard = ({ user, onLogout }) => {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -16,9 +19,11 @@ export const Dashboard = ({ user, onLogout }) => {
       case 'call-management':
         return <CallManagementContent user={user} />;
       case 'mass-uploads':
-        return <MassUploadsContent user={user} />;
+        return <ExcelMapper user={user} />;
       case 'user-management':
         return <UserManagementContent user={user} />;
+      case 'twilio-call':
+        return <CallDashboard user={user}/>
       default:
         return <DashboardContent user={user} />;
     }
@@ -34,6 +39,8 @@ export const Dashboard = ({ user, onLogout }) => {
         return 'Cargas Masivas';
       case 'user-management':
         return 'Gestión de Usuarios';
+      case 'twilio-call':
+        return 'Gestion llamadas twilio'
       default:
         return 'Panel de Control';
     }
