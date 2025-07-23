@@ -6,14 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card.tsx"
 import { Progress } from "./ui/progress.tsx"
 import { Badge } from "./ui/badge.tsx"
 import { ScrollArea } from "./ui/scroll-area.tsx"
-// import type { User, CallStatus } from "@/app/page" // No longer needed for types
-
-// Interface definitions are now implicit or handled by JSDoc if desired
-// interface CallMonitorProps {
-//   users: User[]
-//   callStatuses: Map<string, CallStatus>
-//   totalUsers?: number
-// }
 
 export function CallMonitor({ users, callStatuses, totalUsers = 0 }) {
   const stats = useMemo(() => {
@@ -43,34 +35,34 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0 }) {
   const getStatusIcon = (status) => {
     switch (status) {
       case "completed":
-        return <CheckCircle className="h-4 w-4 text-green-500" />
+        return <CheckCircle className="h-4 w-4 text-green-600" />
       case "failed":
       case "no-answer":
       case "busy":
-        return <XCircle className="h-4 w-4 text-red-500" />
+        return <XCircle className="h-4 w-4 text-red-600" />
       case "initiated":
-        return <Phone className="h-4 w-4 text-blue-500 animate-pulse" />
+        return <Phone className="h-4 w-4 text-blue-600 animate-pulse" />
       default: // pending
-        return <Clock className="h-4 w-4 text-yellow-500" />
+        return <Clock className="h-4 w-4 text-yellow-600" />
     }
   }
 
   const getStatusColor = (status) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-500"
+        return "bg-yellow-100 text-yellow-800"
       case "initiated":
-        return "bg-blue-500"
+        return "bg-blue-100 text-blue-800"
       case "completed":
-        return "bg-green-600"
+        return "bg-green-100 text-green-800"
       case "failed":
-        return "bg-red-500"
+        return "bg-red-100 text-red-800"
       case "busy":
-        return "bg-orange-500"
+        return "bg-orange-100 text-orange-800"
       case "no-answer":
-        return "bg-gray-500"
+        return "bg-gray-100 text-gray-800"
       default:
-        return "bg-gray-400"
+        return "bg-gray-100 text-gray-800"
     }
   }
 
@@ -99,119 +91,129 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0 }) {
     <div className="space-y-6">
       {/* Estadísticas generales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card>
+        <Card className="bg-white border border-gray-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Usuarios</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-sm font-medium text-gray-600">Total Usuarios</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
               </div>
-              <Users className="h-8 w-8 text-muted-foreground" />
+              <div className="p-3 bg-gray-100 rounded-lg">
+                <Users className="h-6 w-6 text-gray-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border border-gray-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Llamadas Realizadas</p>
-                <p className="text-2xl font-bold">{stats.called}</p>
+                <p className="text-sm font-medium text-gray-600">Llamadas Realizadas</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.called}</p>
               </div>
-              <Phone className="h-8 w-8 text-blue-500" />
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <Phone className="h-6 w-6 text-blue-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border border-gray-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">En Progreso</p>
-                <p className="text-2xl font-bold">{stats.inProgress}</p>
+                <p className="text-sm font-medium text-gray-600">En Progreso</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.inProgress}</p>
               </div>
-              <AlertCircle className="h-8 w-8 text-yellow-500" />
+              <div className="p-3 bg-yellow-100 rounded-lg">
+                <AlertCircle className="h-6 w-6 text-yellow-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border border-gray-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Completadas</p>
-                <p className="text-2xl font-bold">{stats.completed}</p>
+                <p className="text-sm font-medium text-gray-600">Completadas</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
+              <div className="p-3 bg-green-100 rounded-lg">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border border-gray-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Fallidas</p>
-                <p className="text-2xl font-bold">{stats.failed}</p>
+                <p className="text-sm font-medium text-gray-600">Fallidas</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.failed}</p>
               </div>
-              <XCircle className="h-8 w-8 text-red-500" />
+              <div className="p-3 bg-red-100 rounded-lg">
+                <XCircle className="h-6 w-6 text-red-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Barra de progreso */}
-      <Card>
+      <Card className="bg-white border border-gray-200">
         <CardHeader>
-          <CardTitle>Progreso General</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-900">Progreso General</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex justify-between text-sm">
-              <span>Llamadas realizadas</span>
-              <span>
+              <span className="text-gray-600">Llamadas realizadas</span>
+              <span className="font-medium text-gray-900">
                 {stats.called} de {stats.total}
               </span>
             </div>
-            <Progress value={progressPercentage} className="h-2" />
-            <p className="text-xs text-muted-foreground">{progressPercentage.toFixed(1)}% completado</p>
+            <Progress value={progressPercentage} className="h-3" />
+            <p className="text-xs text-gray-500">{progressPercentage.toFixed(1)}% completado</p>
           </div>
         </CardContent>
       </Card>
 
       {/* Lista de llamadas recientes */}
-      <Card>
+      <Card className="bg-white border border-gray-200">
         <CardHeader>
-          <CardTitle>Actividad Reciente</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-900">Actividad Reciente</CardTitle>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[400px]">
             {recentCalls.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                <Phone className="h-12 w-12 mb-4" />
+              <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                <Phone className="h-12 w-12 mb-4 text-gray-400" />
                 <p>No hay actividad de llamadas aún</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {recentCalls.map(({ user, status }) => (
                   <div
                     key={`${user?.id}-${status.timestamp.getTime()}`}
-                    className="flex items-center justify-between p-3 border rounded-lg"
+                    className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       {getStatusIcon(status.status)}
                       <div>
-                        <p className="font-medium">{user?.name}</p>
-                        <p className="text-sm text-muted-foreground">{user?.phone}</p>
+                        <p className="font-medium text-gray-900">{user?.name}</p>
+                        <p className="text-sm text-gray-600">{user?.phone}</p>
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <Badge variant="secondary" className={`${getStatusColor(status.status)} text-white mb-1`}>
+                      <Badge variant="secondary" className={`${getStatusColor(status.status)} mb-1`}>
                         {getStatusText(status.status)}
                       </Badge>
-                      <p className="text-xs text-muted-foreground">{status.timestamp.toLocaleTimeString()}</p>
-                      {status.callId && <p className="text-xs text-muted-foreground">ID: {status.callId.slice(-8)}</p>}
+                      <p className="text-xs text-gray-500">{status.timestamp.toLocaleTimeString()}</p>
+                      {status.callId && <p className="text-xs text-gray-500">ID: {status.callId.slice(-8)}</p>}
                     </div>
                   </div>
                 ))}

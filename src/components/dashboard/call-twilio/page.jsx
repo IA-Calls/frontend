@@ -426,35 +426,34 @@ export default function CallDashboard() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto p-6 space-y-6">
-        {/* Header con gradiente */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 text-white">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative flex items-center justify-between">
+        {/* Header limpio y minimalista */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
-                <Phone className="h-10 w-10" />
-                Sistema de Llamadas
+              <h1 className="text-2xl font-semibold text-gray-900 mb-2 flex items-center gap-3">
+                <Phone className="h-6 w-6 text-blue-600" />
+                Gestión de Llamadas Twilio
               </h1>
-              <p className="text-blue-100 text-lg">Gestiona y realiza llamadas masivas con Twilio</p>
+              <p className="text-gray-600">Gestiona y realiza llamadas masivas con Twilio</p>
             </div>
 
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold">{pagination.totalUsers}</div>
-                <div className="text-blue-100 text-sm">Usuarios Totales</div>
+                <div className="text-2xl font-bold text-gray-900">{pagination.totalUsers}</div>
+                <div className="text-sm text-gray-500">Usuarios Totales</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold">{selectedUsers.size}</div>
-                <div className="text-blue-100 text-sm">Seleccionados</div>
+                <div className="text-2xl font-bold text-blue-600">{selectedUsers.size}</div>
+                <div className="text-sm text-gray-500">Seleccionados</div>
               </div>
               <Button
-                variant="secondary"
+                variant="outline"
                 size="sm"
                 onClick={handleRefresh}
                 disabled={isLoading}
-                className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                className="border-gray-300"
               >
                 <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
               </Button>
@@ -462,22 +461,22 @@ export default function CallDashboard() {
           </div>
         </div>
 
-        {/* Botones de acción con efectos visuales */}
-        <div className="flex gap-4 justify-center">
+        {/* Botones de acción con diseño limpio */}
+        <div className="flex gap-3 justify-center">
           <Button
             onClick={handleCallSelected}
             disabled={isCallingState || selectedUsers.size === 0}
             size="lg"
-            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             {isCallingState ? (
               <>
-                <Square className="h-5 w-5 mr-2" />
+                <Square className="h-4 w-4 mr-2" />
                 Llamando...
               </>
             ) : (
               <>
-                <Play className="h-5 w-5 mr-2" />
+                <Play className="h-4 w-4 mr-2" />
                 Llamar Seleccionados ({selectedUsers.size})
               </>
             )}
@@ -487,16 +486,17 @@ export default function CallDashboard() {
             onClick={handleCallAll}
             disabled={isCallingState || pagination.totalUsers === 0}
             size="lg"
-            className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            variant="outline"
+            className="border-blue-600 text-blue-600 hover:bg-blue-50"
           >
             {isCallingState ? (
               <>
-                <Square className="h-5 w-5 mr-2" />
+                <Square className="h-4 w-4 mr-2" />
                 Llamando Todos...
               </>
             ) : (
               <>
-                <Zap className="h-5 w-5 mr-2" />
+                <Zap className="h-4 w-4 mr-2" />
                 Llamar Todos ({pagination.totalUsers})
               </>
             )}
@@ -507,9 +507,9 @@ export default function CallDashboard() {
               onClick={handleStopCalls}
               size="lg"
               variant="destructive"
-              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse"
+              className="bg-red-600 hover:bg-red-700"
             >
-              <Square className="h-5 w-5 mr-2" />
+              <Square className="h-4 w-4 mr-2" />
               Detener Llamadas
             </Button>
           )}
@@ -519,9 +519,9 @@ export default function CallDashboard() {
             disabled={users.length === 0 && callStatuses.size === 0}
             size="lg"
             variant="outline"
-            className="bg-white/80 hover:bg-white text-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="border-gray-300"
           >
-            <Download className="h-5 w-5 mr-2" />
+            <Download className="h-4 w-4 mr-2" />
             Exportar Reporte
           </Button>
         </div>
@@ -544,19 +544,19 @@ export default function CallDashboard() {
           isCallInProgress={isCallingState}
         />
 
-        {/* Tabs con mejor diseño */}
+        {/* Tabs con diseño limpio */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 bg-white shadow-md rounded-xl p-1">
+          <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
             <TabsTrigger
               value="users"
-              className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white"
+              className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
             >
               <Users className="h-4 w-4 mr-2" />
               Gestión de Usuarios
             </TabsTrigger>
             <TabsTrigger
               value="monitor"
-              className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white"
+              className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
             >
               <Phone className="h-4 w-4 mr-2" />
               Monitor de Llamadas

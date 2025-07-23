@@ -10,59 +10,42 @@ import { Badge } from "./ui/badge.tsx"
 import { ScrollArea } from "./ui/scroll-area.tsx"
 import { Avatar, AvatarFallback } from "./ui/avatar.tsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select.tsx"
-// import type { User, CallStatus } from "@/app/page" // No longer needed for types
-
-// interface UserListProps {
-//   users: User[]
-//   selectedUsers: Set<string>
-//   callStatuses: Map<string, CallStatus>
-//   onUserSelection: (userId: string, selected: boolean) => void
-//   onSelectAll: () => void
-//   onDeselectAll: () => void
-//   isLoading?: boolean
-//   filterCategory: string
-//   setFilterCategory: (category: string) => void
-//   filterCallStatus: string
-//   setFilterCallStatus: (status: string) => void
-//   uniqueCategories: string[]
-//   possibleCallStatuses: string[]
-// }
 
 const getStatusColor = (status) => {
   switch (status) {
     case "pending":
-      return "bg-gradient-to-r from-yellow-400 to-yellow-500"
+      return "bg-yellow-100 text-yellow-800"
     case "initiated":
-      return "bg-gradient-to-r from-blue-400 to-blue-500"
+      return "bg-blue-100 text-blue-800"
     case "completed":
-      return "bg-gradient-to-r from-emerald-500 to-green-600"
+      return "bg-green-100 text-green-800"
     case "failed":
-      return "bg-gradient-to-r from-red-400 to-red-500"
+      return "bg-red-100 text-red-800"
     case "busy":
-      return "bg-gradient-to-r from-orange-400 to-orange-500"
+      return "bg-orange-100 text-orange-800"
     case "no-answer":
-      return "bg-gradient-to-r from-gray-400 to-gray-500"
+      return "bg-gray-100 text-gray-800"
     default:
-      return "bg-gradient-to-r from-gray-300 to-gray-400"
+      return "bg-gray-100 text-gray-800"
   }
 }
 
 const getStatusText = (status) => {
   switch (status) {
     case "pending":
-      return "⏳ Pendiente"
+      return "Pendiente"
     case "initiated":
-      return "🚀 Iniciada"
+      return "Iniciada"
     case "completed":
-      return "✅ Completada"
+      return "Completada"
     case "failed":
-      return "❌ Falló"
+      return "Falló"
     case "busy":
-      return "📵 Ocupado"
+      return "Ocupado"
     case "no-answer":
-      return "🔇 Sin respuesta"
+      return "Sin respuesta"
     default:
-      return "❓ Desconocido"
+      return "Desconocido"
   }
 }
 
@@ -128,13 +111,10 @@ export function UserList({
 
   if (isLoading) {
     return (
-      <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-0 shadow-xl">
+      <Card className="bg-white border border-gray-200 shadow-sm">
         <CardContent className="flex flex-col items-center justify-center py-16">
-          <div className="relative">
-            <RefreshCw className="h-16 w-16 text-blue-500 animate-spin" />
-            <div className="absolute inset-0 h-16 w-16 border-4 border-blue-200 rounded-full animate-pulse"></div>
-          </div>
-          <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <RefreshCw className="h-12 w-12 text-blue-600 animate-spin mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
             Cargando usuarios...
           </h3>
           <p className="text-gray-600 text-center">Obteniendo datos desde la API</p>
@@ -145,15 +125,10 @@ export function UserList({
 
   if (users.length === 0) {
     return (
-      <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-0 shadow-xl">
+      <Card className="bg-white border border-gray-200 shadow-sm">
         <CardContent className="flex flex-col items-center justify-center py-16">
-          <div className="relative mb-6">
-            <Phone className="h-16 w-16 text-gray-400" />
-            <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs">!</span>
-            </div>
-          </div>
-          <h3 className="text-2xl font-bold mb-2 text-gray-700">No hay usuarios disponibles</h3>
+          <Phone className="h-12 w-12 text-gray-400 mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No hay usuarios disponibles</h3>
           <p className="text-gray-500 text-center">No se encontraron usuarios en esta página</p>
         </CardContent>
       </Card>
@@ -161,29 +136,29 @@ export function UserList({
   }
 
   return (
-    <Card className="bg-white border-0 shadow-xl overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+    <Card className="bg-white border border-gray-200 shadow-sm">
+      <CardHeader className="bg-gray-50 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-bold flex items-center gap-3">
-            <UserIcon className="h-6 w-6" />
+          <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-3">
+            <UserIcon className="h-5 w-5 text-blue-600" />
             Lista de Usuarios ({filteredUsers.length})
           </CardTitle>
           <div className="flex gap-2">
             <Button
-              variant="secondary"
+              variant="outline"
               size="sm"
               onClick={onSelectAll}
               disabled={isLoading}
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+              className="border-gray-300"
             >
               Seleccionar Todos
             </Button>
             <Button
-              variant="secondary"
+              variant="outline"
               size="sm"
               onClick={onDeselectAll}
               disabled={isLoading}
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+              className="border-gray-300"
             >
               Deseleccionar Todos
             </Button>
@@ -192,23 +167,23 @@ export function UserList({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/70" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Buscar usuarios..."
               value={localSearchTerm}
               onChange={(e) => setLocalSearchTerm(e.target.value)}
-              className="pl-10 bg-white/20 border-white/30 text-white placeholder:text-white/70 focus:bg-white/30"
+              className="pl-10 border-gray-300"
               disabled={isLoading}
             />
           </div>
 
           <Select value={filterCategory} onValueChange={setFilterCategory} disabled={isLoading}>
-            <SelectTrigger className="bg-white/20 border-white/30 text-white [&>span]:text-white placeholder:text-white/70">
+            <SelectTrigger className="border-gray-300">
               <SelectValue placeholder="Filtrar por Categoría" />
             </SelectTrigger>
             <SelectContent className="bg-white text-gray-900">
               <SelectItem value="all">Todas las Categorías</SelectItem>
-              {uniqueCategories.map((category) => (
+              {uniqueCategories.filter(cat => cat !== "all").map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
                 </SelectItem>
@@ -217,20 +192,16 @@ export function UserList({
           </Select>
 
           <Select value={filterCallStatus} onValueChange={setFilterCallStatus} disabled={isLoading}>
-            <SelectTrigger className="bg-white/20 border-white/30 text-white [&>span]:text-white placeholder:text-white/70">
+            <SelectTrigger className="border-gray-300">
               <SelectValue placeholder="Filtrar por Estado de Llamada" />
             </SelectTrigger>
             <SelectContent className="bg-white text-gray-900">
               <SelectItem value="all">Todos los Estados</SelectItem>
-              {possibleCallStatuses.slice(1).map(
-                (
-                  status, // Skip "all" from possibleCallStatuses
-                ) => (
-                  <SelectItem key={status} value={status}>
-                    {getStatusText(status).replace(/^[^\s]+\s/, "")} {/* Remove emoji */}
-                  </SelectItem>
-                ),
-              )}
+              {possibleCallStatuses.slice(1).map((status) => (
+                <SelectItem key={status} value={status}>
+                  {getStatusText(status)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -240,9 +211,9 @@ export function UserList({
         <ScrollArea className="h-[600px]">
           <div className="p-6 space-y-4">
             {filteredUsers.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <Search className="h-12 w-12 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No se encontraron usuarios</h3>
+              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                <Search className="h-12 w-12 mb-4 text-gray-400" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No se encontraron usuarios</h3>
                 <p className="text-center">Ajusta tus filtros o tu búsqueda.</p>
               </div>
             ) : (
@@ -253,17 +224,12 @@ export function UserList({
                 return (
                   <div
                     key={user.id}
-                    className={`relative p-6 border-2 rounded-xl transition-all duration-300 transform hover:scale-[1.02] ${
+                    className={`p-6 border rounded-lg transition-all duration-200 ${
                       isSelected
-                        ? "bg-gradient-to-r from-blue-50 to-purple-50 border-blue-300 shadow-lg"
-                        : "bg-white hover:bg-gray-50 border-gray-200 hover:border-gray-300 shadow-md hover:shadow-lg"
+                        ? "bg-blue-50 border-blue-200 shadow-sm"
+                        : "bg-white hover:bg-gray-50 border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    {/* Decorative corner */}
-                    <div
-                      className={`absolute top-0 right-0 w-16 h-16 ${isSelected ? "bg-blue-100" : "bg-gray-50"} rounded-bl-full opacity-50`}
-                    ></div>
-
                     <div className="flex items-start gap-4">
                       <Checkbox
                         checked={isSelected}
@@ -272,8 +238,8 @@ export function UserList({
                         disabled={isLoading}
                       />
 
-                      <Avatar className="h-12 w-12 border-2 border-white shadow-lg">
-                        <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold">
+                      <Avatar className="h-12 w-12 border border-gray-200">
+                        <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold">
                           {user.name
                             .split(" ")
                             .map((n) => n[0])
@@ -286,7 +252,7 @@ export function UserList({
                       <div className="flex-1 space-y-3">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                               {user.name}
                               {user.totalCalls && user.totalCalls > 0 && (
                                 <Badge variant="outline" className="text-xs">
@@ -303,7 +269,7 @@ export function UserList({
                           </div>
                           {callStatus && (
                             <Badge
-                              className={`${getStatusColor(callStatus.status)} text-white shadow-lg animate-pulse`}
+                              className={`${getStatusColor(callStatus.status)}`}
                             >
                               {getStatusText(callStatus.status)}
                             </Badge>
@@ -311,28 +277,28 @@ export function UserList({
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="flex items-center gap-2 text-gray-600 bg-gray-50 p-2 rounded-lg">
-                            <Phone className="h-4 w-4 text-green-500" />
+                          <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-md">
+                            <Phone className="h-4 w-4 text-green-600" />
                             <span className="font-medium">{user.phone}</span>
                           </div>
 
                           {user.email && (
-                            <div className="flex items-center gap-2 text-gray-600 bg-gray-50 p-2 rounded-lg">
-                              <Mail className="h-4 w-4 text-blue-500" />
+                            <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-md">
+                              <Mail className="h-4 w-4 text-blue-600" />
                               <span className="font-medium truncate">{user.email}</span>
                             </div>
                           )}
 
                           {user.address && (
-                            <div className="flex items-center gap-2 text-gray-600 bg-gray-50 p-2 rounded-lg">
-                              <MapPin className="h-4 w-4 text-red-500" />
+                            <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-md">
+                              <MapPin className="h-4 w-4 text-red-600" />
                               <span className="font-medium truncate">{user.address}</span>
                             </div>
                           )}
 
                           {user.website && (
-                            <div className="flex items-center gap-2 text-gray-600 bg-gray-50 p-2 rounded-lg">
-                              <Globe className="h-4 w-4 text-purple-500" />
+                            <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-md">
+                              <Globe className="h-4 w-4 text-purple-600" />
                               <a
                                 href={user.website}
                                 target="_blank"
@@ -346,17 +312,17 @@ export function UserList({
                         </div>
 
                         {user.review && (
-                          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-3 rounded-lg border-l-4 border-yellow-400">
+                          <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200">
                             <div className="flex items-start gap-2">
-                              <Star className="h-4 w-4 text-yellow-500 mt-0.5" />
-                              <p className="text-sm text-gray-700 italic font-medium">"{user.review}"</p>
+                              <Star className="h-4 w-4 text-yellow-600 mt-0.5" />
+                              <p className="text-sm text-gray-700 italic">"{user.review}"</p>
                             </div>
                           </div>
                         )}
 
                         {callStatus && (
-                          <div className="bg-gray-50 p-3 rounded-lg">
-                            <div className="flex items-center justify-between text-xs text-gray-500">
+                          <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
+                            <div className="flex items-center justify-between text-xs text-gray-600">
                               <span>Última actualización: {callStatus.timestamp.toLocaleTimeString()}</span>
                               {callStatus.callId && <span>ID: {callStatus.callId.slice(-8)}</span>}
                             </div>
