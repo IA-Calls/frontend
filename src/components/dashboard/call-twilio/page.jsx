@@ -1,150 +1,199 @@
 "use client"
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
-import { Phone, Users, Play, Square, RefreshCw, Zap, Target, Download } from "lucide-react"
+import { Phone, Users, Play, Square, RefreshCw, Zap, Target, Download, Search, Filter, Plus, Edit, Trash2, FolderOpen, UserPlus } from "lucide-react"
 import { Button } from "./components/ui/button.tsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.tsx"
 import { UserList } from "./components/user-list.jsx"
 import { CallMonitor } from "./components/call-monitor.jsx"
 import { Pagination } from "./components/pagination.jsx"
 import { StatsCards } from "./components/stats-cards.jsx"
+import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card.tsx"
+import { Input } from "./components/ui/input.tsx"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "./components/ui/dialog.tsx"
+import { Badge } from "./components/ui/badge.tsx"
 import { useToast } from "./use-toast.ts"
-const EXTERNAL_OUTBOUND_CALL_API_URL = "https://twilio-call-754698887417.us-central1.run.app/outbound-call"
-const EXTERNAL_CLIENTS_API_URL = "http://localhost:5000/clients/pending"
 
-// URLs de los proxies internos
+const EXTERNAL_OUTBOUND_CALL_API_URL = "https://twilio-call-754698887417.us-central1.run.app/outbound-call"
+const CLIENTS_PENDING_API_URL = "http://localhost:5000/clients/pending"
+const GROUPS_API_URL = "http://localhost:5000/api/groups"
 const OUTBOUND_CALL_PROXY_API_URL = "http://localhost:5000/calls/outbound"
-const CLIENTS_PROXY_API_URL = "/api/clients/pending"
 
 export default function CallDashboard() {
-  const [users, setUsers] = useState([])
+  // Estados principales
+  const [groups, setGroups] = useState([])
+  const [selectedGroup, setSelectedGroup] = useState(null)
   const [selectedUsers, setSelectedUsers] = useState(new Set())
   const [callStatuses, setCallStatuses] = useState(new Map())
   const [isCallingState, setIsCallingState] = useState(false)
   const stopCallingRef = useRef(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  // Estados para gestión de grupos
+  const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false)
+  const [editingGroup, setEditingGroup] = useState(null)
+  const [groupForm, setGroupForm] = useState({
+    name: '',
+    description: '',
+    color: '#3B82F6'
+  })
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState({ open: false, groupId: null, groupName: '' })
+
+  // Estados para paginación
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
-    totalUsers: 0,
-    limit: 5,
+    totalGroups: 0,
+    totalClients: 0,
+    limit: 10,
   })
 
-  // Estados para los filtros avanzados
+  // Estados para filtros
   const [filterCategory, setFilterCategory] = useState("all")
   const [filterCallStatus, setFilterCallStatus] = useState("all")
 
   const { toast } = useToast()
 
-  const fetchUsers = useCallback(
-    async (page = 1, limit = 5) => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const response = await fetch(`${EXTERNAL_CLIENTS_API_URL}?page=1&limit=5`)
-
-        if (!response.ok) {
-          const errorText = await response.text()
-          throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
-        }
-
-        const data = await response.json()
-
-        const transformedUsers =
-          data.clients?.map((client) => ({
-            id: client._id || `user-${Date.now()}-${Math.random()}`,
-            name: client.name || "Sin nombre",
-            phone: client.phone || "",
-            review: client.review,
-            category: client.category,
-            address: client.adress,
-            website: client.web,
-            email: client.mail,
-            latitude: client.latitude ? Number.parseFloat(client.latitude) : undefined,
-            longitude: client.length ? Number.parseFloat(client.length) : undefined,
-            location: client.ubication,
-            state: client.state,
-            totalCalls: client.total_calls || 0,
-          })) || []
-
-        const totalPages = Math.ceil((data.total || 0) / (data.size || limit))
-
-        setUsers(transformedUsers)
-        setPagination({
-          currentPage: data.page || page,
-          totalPages,
-          totalUsers: data.total || 0,
-          limit: data.size || limit,
-        })
-
-        toast({
-          title: "✅ Usuarios cargados",
-          description: `Se cargaron ${transformedUsers.length} usuarios de la página ${page}.`,
-        })
-      } catch (error) {
-        console.error("Error fetching users:", error)
-        setError(`No se pudieron cargar los usuarios: ${error.message || "Error desconocido"}`)
-        toast({
-          title: "❌ Error al cargar usuarios",
-          description: "Verifica la conexión con la API de usuarios o el proxy.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [toast],
-  )
-
-  const fetchAllUsers = useCallback(async () => {
-    const allUsers = []
-    let currentPage = 1
-    let totalPages = 1
-
+  // Obtener todos los grupos desde clients/pending
+  const fetchGroups = useCallback(async (page = 1, limit = 10) => {
+    setIsLoading(true)
+    setError(null)
     try {
-      do {
-        const response = await fetch(`${CLIENTS_PROXY_API_URL}?page=${currentPage}&size=100`)
+      const response = await fetch(`${CLIENTS_PENDING_API_URL}`)
 
-        if (!response.ok) {
-          const errorText = await response.text()
-          throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
-        }
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
 
-        const data = await response.json()
+      const data = await response.json()
 
-        const transformedUsers =
-          data.clients?.map((client) => ({
-            id: client._id || `user-${Date.now()}-${Math.random()}`,
-            name: client.name || "Sin nombre",
-            phone: client.phone || "",
-            review: client.review,
-            category: client.category,
-            address: client.adress,
-            website: client.web,
-            email: client.mail,
-            latitude: client.latitude ? Number.parseFloat(client.latitude) : undefined,
-            longitude: client.length ? Number.parseFloat(client.length) : undefined,
-            location: client.ubication,
-            state: client.state,
-            totalCalls: client.total_calls || 0,
-          })) || []
+      if (data.success) {
+        setGroups(data.groups || [])
+        setPagination({
+          currentPage: 1, // El endpoint no maneja paginación por ahora
+          totalPages: 1,
+          totalGroups: data.totalGroups || 0,
+          totalClients: data.totalClients || 0,
+          limit: limit,
+        })
 
-        allUsers.push(...transformedUsers)
-        totalPages = Math.ceil((data.total || 0) / (data.size || 100))
-        currentPage++
-      } while (currentPage <= totalPages)
-
-      return allUsers
+        toast({
+          title: "✅ Grupos cargados",
+          description: `Se cargaron ${data.totalGroups} grupos con ${data.totalClients} clientes.`,
+        })
+      }
     } catch (error) {
-      console.error("Error fetching all users:", error)
-      throw error
+      console.error("Error fetching groups:", error)
+      setError(`No se pudieron cargar los grupos: ${error.message}`)
+      toast({
+        title: "❌ Error al cargar grupos",
+        description: "Verifica la conexión con la API.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
-  }, [])
+  }, [toast])
+
+  // Crear o actualizar grupo
+  const saveGroup = useCallback(async () => {
+    try {
+      const url = editingGroup 
+        ? `${GROUPS_API_URL}/${editingGroup.id}`
+        : GROUPS_API_URL
+
+      const response = await fetch(url, {
+        method: editingGroup ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(groupForm),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
+
+      toast({
+        title: editingGroup ? "✅ Grupo actualizado" : "✅ Grupo creado",
+        description: `El grupo "${groupForm.name}" se ${editingGroup ? 'actualizó' : 'creó'} correctamente.`,
+      })
+
+      setIsGroupDialogOpen(false)
+      setEditingGroup(null)
+      setGroupForm({ name: '', description: '', color: '#3B82F6' })
+      fetchGroups()
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: `No se pudo ${editingGroup ? 'actualizar' : 'crear'} el grupo.`,
+        variant: "destructive",
+      })
+    }
+  }, [groupForm, editingGroup, fetchGroups, toast])
+
+  // Eliminar grupo
+  const deleteGroup = useCallback(async (groupId) => {
+    try {
+      const response = await fetch(`${GROUPS_API_URL}/${groupId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
+
+      toast({
+        title: "✅ Grupo eliminado",
+        description: "El grupo se eliminó correctamente.",
+      })
+
+      fetchGroups()
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: "No se pudo eliminar el grupo.",
+        variant: "destructive",
+      })
+    }
+  }, [fetchGroups, toast])
 
   useEffect(() => {
-    fetchUsers(1, 5)
-  }, [fetchUsers])
+    fetchGroups()
+  }, [fetchGroups])
+
+  // Obtener todos los usuarios de todos los grupos
+  const allUsers = useMemo(() => {
+    const users = []
+    groups.forEach(group => {
+      if (group.clients) {
+        group.clients.forEach(client => {
+          users.push({
+            id: client.id,
+            name: client.name,
+            phone: client.phone,
+            email: client.email || client.metadata?.mail,
+            category: client.category,
+            address: client.address || client.metadata?.adress,
+            website: client.metadata?.web,
+            review: client.review,
+            totalCalls: client.metadata?.total_calls || 0,
+            groupId: group.id,
+            groupName: group.name,
+            groupColor: group.color
+          })
+        })
+      }
+    })
+    return users
+  }, [groups])
+
+  // Usuarios filtrados por grupo seleccionado
+  const filteredUsers = useMemo(() => {
+    if (!selectedGroup) return allUsers
+    return allUsers.filter(user => user.groupId === selectedGroup.id)
+  }, [allUsers, selectedGroup])
 
   const handleUserSelection = useCallback((userId, selected) => {
     setSelectedUsers((prev) => {
@@ -159,20 +208,13 @@ export default function CallDashboard() {
   }, [])
 
   const handleSelectAll = useCallback(() => {
-    setSelectedUsers(new Set(users.map((user) => user.id)))
-  }, [users])
+    const usersToSelect = selectedGroup ? filteredUsers : allUsers
+    setSelectedUsers(new Set(usersToSelect.map((user) => user.id)))
+  }, [selectedGroup, filteredUsers, allUsers])
 
   const handleDeselectAll = useCallback(() => {
     setSelectedUsers(new Set())
   }, [])
-
-  const handlePageChange = useCallback(
-    (page) => {
-      fetchUsers(page, pagination.limit)
-      setSelectedUsers(new Set()) // Limpiar selección al cambiar página
-    },
-    [fetchUsers, pagination.limit],
-  )
 
   const makeCall = useCallback(
     async (user) => {
@@ -188,7 +230,6 @@ export default function CallDashboard() {
               }),
             ),
         )
-        console.log(`[makeCall] Call status for ${user.name} set to pending.`)
 
         const response = await fetch(OUTBOUND_CALL_PROXY_API_URL, {
           method: "POST",
@@ -200,18 +241,11 @@ export default function CallDashboard() {
           }),
         })
 
-        console.log(`[makeCall] Fetch response received for ${user.name}. Status: ${response.status}`)
-
         if (!response.ok) {
-          const errorText = await response.text()
-          console.error(
-            `[makeCall] API call failed for ${user.name}. Status: ${response.status}, Message: ${errorText}`,
-          )
-          throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
+          throw new Error(`HTTP error! status: ${response.status}`)
         }
 
         const result = await response.json()
-        console.log(`[makeCall] API call successful for ${user.name}. Result:`, result)
 
         if (result.sucess === true && result.callSid) {
           const callId = result.callSid
@@ -227,16 +261,12 @@ export default function CallDashboard() {
                 prev.set(user.id, {
                   userId: user.id,
                   callId: callId,
-                  status: "initiated", // La llamada se inició correctamente
+                  status: "initiated",
                   timestamp: new Date(),
                 }),
               ),
           )
-          console.log(`[makeCall] Call status for ${user.name} set to initiated with SID: ${callId}.`)
         } else {
-          // API respondió OK, pero Success es false o falta Call-sid
-          const errorMessage = result.Message || "La API indicó un fallo en la llamada."
-          console.error(`[makeCall] API call failed for ${user.name}. Reason: ${errorMessage}`)
           setCallStatuses(
             (prev) =>
               new Map(
@@ -249,18 +279,18 @@ export default function CallDashboard() {
           )
           toast({
             title: "❌ Error en llamada",
-            description: `No se pudo llamar a ${user.name}: ${errorMessage}`,
+            description: `No se pudo llamar a ${user.name}`,
             variant: "destructive",
           })
         }
       } catch (error) {
-        console.error("[makeCall] Caught error in makeCall:", error)
+        console.error("[makeCall] Error:", error)
         setCallStatuses(
           (prev) =>
             new Map(
               prev.set(user.id, {
                 userId: user.id,
-                status: "failed", // La llamada falló
+                status: "failed",
                 timestamp: new Date(),
               }),
             ),
@@ -268,16 +298,15 @@ export default function CallDashboard() {
 
         toast({
           title: "❌ Error en llamada",
-          description: `No se pudo llamar a ${user.name}: ${error.message || "Error desconocido"}`,
+          description: `No se pudo llamar a ${user.name}: ${error.message}`,
           variant: "destructive",
         })
       }
     },
-    [setCallStatuses, toast],
+    [toast],
   )
 
   const handleCallSelected = useCallback(async () => {
-    console.log("[handleCallSelected] Triggered.")
     if (selectedUsers.size === 0) {
       toast({
         title: "⚠️ Sin selección",
@@ -287,88 +316,75 @@ export default function CallDashboard() {
       return
     }
 
-    setIsCallingState(true) // Activar estado de UI
-    stopCallingRef.current = false // Asegurar que el bucle no se detenga
-    const selectedUsersList = users.filter((user) => selectedUsers.has(user.id))
+    setIsCallingState(true)
+    stopCallingRef.current = false
+    const usersToCall = selectedGroup 
+      ? filteredUsers.filter((user) => selectedUsers.has(user.id))
+      : allUsers.filter((user) => selectedUsers.has(user.id))
 
     toast({
       title: "🚀 Iniciando llamadas",
-      description: `Iniciando ${selectedUsersList.length} llamadas...`,
+      description: `Iniciando ${usersToCall.length} llamadas...`,
     })
 
-    for (let i = 0; i < selectedUsersList.length; i++) {
-      if (stopCallingRef.current) {
-        console.log("[handleCallSelected] Call process stopped by user or state change (ref).")
-        break
-      }
-      console.log(`[handleCallSelected] Calling makeCall for user ${selectedUsersList[i].name} (index ${i}).`)
-      await makeCall(selectedUsersList[i])
-      if (i < selectedUsersList.length - 1) {
+    for (let i = 0; i < usersToCall.length; i++) {
+      if (stopCallingRef.current) break
+      await makeCall(usersToCall[i])
+      if (i < usersToCall.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, 500))
       }
     }
 
-    setIsCallingState(false) // Desactivar estado de UI
-    console.log("[handleCallSelected] Finished.")
-  }, [selectedUsers, users, makeCall, toast])
+    setIsCallingState(false)
+  }, [selectedUsers, selectedGroup, filteredUsers, allUsers, makeCall, toast])
 
-  const handleCallAll = useCallback(async () => {
-    console.log("[handleCallAll] Triggered.")
-    setIsCallingState(true) // Activar estado de UI
-    stopCallingRef.current = false // Asegurar que el bucle no se detenga
-
-    try {
+  const handleCallGroup = useCallback(async (group) => {
+    if (!group.clients || group.clients.length === 0) {
       toast({
-        title: "📊 Cargando todos los usuarios",
-        description: "Obteniendo usuarios de todas las páginas...",
-      })
-
-      const allUsers = await fetchAllUsers()
-      console.log(`[handleCallAll] Fetched ${allUsers.length} users for call all.`)
-
-      if (allUsers.length === 0) {
-        toast({
-          title: "⚠️ Sin usuarios",
-          description: "No hay usuarios disponibles para llamar.",
-          variant: "destructive",
-        })
-        setIsCallingState(false) // Desactivar estado de UI
-        return
-      }
-
-      toast({
-        title: "🎯 Iniciando llamadas masivas",
-        description: `Iniciando ${allUsers.length} llamadas a todos los usuarios...`,
-      })
-
-      for (let i = 0; i < allUsers.length; i++) {
-        if (stopCallingRef.current) {
-          console.log("[handleCallAll] Call process stopped by user or state change (ref).")
-          break
-        }
-        console.log(`[handleCallAll] Calling makeCall for user ${allUsers[i].name} (index ${i}).`)
-        await makeCall(allUsers[i])
-        if (i < allUsers.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 500))
-        }
-      }
-    } catch (error) {
-      console.error("[handleCallAll] Error in handleCallAll:", error)
-      toast({
-        title: "❌ Error al obtener usuarios",
-        description: "No se pudieron cargar todos los usuarios para llamar.",
+        title: "⚠️ Grupo vacío",
+        description: "Este grupo no tiene clientes para llamar.",
         variant: "destructive",
       })
-    } finally {
-      setIsCallingState(false) // Desactivar estado de UI
-      console.log("[handleCallAll] Finished.")
+      return
     }
-  }, [fetchAllUsers, makeCall, toast])
+
+    setIsCallingState(true)
+    stopCallingRef.current = false
+    
+    const groupUsers = group.clients.map(client => ({
+      id: client.id,
+      name: client.name,
+      phone: client.phone,
+      email: client.email || client.metadata?.mail,
+      category: client.category,
+      address: client.address || client.metadata?.adress,
+      website: client.metadata?.web,
+      review: client.review,
+      totalCalls: client.metadata?.total_calls || 0,
+      groupId: group.id,
+      groupName: group.name,
+      groupColor: group.color
+    }))
+
+    toast({
+      title: "🚀 Iniciando llamadas de grupo",
+      description: `Llamando a ${groupUsers.length} clientes del grupo "${group.name}"`,
+    })
+
+    for (let i = 0; i < groupUsers.length; i++) {
+      if (stopCallingRef.current) break
+      await makeCall(groupUsers[i])
+      if (i < groupUsers.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      }
+    }
+
+    setIsCallingState(false)
+  }, [makeCall, toast])
 
   const handleStopCalls = useCallback(() => {
-    console.log("[handleStopCalls] Triggered. Setting stopCallingRef.current to true.")
-    stopCallingRef.current = true // Indicar al bucle que se detenga
-    setIsCallingState(false) // Actualizar UI
+    stopCallingRef.current = true
+    setIsCallingState(false)
     toast({
       title: "⏹️ Llamadas detenidas",
       description: "Se ha detenido el proceso de llamadas.",
@@ -376,154 +392,405 @@ export default function CallDashboard() {
   }, [toast])
 
   const handleRefresh = useCallback(() => {
-    fetchUsers(pagination.currentPage, pagination.limit)
-  }, [fetchUsers, pagination.currentPage, pagination.limit])
+    fetchGroups()
+  }, [fetchGroups])
 
   const handleExportReport = useCallback(() => {
-    const headers = ["ID", "Nombre", "Teléfono", "Categoría", "Estado Llamada", "ID Llamada", "Última Actualización"]
-    const rows = users.map((user) => {
-      const status = callStatuses.get(user.id)
-      return [
-        user.id,
-        user.name,
-        user.phone,
-        user.category || "N/A",
-        status ? status.status : "No Llamado",
-        status?.callId || "N/A",
-        status ? status.timestamp.toLocaleString() : "N/A",
+    try {
+      const csvData = []
+      
+      const headers = [
+        "ID",
+        "Nombre", 
+        "Telefono",
+        "Email",
+        "Categoria",
+        "Direccion",
+        "Sitio Web",
+        "Grupo",
+        "Estado Llamada",
+        "ID Llamada",
+        "Ultima Actualizacion"
       ]
-        .map((field) => `"${String(field).replace(/"/g, '""')}"`)
-        .join(",") // Escape commas and quotes
-    })
+      
+      csvData.push(headers)
+      
+      allUsers.forEach((user) => {
+        const status = callStatuses.get(user.id)
+        const row = [
+          user.id || "N/A",
+          user.name || "N/A",
+          user.phone || "N/A", 
+          user.email || "N/A",
+          user.category || "N/A",
+          user.address || "N/A",
+          user.website || "N/A",
+          user.groupName || "N/A",
+          status ? status.status : "No Llamado",
+          status?.callId || "N/A",
+          status ? status.timestamp.toLocaleString() : "N/A"
+        ]
+        csvData.push(row)
+      })
+      
+      const csvContent = csvData
+        .map(row => 
+          row.map(field => {
+            const escapedField = String(field).replace(/"/g, '""')
+            return `"${escapedField}"`
+          }).join(';')
+        )
+        .join('\n')
+      
+      const BOM = '\uFEFF'
+      const blob = new Blob([BOM + csvContent], { 
+        type: 'text/csv;charset=utf-8;' 
+      })
+      
+      const now = new Date()
+      const timestamp = now.toISOString().slice(0, 19).replace(/:/g, '-')
+      const filename = `reporte_llamadas_${timestamp}.csv`
+      
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.setAttribute("href", url)
+      link.setAttribute("download", filename)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
 
-    const csvContent = [headers.join(","), ...rows].join("\n")
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.setAttribute("href", url)
-    link.setAttribute("download", "reporte_llamadas.csv")
-    link.click()
-    URL.revokeObjectURL(url)
+      toast({
+        title: "📄 Reporte Exportado",
+        description: `El reporte se ha descargado como ${filename}`,
+      })
+    } catch (error) {
+      console.error('Error exporting CSV:', error)
+      toast({
+        title: "❌ Error en exportación",
+        description: "No se pudo generar el reporte CSV.",
+        variant: "destructive",
+      })
+    }
+  }, [allUsers, callStatuses, toast])
 
-    toast({
-      title: "📄 Reporte Exportado",
-      description: "El reporte de llamadas se ha descargado como CSV.",
-    })
-  }, [users, callStatuses, toast])
-
-  // Obtener categorías únicas para el filtro
+  // Obtener categorías únicas
   const uniqueCategories = useMemo(() => {
     const categories = new Set()
-    users.forEach((user) => {
+    allUsers.forEach((user) => {
       if (user.category) categories.add(user.category)
     })
     return ["all", ...Array.from(categories)]
-  }, [users])
+  }, [allUsers])
 
-  // Estados de llamada posibles para el filtro
   const possibleCallStatuses = useMemo(() => {
     return ["all", "pending", "initiated", "failed", "completed", "busy", "no-answer"]
   }, [])
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Header limpio y minimalista */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900 mb-2 flex items-center gap-3">
-                <Phone className="h-6 w-6 text-blue-600" />
-                Gestión de Llamadas Twilio
-              </h1>
-              <p className="text-gray-600">Gestiona y realiza llamadas masivas con Twilio</p>
+      <div className="container mx-auto p-6 space-y-6 max-w-7xl">
+        
+        {/* Header Principal */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+                  Gestión de Llamadas por Grupos
+                </h1>
+                <p className="text-gray-600">
+                  Organiza y gestiona llamadas masivas por grupos de clientes
+                </p>
+              </div>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  disabled={isLoading}
+                  className="border-gray-300"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                  Actualizar
+                </Button>
+                <Button
+                  onClick={handleExportReport}
+                  disabled={allUsers.length === 0}
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-300"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar
+                </Button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{pagination.totalUsers}</div>
-                <div className="text-sm text-gray-500">Usuarios Totales</div>
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-600">Total Grupos</p>
+                    <p className="text-2xl font-semibold text-blue-900">{pagination.totalGroups}</p>
+                  </div>
+                  <FolderOpen className="h-8 w-8 text-blue-600" />
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{selectedUsers.size}</div>
-                <div className="text-sm text-gray-500">Seleccionados</div>
+              
+              <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-green-600">Total Clientes</p>
+                    <p className="text-2xl font-semibold text-green-900">{pagination.totalClients}</p>
+                  </div>
+                  <Users className="h-8 w-8 text-green-600" />
+                </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isLoading}
-                className="border-gray-300"
-              >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-              </Button>
+              
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-purple-600">Seleccionados</p>
+                    <p className="text-2xl font-semibold text-purple-900">{selectedUsers.size}</p>
+                  </div>
+                  <Target className="h-8 w-8 text-purple-600" />
+                </div>
+              </div>
+              
+              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-yellow-600">Estado</p>
+                    <p className="text-lg font-semibold text-yellow-900">
+                      {isCallingState ? "En progreso" : "Inactivo"}
+                    </p>
+                  </div>
+                  <Zap className={`h-8 w-8 text-yellow-600 ${isCallingState ? "animate-pulse" : ""}`} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Botones de acción con diseño limpio */}
-        <div className="flex gap-3 justify-center">
-          <Button
-            onClick={handleCallSelected}
-            disabled={isCallingState || selectedUsers.size === 0}
-            size="lg"
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            {isCallingState ? (
-              <>
-                <Square className="h-4 w-4 mr-2" />
-                Llamando...
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4 mr-2" />
-                Llamar Seleccionados ({selectedUsers.size})
-              </>
-            )}
-          </Button>
+        {/* Gestión de Grupos */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Grupos de Clientes</h2>
+              <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={() => {
+                      setEditingGroup(null)
+                      setGroupForm({ name: '', description: '', color: '#3B82F6' })
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Crear Grupo
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingGroup ? 'Editar Grupo' : 'Crear Nuevo Grupo'}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre del Grupo
+                      </label>
+                      <Input
+                        value={groupForm.name}
+                        onChange={(e) => setGroupForm(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Ej: Clientes VIP"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Descripción
+                      </label>
+                      <Input
+                        value={groupForm.description}
+                        onChange={(e) => setGroupForm(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Descripción del grupo"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Color
+                      </label>
+                      <input
+                        type="color"
+                        value={groupForm.color}
+                        onChange={(e) => setGroupForm(prev => ({ ...prev, color: e.target.value }))}
+                        className="w-full h-10 rounded border border-gray-300"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsGroupDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={saveGroup}>
+                      {editingGroup ? 'Actualizar' : 'Crear'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
 
-          <Button
-            onClick={handleCallAll}
-            disabled={isCallingState || pagination.totalUsers === 0}
-            size="lg"
-            variant="outline"
-            className="border-blue-600 text-blue-600 hover:bg-blue-50"
-          >
-            {isCallingState ? (
-              <>
-                <Square className="h-4 w-4 mr-2" />
-                Llamando Todos...
-              </>
-            ) : (
-              <>
-                <Zap className="h-4 w-4 mr-2" />
-                Llamar Todos ({pagination.totalUsers})
-              </>
-            )}
-          </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Opción "Todos los grupos" */}
+              <Card 
+                className={`cursor-pointer transition-all duration-200 ${
+                  !selectedGroup 
+                    ? 'ring-2 ring-blue-500 bg-blue-50' 
+                    : 'hover:bg-gray-50'
+                }`}
+                onClick={() => setSelectedGroup(null)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 bg-gray-400 rounded"></div>
+                      <h3 className="font-semibold text-gray-900">Todos los Grupos</h3>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">Ver todos los clientes de todos los grupos</p>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary">
+                      {allUsers.length} clientes
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {isCallingState && (
-            <Button
-              onClick={handleStopCalls}
-              size="lg"
-              variant="destructive"
-              className="bg-red-600 hover:bg-red-700"
-            >
-              <Square className="h-4 w-4 mr-2" />
-              Detener Llamadas
-            </Button>
-          )}
+              {/* Grupos existentes */}
+              {groups.map((group) => (
+                <Card 
+                  key={group.id}
+                  className={`cursor-pointer transition-all duration-200 ${
+                    selectedGroup?.id === group.id 
+                      ? 'ring-2 ring-blue-500 bg-blue-50' 
+                      : 'hover:bg-gray-50'
+                  }`}
+                  onClick={() => setSelectedGroup(group)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-4 h-4 rounded" 
+                          style={{ backgroundColor: group.color }}
+                        ></div>
+                        <h3 className="font-semibold text-gray-900">{group.name}</h3>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingGroup(group)
+                            setGroupForm({
+                              name: group.name,
+                              description: group.description,
+                              color: group.color
+                            })
+                            setIsGroupDialogOpen(true)
+                          }}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDeleteConfirmDialog({
+                              open: true,
+                              groupId: group.id,
+                              groupName: group.name
+                            })
+                          }}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">{group.description}</p>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="secondary">
+                        {group.clientCount} clientes
+                      </Badge>
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleCallGroup(group)
+                        }}
+                        disabled={isCallingState || !group.clients?.length}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <Phone className="h-3 w-3 mr-1" />
+                        Llamar Grupo
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
 
-          <Button
-            onClick={handleExportReport}
-            disabled={users.length === 0 && callStatuses.size === 0}
-            size="lg"
-            variant="outline"
-            className="border-gray-300"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Exportar Reporte
-          </Button>
+        {/* Controles de Acción */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Controles de Llamadas
+              {selectedGroup && (
+                <span className="ml-2 text-sm font-normal text-gray-600">
+                  - Grupo: {selectedGroup.name}
+                </span>
+              )}
+            </h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                onClick={handleCallSelected}
+                disabled={isCallingState || selectedUsers.size === 0}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {isCallingState ? (
+                  <>
+                    <Square className="h-4 w-4 mr-2" />
+                    Llamando...
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Llamar Seleccionados ({selectedUsers.size})
+                  </>
+                )}
+              </Button>
+
+              {isCallingState && (
+                <Button
+                  onClick={handleStopCalls}
+                  variant="destructive"
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  <Square className="h-4 w-4 mr-2" />
+                  Detener Llamadas
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Error display */}
@@ -536,63 +803,99 @@ export default function CallDashboard() {
           </div>
         )}
 
-        {/* Stats Cards */}
+        {/* Stats Cards Detalladas */}
         <StatsCards
-          totalUsers={pagination.totalUsers}
+          totalUsers={selectedGroup ? filteredUsers.length : allUsers.length}
           selectedUsers={selectedUsers.size}
           callStatuses={callStatuses}
           isCallInProgress={isCallingState}
         />
 
-        {/* Tabs con diseño limpio */}
+        {/* Contenido Principal */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
-            <TabsTrigger
-              value="users"
-              className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
-            >
-              <Users className="h-4 w-4 mr-2" />
-              Gestión de Usuarios
-            </TabsTrigger>
-            <TabsTrigger
-              value="monitor"
-              className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
-            >
-              <Phone className="h-4 w-4 mr-2" />
-              Monitor de Llamadas
-            </TabsTrigger>
-          </TabsList>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div className="p-6 border-b border-gray-200">
+              <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg max-w-md">
+                <TabsTrigger
+                  value="users"
+                  className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Gestión de Usuarios
+                </TabsTrigger>
+                <TabsTrigger
+                  value="monitor"
+                  className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Monitor de Llamadas
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-          <TabsContent value="users" className="space-y-6">
-            <UserList
-              users={users}
-              selectedUsers={selectedUsers}
-              callStatuses={callStatuses}
-              onUserSelection={handleUserSelection}
-              onSelectAll={handleSelectAll}
-              onDeselectAll={handleDeselectAll}
-              isLoading={isLoading}
-              filterCategory={filterCategory}
-              setFilterCategory={setFilterCategory}
-              filterCallStatus={filterCallStatus}
-              setFilterCallStatus={setFilterCallStatus}
-              uniqueCategories={uniqueCategories}
-              possibleCallStatuses={possibleCallStatuses}
-            />
+            <TabsContent value="users" className="p-6 space-y-6">
+              <UserList
+                users={selectedGroup ? filteredUsers : allUsers}
+                selectedUsers={selectedUsers}
+                callStatuses={callStatuses}
+                onUserSelection={handleUserSelection}
+                onSelectAll={handleSelectAll}
+                onDeselectAll={handleDeselectAll}
+                isLoading={isLoading}
+                filterCategory={filterCategory}
+                setFilterCategory={setFilterCategory}
+                filterCallStatus={filterCallStatus}
+                setFilterCallStatus={setFilterCallStatus}
+                uniqueCategories={uniqueCategories}
+                possibleCallStatuses={possibleCallStatuses}
+              />
+            </TabsContent>
 
-            <Pagination
-              currentPage={pagination.currentPage}
-              totalPages={pagination.totalPages}
-              totalUsers={pagination.totalUsers}
-              onPageChange={handlePageChange}
-              disabled={isLoading}
-            />
-          </TabsContent>
-
-          <TabsContent value="monitor">
-            <CallMonitor users={users} callStatuses={callStatuses} totalUsers={pagination.totalUsers} />
-          </TabsContent>
+            <TabsContent value="monitor" className="p-6">
+              <CallMonitor 
+                users={selectedGroup ? filteredUsers : allUsers} 
+                callStatuses={callStatuses} 
+                totalUsers={selectedGroup ? filteredUsers.length : allUsers.length} 
+              />
+            </TabsContent>
+          </div>
         </Tabs>
+
+        {/* Diálogo de Confirmación para Eliminar Grupo */}
+        <Dialog open={deleteConfirmDialog.open} onOpenChange={(open) => 
+          setDeleteConfirmDialog(prev => ({ ...prev, open }))
+        }>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmar Eliminación</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-gray-700">
+                ¿Estás seguro de que quieres eliminar el grupo <strong>"{deleteConfirmDialog.groupName}"</strong>?
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setDeleteConfirmDialog({ open: false, groupId: null, groupName: '' })}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={() => {
+                  deleteGroup(deleteConfirmDialog.groupId)
+                  setDeleteConfirmDialog({ open: false, groupId: null, groupName: '' })
+                }}
+              >
+                Eliminar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

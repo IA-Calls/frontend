@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { Phone, Mail, MapPin, Globe, Search, RefreshCw, UserIcon, Star, Building } from "lucide-react"
+import { Phone, Mail, MapPin, Globe, Search, RefreshCw, UserIcon, Star, Building, FolderOpen } from "lucide-react"
 import { Button } from "./ui/button.tsx"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card.tsx"
 import { Checkbox } from "./ui/checkbox.tsx"
@@ -58,6 +58,7 @@ const getCategoryColor = (category) => {
     Especialista: "bg-purple-100 text-purple-800",
     Cliente: "bg-orange-100 text-orange-800",
     Premium: "bg-yellow-100 text-yellow-800",
+    General: "bg-gray-100 text-gray-800",
   }
 
   return colors[category] || "bg-gray-100 text-gray-800"
@@ -85,7 +86,7 @@ export function UserList({
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedSearchTerm(localSearchTerm)
-    }, 300) // 300ms debounce
+    }, 300)
 
     return () => {
       clearTimeout(timerId)
@@ -98,7 +99,8 @@ export function UserList({
         user.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         user.phone.includes(debouncedSearchTerm) ||
         user.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        user.category?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+        user.category?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        user.groupName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
 
       const matchesCategory = filterCategory === "all" || user.category === filterCategory
 
@@ -127,9 +129,9 @@ export function UserList({
     return (
       <Card className="bg-white border border-gray-200 shadow-sm">
         <CardContent className="flex flex-col items-center justify-center py-16">
-          <Phone className="h-12 w-12 text-gray-400 mb-4" />
+          <FolderOpen className="h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">No hay usuarios disponibles</h3>
-          <p className="text-gray-500 text-center">No se encontraron usuarios en esta página</p>
+          <p className="text-gray-500 text-center">No se encontraron usuarios en esta selección</p>
         </CardContent>
       </Card>
     )
@@ -169,7 +171,7 @@ export function UserList({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Buscar usuarios..."
+              placeholder="Buscar usuarios o grupos..."
               value={localSearchTerm}
               onChange={(e) => setLocalSearchTerm(e.target.value)}
               className="pl-10 border-gray-300"
@@ -260,12 +262,27 @@ export function UserList({
                                 </Badge>
                               )}
                             </h4>
-                            {user.category && (
-                              <Badge className={`mt-1 ${getCategoryColor(user.category)}`}>
-                                <Building className="h-3 w-3 mr-1" />
-                                {user.category}
-                              </Badge>
-                            )}
+                            <div className="flex items-center gap-2 mt-1">
+                              {user.category && (
+                                <Badge className={`${getCategoryColor(user.category)}`}>
+                                  <Building className="h-3 w-3 mr-1" />
+                                  {user.category}
+                                </Badge>
+                              )}
+                              {user.groupName && (
+                                <Badge 
+                                  variant="outline"
+                                  className="border-gray-300"
+                                  style={{ 
+                                    borderLeftColor: user.groupColor,
+                                    borderLeftWidth: '3px'
+                                  }}
+                                >
+                                  <FolderOpen className="h-3 w-3 mr-1" />
+                                  {user.groupName}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                           {callStatus && (
                             <Badge
