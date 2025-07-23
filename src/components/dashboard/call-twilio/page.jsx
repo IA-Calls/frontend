@@ -528,50 +528,7 @@ export default function CallDashboard() {
               </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-blue-600">Total Grupos</p>
-                    <p className="text-2xl font-semibold text-blue-900">{pagination.totalGroups}</p>
-                  </div>
-                  <FolderOpen className="h-8 w-8 text-blue-600" />
-                </div>
-              </div>
-              
-              <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-green-600">Total Clientes</p>
-                    <p className="text-2xl font-semibold text-green-900">{pagination.totalClients}</p>
-                  </div>
-                  <Users className="h-8 w-8 text-green-600" />
-                </div>
-              </div>
-              
-              <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-purple-600">Seleccionados</p>
-                    <p className="text-2xl font-semibold text-purple-900">{selectedUsers.size}</p>
-                  </div>
-                  <Target className="h-8 w-8 text-purple-600" />
-                </div>
-              </div>
-              
-              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-yellow-600">Estado</p>
-                    <p className="text-lg font-semibold text-yellow-900">
-                      {isCallingState ? "En progreso" : "Inactivo"}
-                    </p>
-                  </div>
-                  <Zap className={`h-8 w-8 text-yellow-600 ${isCallingState ? "animate-pulse" : ""}`} />
-                </div>
-              </div>
-            </div>
+
           </div>
         </div>
 

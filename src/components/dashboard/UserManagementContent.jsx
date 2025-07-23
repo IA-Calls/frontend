@@ -24,6 +24,7 @@ export const UserManagementContent = ({ user: currentUser }) => {
     changePage,
     changeLimit,
     loadUsers,
+    loadStats,
     clearError
   } = useUsers();
 
@@ -31,6 +32,9 @@ export const UserManagementContent = ({ user: currentUser }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+
+  // Check if current user is admin
+  const isAdmin = currentUser?.role === 'admin';
 
   // Debounce para la búsqueda
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,23 +45,47 @@ export const UserManagementContent = ({ user: currentUser }) => {
     return () => clearTimeout(timeoutId);
   }, [searchTerm, updateFilters]);
 
+  // Refresh stats when users change (for admin users)
+  useEffect(() => {
+    if (isAdmin) {
+      // Try to load stats from API first
+      loadStats();
+    }
+  }, [users.length, isAdmin, loadStats]);
+
   const handleCreateUser = async (userData) => {
     await createUser(userData);
+    // Refresh stats after creating a user
+    if (isAdmin) {
+      loadStats();
+    }
   };
 
   const handleUpdateUser = async (userData) => {
     await updateUser(selectedUser.id, userData);
     setSelectedUser(null);
+    // Refresh stats after updating a user
+    if (isAdmin) {
+      loadStats();
+    }
   };
 
   const handleDeleteUser = async (userId) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
       await deleteUser(userId);
+      // Refresh stats after deleting a user
+      if (isAdmin) {
+        loadStats();
+      }
     }
   };
 
   const handleActivateUser = async (userId) => {
     await activateUser(userId);
+    // Refresh stats after activating a user
+    if (isAdmin) {
+      loadStats();
+    }
   };
 
   const handleChangePassword = async (passwordData) => {
@@ -90,7 +118,35 @@ export const UserManagementContent = ({ user: currentUser }) => {
     updateFilters({ status: status === 'all' ? '' : status });
   };
 
-  const isAdmin = currentUser?.role === 'admin';
+  // Calculate stats from users list as fallback
+  const calculateStatsFromUsers = () => {
+    const totalUsers = users.length;
+    const activeUsers = users.filter(user => user.status === 'active').length;
+    const pendingUsers = users.filter(user => user.status === 'pending').length;
+    
+    // Calculate new users this month
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const newUsersThisMonth = users.filter(user => {
+      if (!user.createdAt) return false;
+      const createdDate = new Date(user.createdAt);
+      return createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear;
+    }).length;
+
+    return {
+      totalUsers,
+      activeUsers,
+      pendingUsers,
+      newUsersThisMonth,
+      totalUsersChange: 0,
+      activeUsersChange: 0,
+      pendingUsersChange: 0,
+      newUsersThisMonthChange: 0
+    };
+  };
+
+  // Use API stats if available, otherwise calculate from users
+  const displayStats = stats || calculateStatsFromUsers();
 
   const getRoleColor = (role) => {
     switch (role) {
@@ -151,7 +207,27 @@ export const UserManagementContent = ({ user: currentUser }) => {
       </div>
 
       {/* Estadísticas */}
-      {isAdmin && <UserStats stats={stats} loading={loading} />}
+      {isAdmin && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Estadísticas de Usuarios</h3>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={loadStats}
+              disabled={loading}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Actualizar
+            </Button>
+          </div>
+          <UserStats stats={displayStats} loading={loading} />
+          {/* Debug info - remove in production */}
+
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (

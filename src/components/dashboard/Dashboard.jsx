@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
-import { DashboardContent } from './DashboardContent';
-import { CallManagementContent } from './CallManagementContent';
-import { MassUploadsContent } from './MassUploadsContent';
+import { DashboardContent } from './DashboardContent';  
 import ExcelMapper from "./excelmap"
 import CallDashboard from './call-twilio/page'
 import { UserManagementContent } from './UserManagementContent';
@@ -16,8 +14,6 @@ export const Dashboard = ({ user, onLogout }) => {
     switch (activeSection) {
       case 'dashboard':
         return <DashboardContent user={user} />;
-      case 'call-management':
-        return <CallManagementContent user={user} />;
       case 'mass-uploads':
         return <ExcelMapper user={user} />;
       case 'user-management':
@@ -33,14 +29,12 @@ export const Dashboard = ({ user, onLogout }) => {
     switch (activeSection) {
       case 'dashboard':
         return 'Panel de Control';
-      case 'call-management':
-        return 'Gestor de Llamadas';
       case 'mass-uploads':
         return 'Cargas Masivas';
       case 'user-management':
         return 'Gestión de Usuarios';
       case 'twilio-call':
-        return 'Gestion llamadas twilio'
+        return 'Gestion de llamadas'
       default:
         return 'Panel de Control';
     }

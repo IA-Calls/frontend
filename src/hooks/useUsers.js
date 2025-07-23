@@ -61,10 +61,23 @@ export const useUsers = () => {
   // Cargar estadísticas
   const loadStats = useCallback(async () => {
     try {
+      console.log('useUsers - Loading stats...');
       const response = await userService.getUserStats();
+      console.log('useUsers - Stats loaded:', response);
       setStats(response);
     } catch (err) {
       console.error('Error loading stats:', err);
+      // Set default stats to prevent UI issues
+      setStats({
+        totalUsers: 0,
+        activeUsers: 0,
+        pendingUsers: 0,
+        newUsersThisMonth: 0,
+        totalUsersChange: 0,
+        activeUsersChange: 0,
+        pendingUsersChange: 0,
+        newUsersThisMonthChange: 0
+      });
     }
   }, []);
 
