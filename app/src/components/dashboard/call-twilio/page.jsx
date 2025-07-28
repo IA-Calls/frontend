@@ -9,9 +9,9 @@ import { CallMonitor } from "./components/call-monitor.jsx"
 import { Pagination } from "./components/pagination.jsx"
 import { StatsCards } from "./components/stats-cards.jsx"
 import { useToast } from "./use-toast.ts"
-const EXTERNAL_OUTBOUND_CALL_API_URL = "https://twilio-call-754698887417.us-central1.run.app/outbound-call"
-const EXTERNAL_CLIENTS_API_URL = "http://localhost:5000/clients/pending"
+import { useWebSocketManager } from "../../../hooks/use-websocket.ts"
 
+const EXTERNAL_CLIENTS_API_URL = "http://localhost:5000/clients/pending"
 // URLs de los proxies internos
 const OUTBOUND_CALL_PROXY_API_URL = "http://localhost:5000/calls/outbound"
 const CLIENTS_PROXY_API_URL = "/api/clients/pending"
@@ -37,20 +37,72 @@ export default function CallDashboard() {
 
   const { toast } = useToast()
 
+  // Hook personalizado para manejar WebSockets
+  const { connectToPhone, disconnectFromPhone, disconnectAll } = useWebSocketManager({
+    onStatusUpdate: (data) => {
+      console.log("[WebSocket] Received status update:", data)
+
+      // Buscar el usuario por número de teléfono
+      const user = users.find((u) => u.phone === data.number)
+      if (user) {
+        setCallStatuses(
+          (prev) =>
+            new Map(
+              prev.set(user.id, {
+                userId: user.id,
+                callId: data.sid,
+                status: data.status,
+                timestamp: new Date(),
+              }),
+            ),
+        )
+
+        // Mostrar toast para cambios de estado importantes
+        const statusMessages = {
+          initiated: "📞 Llamada iniciada",
+          ringing: "📱 Timbrando",
+          "in-progress": "🗣️ En progreso",
+          answered: "✅ Contestada",
+          completed: "✅ Completada",
+          failed: "❌ Falló",
+          "no-answer": "📵 Sin respuesta",
+          canceled: "⏹️ Cancelada",
+          busy: "📞 Ocupado",
+        }
+
+        const message = statusMessages[data.status] || `📊 Estado: ${data.status}`
+
+        toast({
+          title: message,
+          description: `${user.name} (${user.phone})`,
+          duration: 3000,
+        })
+      }
+    },
+    onError: (phone, error) => {
+      console.error(`[WebSocket] Error for phone ${phone}:`, error)
+      toast({
+        title: "🔌 Error de conexión",
+        description: `Error en WebSocket para ${phone}`,
+        variant: "destructive",
+      })
+    },
+    onDisconnect: (phone) => {
+      console.log(`[WebSocket] Disconnected from ${phone}`)
+    },
+  })
+
   const fetchUsers = useCallback(
     async (page = 1, limit = 5) => {
       setIsLoading(true)
       setError(null)
       try {
         const response = await fetch(`${EXTERNAL_CLIENTS_API_URL}?page=1&limit=5`)
-
         if (!response.ok) {
           const errorText = await response.text()
           throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
         }
-
         const data = await response.json()
-
         const transformedUsers =
           data.clients?.map((client) => ({
             id: client._id || `user-${Date.now()}-${Math.random()}`,
@@ -65,11 +117,11 @@ export default function CallDashboard() {
             longitude: client.length ? Number.parseFloat(client.length) : undefined,
             location: client.ubication,
             state: client.state,
+            group: client.groupName,
             totalCalls: client.total_calls || 0,
           })) || []
 
         const totalPages = Math.ceil((data.total || 0) / (data.size || limit))
-
         setUsers(transformedUsers)
         setPagination({
           currentPage: data.page || page,
@@ -101,18 +153,14 @@ export default function CallDashboard() {
     const allUsers = []
     let currentPage = 1
     let totalPages = 1
-
     try {
       do {
         const response = await fetch(`${CLIENTS_PROXY_API_URL}?page=${currentPage}&size=100`)
-
         if (!response.ok) {
           const errorText = await response.text()
           throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
         }
-
         const data = await response.json()
-
         const transformedUsers =
           data.clients?.map((client) => ({
             id: client._id || `user-${Date.now()}-${Math.random()}`,
@@ -144,7 +192,11 @@ export default function CallDashboard() {
 
   useEffect(() => {
     fetchUsers(1, 5)
-  }, [fetchUsers])
+
+    return () => {
+      disconnectAll()
+    }
+  }, [fetchUsers, disconnectAll])
 
   const handleUserSelection = useCallback((userId, selected) => {
     setSelectedUsers((prev) => {
@@ -177,7 +229,10 @@ export default function CallDashboard() {
   const makeCall = useCallback(
     async (user) => {
       console.log(`[makeCall] Attempting to make call for user: ${user.name} with phone: ${user.phone}`)
+
       try {
+        connectToPhone(user.phone)
+
         setCallStatuses(
           (prev) =>
             new Map(
@@ -213,8 +268,8 @@ export default function CallDashboard() {
         const result = await response.json()
         console.log(`[makeCall] API call successful for ${user.name}. Result:`, result)
 
-        if (result.sucess === true && result.callSid) {
-          const callId = result.callSid
+        if (result.Success === true && result["Call-sid"]) {
+          const callId = result["Call-sid"]
           toast({
             title: "📞 Llamada iniciada",
             description: `Llamando a ${user.name} (${user.phone}). SID: ${callId.slice(-8)}`,
@@ -237,6 +292,10 @@ export default function CallDashboard() {
           // API respondió OK, pero Success es false o falta Call-sid
           const errorMessage = result.Message || "La API indicó un fallo en la llamada."
           console.error(`[makeCall] API call failed for ${user.name}. Reason: ${errorMessage}`)
+
+          // Desconectar WebSocket si la llamada falló
+          disconnectFromPhone(user.phone)
+
           setCallStatuses(
             (prev) =>
               new Map(
@@ -255,6 +314,10 @@ export default function CallDashboard() {
         }
       } catch (error) {
         console.error("[makeCall] Caught error in makeCall:", error)
+
+        // Desconectar WebSocket si hubo error
+        disconnectFromPhone(user.phone)
+
         setCallStatuses(
           (prev) =>
             new Map(
@@ -265,7 +328,6 @@ export default function CallDashboard() {
               }),
             ),
         )
-
         toast({
           title: "❌ Error en llamada",
           description: `No se pudo llamar a ${user.name}: ${error.message || "Error desconocido"}`,
@@ -273,7 +335,7 @@ export default function CallDashboard() {
         })
       }
     },
-    [setCallStatuses, toast],
+    [setCallStatuses, toast, connectToPhone, disconnectFromPhone],
   )
 
   const handleCallSelected = useCallback(async () => {
@@ -289,8 +351,8 @@ export default function CallDashboard() {
 
     setIsCallingState(true) // Activar estado de UI
     stopCallingRef.current = false // Asegurar que el bucle no se detenga
-    const selectedUsersList = users.filter((user) => selectedUsers.has(user.id))
 
+    const selectedUsersList = users.filter((user) => selectedUsers.has(user.id))
     toast({
       title: "🚀 Iniciando llamadas",
       description: `Iniciando ${selectedUsersList.length} llamadas...`,
@@ -360,20 +422,23 @@ export default function CallDashboard() {
         variant: "destructive",
       })
     } finally {
-      setIsCallingState(false) // Desactivar estado de UI
+      setIsCallingState(false)
       console.log("[handleCallAll] Finished.")
     }
   }, [fetchAllUsers, makeCall, toast])
 
   const handleStopCalls = useCallback(() => {
     console.log("[handleStopCalls] Triggered. Setting stopCallingRef.current to true.")
-    stopCallingRef.current = true // Indicar al bucle que se detenga
-    setIsCallingState(false) // Actualizar UI
+    stopCallingRef.current = true
+    setIsCallingState(false) 
+
+    disconnectAll()
+
     toast({
       title: "⏹️ Llamadas detenidas",
-      description: "Se ha detenido el proceso de llamadas.",
+      description: "Se ha detenido el proceso de llamadas y desconectado los WebSockets.",
     })
-  }, [toast])
+  }, [toast, disconnectAll])
 
   const handleRefresh = useCallback(() => {
     fetchUsers(pagination.currentPage, pagination.limit)
@@ -393,7 +458,7 @@ export default function CallDashboard() {
         status ? status.timestamp.toLocaleString() : "N/A",
       ]
         .map((field) => `"${String(field).replace(/"/g, '""')}"`)
-        .join(",") // Escape commas and quotes
+        .join(",")
     })
 
     const csvContent = [headers.join(","), ...rows].join("\n")
@@ -411,7 +476,6 @@ export default function CallDashboard() {
     })
   }, [users, callStatuses, toast])
 
-  // Obtener categorías únicas para el filtro
   const uniqueCategories = useMemo(() => {
     const categories = new Set()
     users.forEach((user) => {
@@ -422,7 +486,19 @@ export default function CallDashboard() {
 
   // Estados de llamada posibles para el filtro
   const possibleCallStatuses = useMemo(() => {
-    return ["all", "pending", "initiated", "failed", "completed", "busy", "no-answer"]
+    return [
+      "all",
+      "pending",
+      "initiated",
+      "ringing",
+      "in-progress",
+      "answered",
+      "completed",
+      "failed",
+      "no-answer",
+      "canceled",
+      "busy",
+    ]
   }, [])
 
   return (
@@ -437,9 +513,8 @@ export default function CallDashboard() {
                 <Phone className="h-10 w-10" />
                 Sistema de Llamadas
               </h1>
-              <p className="text-blue-100 text-lg">Gestiona y realiza llamadas masivas con Twilio</p>
+              <p className="text-blue-100 text-lg">Gestiona y realiza llamadas masivas con Twilio - Tiempo Real</p>
             </div>
-
             <div className="flex items-center gap-6">
               <div className="text-center">
                 <div className="text-3xl font-bold">{pagination.totalUsers}</div>
@@ -579,7 +654,6 @@ export default function CallDashboard() {
               uniqueCategories={uniqueCategories}
               possibleCallStatuses={possibleCallStatuses}
             />
-
             <Pagination
               currentPage={pagination.currentPage}
               totalPages={pagination.totalPages}

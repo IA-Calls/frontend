@@ -7,6 +7,7 @@ export const GroupsOverview = ({ groups, onSelectGroup, onCreateGroup, user }) =
   const [newGroup, setNewGroup] = useState({
     name: '',
     description: '',
+    prompt:'',
     phoneNumber: ''
   });
 
@@ -150,7 +151,7 @@ export const GroupsOverview = ({ groups, onSelectGroup, onCreateGroup, user }) =
                   <div className="mt-4">
                     <h4 className="text-lg font-semibold text-gray-900 mb-2">{group.name}</h4>
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">{group.description}</p>
-                    
+                    <p className="text-sm text-gray600 mb-3 line-clamp-2">{group.prompt}</p>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center text-gray-500">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -222,6 +223,18 @@ export const GroupsOverview = ({ groups, onSelectGroup, onCreateGroup, user }) =
                     placeholder="Describe el propósito de este grupo de llamadas..."
                     rows={3}
                     className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Prompt
+                  </label>
+                  <textarea className="block w-full px-3 py-2 border border-gray-300 rounded-lg shardor-sm focus:outline-none focus:ring-2 focus:ringblue-500 focus:border-blue-500"
+                  onChange={(e) => setNewGroup({...newGroup, prompt: e.target.value })}
+                  placeholder='Describe el contexto de la llamada deseado'
+                  rows={3}
+                  value={newGroup.prompt}
                   />
                 </div>
                 
