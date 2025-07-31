@@ -62,12 +62,24 @@ export const CallManagementContent = ({ user }) => {
       successfulCalls: 0,
       pendingCalls: 0,
       failedCalls: 0,
-      createdAt: new Date().toISOString().split("T")[0],
-      status: "active",
-      color: getRandomColor(),
-    }
-    setGroups([...groups, newGroup])
-  }
+      createdAt: new Date().toISOString().split('T')[0],
+      status: 'active',
+      color: groupData.color || getRandomColor()
+    };
+    setGroups([...groups, newGroup]);
+  };
+
+  const handleUpdateGroup = (groupId, groupData) => {
+    setGroups(groups.map(group => 
+      group.id === groupId 
+        ? { ...group, ...groupData }
+        : group
+    ));
+  };
+
+  const handleDeleteGroup = (groupId) => {
+    setGroups(groups.filter(group => group.id !== groupId));
+  };
 
   const handleSelectGroup = (group) => {
     setSelectedGroup(group)
@@ -151,6 +163,8 @@ export const CallManagementContent = ({ user }) => {
           groups={groups}
           onSelectGroup={handleSelectGroup}
           onCreateGroup={handleCreateGroup}
+          onUpdateGroup={handleUpdateGroup}
+          onDeleteGroup={handleDeleteGroup}
           user={user}
         />
       ) : (

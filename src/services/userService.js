@@ -83,18 +83,47 @@ export class UserService {
    */
   async getUserStats() {
     try {
+      console.log('UserService - Fetching stats from:', `${this.apiUrl}/stats`);
       const response = await authService.authenticatedFetch(`${this.apiUrl}/stats`);
+      
+      console.log('UserService - Stats response status:', response.status);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('UserService - Stats error response:', errorData);
         throw new Error(errorData.message || 'Error al obtener estadísticas');
       }
 
       const responseData = await response.json();
-      return responseData.data || responseData;
+      console.log('UserService - Stats response data:', responseData);
+      
+      // Ensure we return a properly structured stats object
+      const stats = responseData.data || responseData;
+      
+      // Provide default values if stats are missing
+      return {
+        totalUsers: stats.totalUsers || stats.total_users || 0,
+        activeUsers: stats.activeUsers || stats.active_users || 0,
+        pendingUsers: stats.pendingUsers || stats.pending_users || 0,
+        newUsersThisMonth: stats.newUsersThisMonth || stats.new_users_this_month || 0,
+        totalUsersChange: stats.totalUsersChange || stats.total_users_change || 0,
+        activeUsersChange: stats.activeUsersChange || stats.active_users_change || 0,
+        pendingUsersChange: stats.pendingUsersChange || stats.pending_users_change || 0,
+        newUsersThisMonthChange: stats.newUsersThisMonthChange || stats.new_users_this_month_change || 0
+      };
     } catch (error) {
       console.error('Error getting user stats:', error);
-      throw new Error(error.message || 'Error al obtener estadísticas');
+      // Return default stats instead of throwing error to prevent UI issues
+      return {
+        totalUsers: 0,
+        activeUsers: 0,
+        pendingUsers: 0,
+        newUsersThisMonth: 0,
+        totalUsersChange: 0,
+        activeUsersChange: 0,
+        pendingUsersChange: 0,
+        newUsersThisMonthChange: 0
+      };
     }
   }
 
