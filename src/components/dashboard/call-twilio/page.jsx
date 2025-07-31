@@ -242,8 +242,6 @@ export default function CallDashboard() {
       console.log(`[makeCall] Attempting to make call for user: ${user.name} with phone: ${user.phone}`)
 
       try {
-        connectToPhone(user.phone)
-
         setCallStatuses(
           (prev) =>
             new Map(
@@ -344,8 +342,6 @@ export default function CallDashboard() {
     const usersToCall = selectedGroup 
       ? filteredUsers.filter((user) => selectedUsers.has(user.id))
       : allUsers.filter((user) => selectedUsers.has(user.id))
-
-    const selectedUsersList = users.filter((user) => selectedUsers.has(user.id))
     toast({
       title: "🚀 Iniciando llamadas",
       description: `Iniciando ${usersToCall.length} llamadas...`,
@@ -412,9 +408,9 @@ export default function CallDashboard() {
     setIsCallingState(false)
     toast({
       title: "⏹️ Llamadas detenidas",
-      description: "Se ha detenido el proceso de llamadas y desconectado los WebSockets.",
+      description: "Se ha detenido el proceso de llamadas.",
     })
-  }, [toast, disconnectAll])
+  }, [toast])
 
   const handleRefresh = useCallback(() => {
     fetchGroups()
