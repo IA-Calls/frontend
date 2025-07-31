@@ -13,7 +13,6 @@ import { Input } from "./components/ui/input.tsx"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "./components/ui/dialog.tsx"
 import { Badge } from "./components/ui/badge.tsx"
 import { useToast } from "./use-toast.ts"
-
 const EXTERNAL_OUTBOUND_CALL_API_URL = "https://twilio-call-754698887417.us-central1.run.app/outbound-call"
 const CLIENTS_PENDING_API_URL = "http://localhost:5000/clients/pending"
 const GROUPS_API_URL = "http://localhost:5000/api/groups"
@@ -54,7 +53,6 @@ export default function CallDashboard() {
   const [filterCallStatus, setFilterCallStatus] = useState("all")
 
   const { toast } = useToast()
-
   // Obtener todos los grupos desde clients/pending
   const fetchGroups = useCallback(async (page = 1, limit = 10) => {
     setIsLoading(true)
@@ -133,7 +131,7 @@ export default function CallDashboard() {
       setIsGroupDialogOpen(false)
       setEditingGroup(null)
       setGroupForm({ name: '', description: '', color: '#3B82F6' })
-      fetchGroups()
+      fetchGroups() 
     } catch (error) {
       console.error('Error saving group:', error)
       toast({
@@ -242,7 +240,10 @@ export default function CallDashboard() {
   const makeCall = useCallback(
     async (user) => {
       console.log(`[makeCall] Attempting to make call for user: ${user.name} with phone: ${user.phone}`)
+
       try {
+        connectToPhone(user.phone)
+
         setCallStatuses(
           (prev) =>
             new Map(
@@ -270,8 +271,8 @@ export default function CallDashboard() {
 
         const result = await response.json()
 
-        if (result.sucess === true && result.callSid) {
-          const callId = result.callSid
+        if (result.Success === true && result["Call-sid"]) {
+          const callId = result["Call-sid"]
           toast({
             title: "📞 Llamada iniciada",
             description: `Llamando a ${user.name} (${user.phone}). SID: ${callId.slice(-8)}`,
@@ -318,7 +319,6 @@ export default function CallDashboard() {
               }),
             ),
         )
-
         toast({
           title: "❌ Error en llamada",
           description: `No se pudo llamar a ${user.name}: ${error.message}`,
@@ -345,6 +345,7 @@ export default function CallDashboard() {
       ? filteredUsers.filter((user) => selectedUsers.has(user.id))
       : allUsers.filter((user) => selectedUsers.has(user.id))
 
+    const selectedUsersList = users.filter((user) => selectedUsers.has(user.id))
     toast({
       title: "🚀 Iniciando llamadas",
       description: `Iniciando ${usersToCall.length} llamadas...`,
@@ -411,9 +412,9 @@ export default function CallDashboard() {
     setIsCallingState(false)
     toast({
       title: "⏹️ Llamadas detenidas",
-      description: "Se ha detenido el proceso de llamadas.",
+      description: "Se ha detenido el proceso de llamadas y desconectado los WebSockets.",
     })
-  }, [toast])
+  }, [toast, disconnectAll])
 
   const handleRefresh = useCallback(() => {
     fetchGroups()
@@ -435,8 +436,7 @@ export default function CallDashboard() {
         "Estado Llamada",
         "ID Llamada",
         "Ultima Actualizacion"
-      ]
-      
+      ]      
       csvData.push(headers)
       
       allUsers.forEach((user) => {
@@ -498,8 +498,6 @@ export default function CallDashboard() {
       })
     }
   }, [allUsers, callStatuses, toast])
-
-  // Obtener categorías únicas
   const uniqueCategories = useMemo(() => {
     const categories = new Set()
     allUsers.forEach((user) => {
@@ -509,7 +507,19 @@ export default function CallDashboard() {
   }, [allUsers])
 
   const possibleCallStatuses = useMemo(() => {
-    return ["all", "pending", "initiated", "failed", "completed", "busy", "no-answer"]
+    return [
+      "all",
+      "pending",
+      "initiated",
+      "ringing",
+      "in-progress",
+      "answered",
+      "completed",
+      "failed",
+      "no-answer",
+      "canceled",
+      "busy",
+    ]
   }, [])
 
   return (
@@ -859,7 +869,7 @@ export default function CallDashboard() {
                 totalUsers={selectedGroup ? filteredUsers.length : allUsers.length} 
               />
             </TabsContent>
-          </div>
+          </div>   
         </Tabs>
 
         {/* Diálogo de Confirmación para Eliminar Grupo */}

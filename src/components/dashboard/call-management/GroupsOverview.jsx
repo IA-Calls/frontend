@@ -9,6 +9,7 @@ export const GroupsOverview = ({ groups, onSelectGroup, onCreateGroup, onUpdateG
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [loading, setLoading] = useState(false);
 
+
   const handleCreateGroup = () => {
     setSelectedGroup(null);
     setShowGroupModal(true);
@@ -219,7 +220,7 @@ export const GroupsOverview = ({ groups, onSelectGroup, onCreateGroup, onUpdateG
                   <div className="mt-4">
                     <h4 className="text-lg font-semibold text-gray-900 mb-2">{group.name}</h4>
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">{group.description}</p>
-                    
+                    <p className="text-sm text-gray600 mb-3 line-clamp-2">{group.prompt}</p>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center text-gray-500">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,7 +274,6 @@ export const GroupsOverview = ({ groups, onSelectGroup, onCreateGroup, onUpdateG
           )}
         </div>
       </div>
-
       {/* Group Modal */}
       <GroupModal
         isOpen={showGroupModal}
