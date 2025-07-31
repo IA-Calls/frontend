@@ -1,20 +1,58 @@
 import React, { useState } from 'react';
 import { Button } from '../../common/Button';
-import { Input } from '../../common/Input';
+import { GroupModal } from './GroupModal';
+import { DeleteGroupModal } from './DeleteGroupModal';
 
-export const GroupsOverview = ({ groups, onSelectGroup, onCreateGroup, user }) => {
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newGroup, setNewGroup] = useState({
-    name: '',
-    description: '',
-    phoneNumber: ''
-  });
+export const GroupsOverview = ({ groups, onSelectGroup, onCreateGroup, onUpdateGroup, onDeleteGroup, user }) => {
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleCreateGroup = () => {
-    if (newGroup.name && newGroup.phoneNumber) {
-      onCreateGroup(newGroup);
-      setNewGroup({ name: '', description: '', phoneNumber: '' });
-      setShowCreateModal(false);
+    setSelectedGroup(null);
+    setShowGroupModal(true);
+  };
+
+  const handleEditGroup = (group) => {
+    setSelectedGroup(group);
+    setShowGroupModal(true);
+  };
+
+  const handleDeleteGroup = (group) => {
+    setSelectedGroup(group);
+    setShowDeleteModal(true);
+  };
+
+  const handleSaveGroup = async (groupData) => {
+    setLoading(true);
+    try {
+      if (selectedGroup) {
+        await onUpdateGroup(selectedGroup.id, groupData);
+      } else {
+        await onCreateGroup(groupData);
+      }
+      setShowGroupModal(false);
+      setSelectedGroup(null);
+    } catch (error) {
+      console.error('Error saving group:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedGroup) return;
+    
+    setLoading(true);
+    try {
+      await onDeleteGroup(selectedGroup.id);
+      setShowDeleteModal(false);
+      setSelectedGroup(null);
+    } catch (error) {
+      console.error('Error deleting group:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -107,7 +145,7 @@ export const GroupsOverview = ({ groups, onSelectGroup, onCreateGroup, user }) =
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900">Grupos de Llamadas</h3>
-          <Button onClick={() => setShowCreateModal(true)}>
+          <Button onClick={handleCreateGroup}>
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
@@ -124,7 +162,7 @@ export const GroupsOverview = ({ groups, onSelectGroup, onCreateGroup, user }) =
               <h3 className="mt-2 text-sm font-medium text-gray-900">No hay grupos</h3>
               <p className="mt-1 text-sm text-gray-500">Comienza creando tu primer grupo de llamadas.</p>
               <div className="mt-6">
-                <Button onClick={() => setShowCreateModal(true)}>
+                <Button onClick={handleCreateGroup}>
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
@@ -137,14 +175,45 @@ export const GroupsOverview = ({ groups, onSelectGroup, onCreateGroup, user }) =
               {groups.map((group) => (
                 <div
                   key={group.id}
-                  className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => onSelectGroup(group)}
+                  className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-start justify-between">
                     <div className={`w-3 h-3 rounded-full ${group.color} mt-1`}></div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(group.status)}`}>
-                      {getStatusLabel(group.status)}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(group.status)}`}>
+                        {getStatusLabel(group.status)}
+                      </span>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditGroup(group);
+                          }}
+                          title="Editar grupo"
+                          className="h-6 w-6 p-0"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteGroup(group);
+                          }}
+                          title="Eliminar grupo"
+                          className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="mt-4">
@@ -180,6 +249,17 @@ export const GroupsOverview = ({ groups, onSelectGroup, onCreateGroup, user }) =
                         <div className="text-gray-500">Fallidas</div>
                       </div>
                     </div>
+
+                    <div className="mt-4 pt-3 border-t border-gray-100">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onSelectGroup(group)}
+                        className="w-full"
+                      >
+                        Ver Detalles
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="mt-4 pt-4 border-t border-gray-200">
@@ -194,69 +274,29 @@ export const GroupsOverview = ({ groups, onSelectGroup, onCreateGroup, user }) =
         </div>
       </div>
 
-      {/* Create Group Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 text-center mb-4">
-                Crear Nuevo Grupo de Llamadas
-              </h3>
-              
-              <div className="space-y-4">
-                <Input
-                  label="Nombre del Grupo"
-                  value={newGroup.name}
-                  onChange={(e) => setNewGroup({...newGroup, name: e.target.value})}
-                  placeholder="Ej: Campaña de Ventas Q1"
-                  required
-                />
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Descripción
-                  </label>
-                  <textarea
-                    value={newGroup.description}
-                    onChange={(e) => setNewGroup({...newGroup, description: e.target.value})}
-                    placeholder="Describe el propósito de este grupo de llamadas..."
-                    rows={3}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                
-                <Input
-                  label="Número de Teléfono"
-                  value={newGroup.phoneNumber}
-                  onChange={(e) => setNewGroup({...newGroup, phoneNumber: e.target.value})}
-                  placeholder="+1-555-0123"
-                  required
-                />
-              </div>
-              
-              <div className="flex items-center space-x-3 mt-6">
-                <Button
-                  onClick={handleCreateGroup}
-                  className="flex-1"
-                  disabled={!newGroup.name || !newGroup.phoneNumber}
-                >
-                  Crear Grupo
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setNewGroup({ name: '', description: '', phoneNumber: '' });
-                  }}
-                  className="flex-1"
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Group Modal */}
+      <GroupModal
+        isOpen={showGroupModal}
+        onClose={() => {
+          setShowGroupModal(false);
+          setSelectedGroup(null);
+        }}
+        onSave={handleSaveGroup}
+        group={selectedGroup}
+        loading={loading}
+      />
+
+      {/* Delete Group Modal */}
+      <DeleteGroupModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedGroup(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        group={selectedGroup}
+        loading={loading}
+      />
     </div>
   );
 }; 

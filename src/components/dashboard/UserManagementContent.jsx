@@ -224,8 +224,6 @@ export const UserManagementContent = ({ user: currentUser }) => {
             </Button>
           </div>
           <UserStats stats={displayStats} loading={loading} />
-          {/* Debug info - remove in production */}
-
         </div>
       )}
 
