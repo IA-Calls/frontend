@@ -11,6 +11,8 @@ import { StatsCards } from "./components/stats-cards.jsx"
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card.tsx"
 import { Input } from "./components/ui/input.tsx"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "./components/ui/dialog.tsx"
+import { GroupModal } from "./components/GroupModal.jsx"
+import { DeleteGroupModal } from "./components/DeleteGroupModal.jsx"
 import { Badge } from "./components/ui/badge.tsx"
 import { useToast } from "./use-toast.ts"
 const EXTERNAL_OUTBOUND_CALL_API_URL = "https://twilio-call-754698887417.us-central1.run.app/outbound-call"
@@ -35,9 +37,14 @@ export default function CallDashboard() {
   const [groupForm, setGroupForm] = useState({
     name: '',
     description: '',
-    color: '#3B82F6'
+    prompt: '',
+    color: '#3B82F6',
+    favorite: false
   })
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState({ open: false, groupId: null, groupName: '' })
+  const [isDeletingGroup, setIsDeletingGroup] = useState(false)
+
+
 
   // Estados para paginación
   const [pagination, setPagination] = useState({
@@ -66,21 +73,22 @@ export default function CallDashboard() {
 
       const data = await response.json()
 
-      if (data.success) {
-        setGroups(data.groups || [])
-        setPagination({
-          currentPage: 1, // El endpoint no maneja paginación por ahora
-          totalPages: 1,
-          totalGroups: data.totalGroups || 0,
-          totalClients: data.totalClients || 0,
-          limit: limit,
-        })
+             // La API ahora devuelve un array directo de grupos o un objeto con data
+       const groupsArray = Array.isArray(data) ? data : (data.data || [])
+       setGroups(groupsArray)
+       
+       setPagination({
+         currentPage: 1, // El endpoint no maneja paginación por ahora
+         totalPages: 1,
+         totalGroups: groupsArray.length,
+         totalClients: data.totalClients || 0,
+         limit: limit,
+       })
 
-        toast({
-          title: "✅ Grupos cargados",
-          description: `Se cargaron ${data.totalGroups} grupos con ${data.totalClients} clientes.`,
-        })
-      }
+       toast({
+         title: "✅ Grupos cargados",
+         description: `Se cargaron ${groupsArray.length} grupos con ${data.totalClients || 0} clientes.`,
+       })
     } catch (error) {
       console.error("Error fetching groups:", error)
       setError(`No se pudieron cargar los grupos: ${error.message}`)
@@ -95,8 +103,10 @@ export default function CallDashboard() {
   }, [toast])
 
   // Crear o actualizar grupo
-  const saveGroup = useCallback(async () => {
-    if (!groupForm.name.trim()) {
+  const saveGroup = useCallback(async (formData = null) => {
+         const dataToSave = formData || groupForm
+    
+    if (!dataToSave.name.trim()) {
       toast({
         title: "⚠️ Campo requerido",
         description: "El nombre del grupo es obligatorio.",
@@ -115,7 +125,7 @@ export default function CallDashboard() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(groupForm),
+        body: JSON.stringify(dataToSave),
       })
 
       if (!response.ok) {
@@ -125,12 +135,12 @@ export default function CallDashboard() {
 
       toast({
         title: editingGroup ? "✅ Grupo actualizado" : "✅ Grupo creado",
-        description: `El grupo "${groupForm.name}" se ${editingGroup ? 'actualizó' : 'creó'} correctamente.`,
+        description: `El grupo "${dataToSave.name}" se ${editingGroup ? 'actualizó' : 'creó'} correctamente.`,
       })
 
-      setIsGroupDialogOpen(false)
-      setEditingGroup(null)
-      setGroupForm({ name: '', description: '', color: '#3B82F6' })
+             setIsGroupDialogOpen(false)
+       setEditingGroup(null)
+       setGroupForm({ name: '', description: '', prompt: '', color: '#3B82F6', favorite: false })
       fetchGroups() 
     } catch (error) {
       console.error('Error saving group:', error)
@@ -144,6 +154,7 @@ export default function CallDashboard() {
 
     // Eliminar grupo
   const deleteGroup = useCallback(async (groupId) => {
+    setIsDeletingGroup(true)
     try {
       const response = await fetch(`${GROUPS_API_URL}/${groupId}`, {
         method: 'DELETE',
@@ -159,6 +170,7 @@ export default function CallDashboard() {
         description: "El grupo se eliminó correctamente.",
       })
 
+      setDeleteConfirmDialog({ open: false, groupId: null, groupName: '' })
       fetchGroups()
     } catch (error) {
       console.error('Error deleting group:', error)
@@ -167,6 +179,8 @@ export default function CallDashboard() {
         description: `No se pudo eliminar el grupo: ${error.message}`,
         variant: "destructive",
       })
+    } finally {
+      setIsDeletingGroup(false)
     }
   }, [fetchGroups, toast])
 
@@ -174,13 +188,16 @@ export default function CallDashboard() {
     fetchGroups()
   }, [fetchGroups])
 
+
+
   // Obtener todos los usuarios de todos los grupos
   const allUsers = useMemo(() => {
     const users = []
     const seenUsers = new Set() // Para evitar duplicados
     
     groups.forEach(group => {
-      if (group.clients) {
+      // Verificar si el grupo tiene clientes
+      if (group.clients && Array.isArray(group.clients)) {
         group.clients.forEach(client => {
           // Crear un ID único combinando client.id y group.id
           const uniqueId = `${client.id}-${group.id}`
@@ -359,7 +376,7 @@ export default function CallDashboard() {
   }, [selectedUsers, selectedGroup, filteredUsers, allUsers, makeCall, toast])
 
   const handleCallGroup = useCallback(async (group) => {
-    if (!group.clients || group.clients.length === 0) {
+    if (!group.clients || !Array.isArray(group.clients) || group.clients.length === 0) {
       toast({
         title: "⚠️ Grupo vacío",
         description: "Este grupo no tiene clientes para llamar.",
@@ -411,6 +428,14 @@ export default function CallDashboard() {
       description: "Se ha detenido el proceso de llamadas.",
     })
   }, [toast])
+
+  const handleConfirmDelete = useCallback(() => {
+    deleteGroup(deleteConfirmDialog.groupId)
+  }, [deleteGroup, deleteConfirmDialog.groupId])
+
+  const handleCloseDeleteModal = useCallback(() => {
+    setDeleteConfirmDialog({ open: false, groupId: null, groupName: '' })
+  }, [])
 
   const handleRefresh = useCallback(() => {
     fetchGroups()
@@ -568,9 +593,9 @@ export default function CallDashboard() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Grupos de Clientes</h2>
               <Button 
-                onClick={() => {
+                                onClick={() => {
                   setEditingGroup(null)
-                  setGroupForm({ name: '', description: '', color: '#3B82F6' })
+                  setGroupForm({ name: '', description: '', prompt: '', color: '#3B82F6', favorite: false })
                   setIsGroupDialogOpen(true)
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -579,76 +604,21 @@ export default function CallDashboard() {
                 Crear Grupo
               </Button>
               
-              <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
-                <DialogContent>
-                                   <DialogHeader>
-                   <DialogTitle>
-                     {editingGroup ? 'Editar Grupo' : 'Crear Nuevo Grupo'}
-                   </DialogTitle>
-                   <DialogDescription>
-                     {editingGroup 
-                       ? 'Modifica la información del grupo seleccionado.' 
-                       : 'Crea un nuevo grupo para organizar tus clientes.'
-                     }
-                   </DialogDescription>
-                 </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre del Grupo *
-                      </label>
-                      <Input
-                        value={groupForm.name}
-                        onChange={(e) => setGroupForm(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Ej: Clientes VIP"
-                        className={!groupForm.name.trim() ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
-                      />
-                      {!groupForm.name.trim() && (
-                        <p className="text-sm text-red-600 mt-1">El nombre del grupo es requerido</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Descripción
-                      </label>
-                      <Input
-                        value={groupForm.description}
-                        onChange={(e) => setGroupForm(prev => ({ ...prev, description: e.target.value }))}
-                        placeholder="Descripción del grupo"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Color
-                      </label>
-                      <input
-                        type="color"
-                        value={groupForm.color}
-                        onChange={(e) => setGroupForm(prev => ({ ...prev, color: e.target.value }))}
-                        className="w-full h-10 rounded border border-gray-300"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setIsGroupDialogOpen(false)
-                        setEditingGroup(null)
-                        setGroupForm({ name: '', description: '', color: '#3B82F6' })
-                      }}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button 
-                      onClick={saveGroup}
-                      disabled={!groupForm.name.trim()}
-                    >
-                      {editingGroup ? 'Actualizar' : 'Crear'}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              <GroupModal
+                isOpen={isGroupDialogOpen}
+                                 onClose={() => {
+                   setIsGroupDialogOpen(false)
+                   setEditingGroup(null)
+                   setGroupForm({ name: '', description: '', prompt: '', color: '#3B82F6', favorite: false })
+                 }}
+                                 onSave={(formData) => {
+                   setGroupForm(formData)
+                   saveGroup(formData)
+                 }}
+                editingGroup={editingGroup}
+                groupForm={groupForm}
+                setGroupForm={setGroupForm}
+                             />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -704,11 +674,13 @@ export default function CallDashboard() {
                           onClick={(e) => {
                             e.stopPropagation()
                             setEditingGroup(group)
-                            setGroupForm({
-                              name: group.name,
-                              description: group.description,
-                              color: group.color
-                            })
+                                                         setGroupForm({
+                               name: group.name,
+                               description: group.description,
+                               prompt: group.prompt || '',
+                               color: group.color,
+                               favorite: group.favorite || false
+                             })
                             setIsGroupDialogOpen(true)
                           }}
                         >
@@ -732,17 +704,17 @@ export default function CallDashboard() {
                       </div>
                     </div>
                     <p className="text-sm text-gray-600 mb-3">{group.description}</p>
-                    <div className="flex items-center justify-between">
-                      <Badge variant="secondary">
-                        {group.clientCount} clientes
-                      </Badge>
+                                         <div className="flex items-center justify-between">
+                       <Badge variant="secondary">
+                         {group.clients ? group.clients.length : 0} clientes
+                       </Badge>
                       <Button
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleCallGroup(group)
                         }}
-                        disabled={isCallingState || !group.clients?.length}
+                                                 disabled={isCallingState || !group.clients || group.clients.length === 0}
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >
                         <Phone className="h-3 w-3 mr-1" />
@@ -868,44 +840,14 @@ export default function CallDashboard() {
           </div>   
         </Tabs>
 
-        {/* Diálogo de Confirmación para Eliminar Grupo */}
-        <Dialog open={deleteConfirmDialog.open} onOpenChange={(open) => 
-          setDeleteConfirmDialog(prev => ({ ...prev, open }))
-        }>
-          <DialogContent>
-                             <DialogHeader>
-                   <DialogTitle>Confirmar Eliminación</DialogTitle>
-                   <DialogDescription>
-                     Esta acción no se puede deshacer. El grupo será eliminado permanentemente.
-                   </DialogDescription>
-                 </DialogHeader>
-            <div className="py-4">
-              <p className="text-gray-700">
-                ¿Estás seguro de que quieres eliminar el grupo <strong>"{deleteConfirmDialog.groupName}"</strong>?
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Esta acción no se puede deshacer.
-              </p>
-            </div>
-            <DialogFooter>
-              <Button 
-                variant="outline" 
-                onClick={() => setDeleteConfirmDialog({ open: false, groupId: null, groupName: '' })}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                variant="destructive" 
-                onClick={() => {
-                  deleteGroup(deleteConfirmDialog.groupId)
-                  setDeleteConfirmDialog({ open: false, groupId: null, groupName: '' })
-                }}
-              >
-                Eliminar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {/* Modal de Confirmación para Eliminar Grupo */}
+        <DeleteGroupModal
+          isOpen={deleteConfirmDialog.open}
+          onClose={handleCloseDeleteModal}
+          onConfirm={handleConfirmDelete}
+          groupName={deleteConfirmDialog.groupName}
+          isLoading={isDeletingGroup}
+        />
       </div>
     </div>
   )
