@@ -18,6 +18,7 @@ import { useToast } from "./use-toast.ts"
 const EXTERNAL_OUTBOUND_CALL_API_URL = "https://twilio-call-754698887417.us-central1.run.app/outbound-call"
 const CLIENTS_PENDING_API_URL = "http://localhost:5000/clients/pending"
 const GROUPS_API_URL = "http://localhost:5000/api/groups"
+const EXTRACT_EXCEL_API_URL = "http://localhost:5000/clients/extract-excel"
 const OUTBOUND_CALL_PROXY_API_URL = "http://localhost:5000/calls/outbound"
 
 export default function CallDashboard() {
@@ -102,9 +103,9 @@ export default function CallDashboard() {
     }
   }, [toast])
 
-  // Crear o actualizar grupo
+    // Crear o actualizar grupo
   const saveGroup = useCallback(async (formData = null) => {
-         const dataToSave = formData || groupForm
+    const dataToSave = formData || groupForm
     
     if (!dataToSave.name.trim()) {
       toast({
@@ -116,32 +117,146 @@ export default function CallDashboard() {
     }
 
     try {
-      const url = editingGroup 
-        ? `${GROUPS_API_URL}/${editingGroup.id}`
-        : GROUPS_API_URL
+      // Extract file data if present (for new group creation)
+      const { file, filename, ...groupData } = dataToSave
+      
+      let result
+      
+      // If file is provided and this is a new group, create group first then extract clients
+      if (file && filename && !editingGroup) {
+        try {
+          console.log('Creating group first, then extracting clients from Excel')
+          
+          // Step 1: Create the group using the regular endpoint
+          const createGroupResponse = await fetch(GROUPS_API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(groupData),
+          })
 
-      const response = await fetch(url, {
-        method: editingGroup ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dataToSave),
-      })
+          if (!createGroupResponse.ok) {
+            const errorData = await createGroupResponse.json().catch(() => ({}))
+            throw new Error(errorData.message || `Error ${createGroupResponse.status}: ${createGroupResponse.statusText}`)
+          }
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+          result = await createGroupResponse.json()
+          console.log('Group created successfully:', result)
+          
+          // Step 2: Extract clients from Excel using the created group ID
+          if (result.id) {
+            console.log('Extracting clients for group ID:', result.id)
+            
+            // Convert base64 back to file for FormData
+            const byteCharacters = atob(file)
+            const byteNumbers = new Array(byteCharacters.length)
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i)
+            }
+            const byteArray = new Uint8Array(byteNumbers)
+            const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+            const fileObject = new File([blob], filename, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+            
+            // Create FormData for client extraction
+            const formData = new FormData()
+            formData.append("file", fileObject)
+            formData.append("groupId", result.id.toString())
+            
+            const extractResponse = await fetch(EXTRACT_EXCEL_API_URL, {
+              method: 'POST',
+              body: formData,
+            })
+
+            console.log('Extract response status:', extractResponse.status)
+            
+            if (!extractResponse.ok) {
+              const extractErrorData = await extractResponse.json().catch(() => ({}))
+              console.error('File extraction failed:', extractErrorData)
+              toast({
+                title: "⚠️ Error al extraer clientes",
+                description: `El grupo se creó correctamente, pero no se pudieron extraer los clientes: ${extractErrorData.message || `Error ${extractResponse.status}`}`,
+                variant: "destructive",
+              })
+            } else {
+              const extractResult = await extractResponse.json().catch(() => ({}))
+              console.log('Extraction successful:', extractResult)
+              
+              if (extractResult.success) {
+                const clientCount = extractResult.data?.successfullyProcessed || 0
+                const totalExtracted = extractResult.data?.totalExtracted || 0
+                const errors = extractResult.data?.processingErrors || 0
+                
+                let message = `El grupo "${groupData.name}" se creó correctamente.`
+                
+                if (clientCount > 0) {
+                  message += ` Se procesaron ${clientCount} clientes exitosamente.`
+                }
+                
+                if (errors > 0) {
+                  message += ` ${errors} filas tuvieron errores.`
+                }
+                
+                toast({
+                  title: "✅ Grupo creado con clientes",
+                  description: message,
+                })
+              } else {
+                toast({
+                  title: "⚠️ Error en la extracción",
+                  description: extractResult.message || "Error desconocido al procesar el archivo",
+                  variant: "destructive",
+                })
+              }
+            }
+          }
+          
+        } catch (error) {
+          console.error('Error creating group or extracting clients:', error)
+          toast({
+            title: "❌ Error",
+            description: `No se pudo crear el grupo: ${error.message}`,
+            variant: "destructive",
+          })
+          return
+        }
+      } else {
+        // Regular group creation/update without file
+        const url = editingGroup 
+          ? `${GROUPS_API_URL}/${editingGroup.id}`
+          : GROUPS_API_URL
+
+        const response = await fetch(url, {
+          method: editingGroup ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(groupData),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+        }
+
+        result = await response.json()
+        
+        // Show success message for regular group creation/update
+        toast({
+          title: editingGroup ? "✅ Grupo actualizado" : "✅ Grupo creado",
+          description: `El grupo "${groupData.name}" se ${editingGroup ? 'actualizó' : 'creó'} correctamente.`,
+        })
       }
 
-      toast({
-        title: editingGroup ? "✅ Grupo actualizado" : "✅ Grupo creado",
-        description: `El grupo "${dataToSave.name}" se ${editingGroup ? 'actualizó' : 'creó'} correctamente.`,
-      })
-
-             setIsGroupDialogOpen(false)
-       setEditingGroup(null)
-       setGroupForm({ name: '', description: '', prompt: '', color: '#3B82F6', favorite: false })
-      fetchGroups() 
+      setIsGroupDialogOpen(false)
+      setEditingGroup(null)
+      setGroupForm({ name: '', description: '', prompt: '', color: '#3B82F6', favorite: false })
+      
+      // Refresh groups to show the new clients
+      setTimeout(() => {
+        fetchGroups()
+      }, 1000)
+      
     } catch (error) {
       console.error('Error saving group:', error)
       toast({
@@ -611,9 +726,9 @@ export default function CallDashboard() {
                    setEditingGroup(null)
                    setGroupForm({ name: '', description: '', prompt: '', color: '#3B82F6', favorite: false })
                  }}
-                                 onSave={(formData) => {
+                                 onSave={async (formData) => {
                    setGroupForm(formData)
-                   saveGroup(formData)
+                   await saveGroup(formData)
                  }}
                 editingGroup={editingGroup}
                 groupForm={groupForm}

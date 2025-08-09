@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "./ui/button.tsx"
 import { Input } from "./ui/input.tsx"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog.tsx"
-import { Star } from "lucide-react"
+import { Star, Upload, X, FileSpreadsheet, Loader2 } from "lucide-react"
+import { useToast } from "../use-toast.ts"
 
 export function GroupModal({ 
   isOpen, 
@@ -19,6 +20,11 @@ export function GroupModal({
     color: '#3B82F6',
     favorite: false
   })
+  
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     if (isOpen) {
@@ -29,11 +35,122 @@ export function GroupModal({
         color: groupForm.color || '#3B82F6',
         favorite: groupForm.favorite || false
       })
+      // Reset file when opening modal
+      setSelectedFile(null)
     }
   }, [isOpen, groupForm])
 
-  const handleSave = () => {
-    onSave(localForm)
+  const handleSave = async () => {
+    if (selectedFile && !editingGroup) {
+      setIsUploading(true)
+      try {
+        // Convert file to base64
+        const base64File = await fileToBase64(selectedFile)
+        
+        // Create group data with file
+        const groupDataWithFile = {
+          ...localForm,
+          file: base64File,
+          filename: selectedFile.name
+        }
+        
+        await onSave(groupDataWithFile)
+      } catch (error) {
+        console.error('Error converting file to base64:', error)
+        toast({
+          title: "❌ Error",
+          description: "Error al procesar el archivo. Inténtalo de nuevo.",
+          variant: "destructive",
+        })
+        await onSave(localForm)
+      } finally {
+        setIsUploading(false)
+      }
+    } else {
+      await onSave(localForm)
+    }
+  }
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => {
+        // Remove the data URL prefix (e.g., "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,")
+        const base64 = reader.result.split(',')[1]
+        resolve(base64)
+      }
+      reader.onerror = error => reject(error)
+    })
+  }
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0]
+    if (file) {
+      // Validate file type
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+        'application/vnd.ms-excel', // .xls
+        'application/vnd.ms-excel.sheet.macroEnabled.12' // .xlsm
+      ]
+      
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "❌ Archivo no válido",
+          description: "Por favor selecciona un archivo Excel válido (.xlsx, .xls)",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      setSelectedFile(file)
+             toast({
+         title: "✅ Archivo seleccionado",
+         description: `${file.name} ha sido seleccionado. El sistema detectará automáticamente las columnas del Excel.`,
+       })
+    }
+  }
+
+  const handleFileDrop = (event) => {
+    event.preventDefault()
+    const file = event.dataTransfer.files[0]
+    if (file) {
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'application/vnd.ms-excel.sheet.macroEnabled.12'
+      ]
+      
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "❌ Archivo no válido",
+          description: "Por favor selecciona un archivo Excel válido (.xlsx, .xls)",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      setSelectedFile(file)
+             toast({
+         title: "✅ Archivo cargado",
+         description: `${file.name} ha sido cargado. El sistema detectará automáticamente las columnas del Excel.`,
+       })
+    }
+  }
+
+  const handleDragOver = (event) => {
+    event.preventDefault()
+  }
+
+  const removeFile = () => {
+    setSelectedFile(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+    toast({
+      title: "🗑️ Archivo removido",
+      description: "El archivo ha sido removido del formulario.",
+    })
   }
 
   const handleClose = () => {
@@ -48,12 +165,10 @@ export function GroupModal({
     setLocalForm(prev => ({ ...prev, favorite: !prev.favorite }))
   }
 
-
-
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent 
-        className="sm:max-w-[500px] bg-white" 
+        className="sm:max-w-[600px] bg-white" 
         style={{ 
           zIndex: 9999,
           position: 'fixed',
@@ -85,7 +200,7 @@ export function GroupModal({
           <DialogDescription>
             {editingGroup 
               ? 'Modifica la información del grupo seleccionado.' 
-              : 'Crea un nuevo grupo para organizar tus clientes.'
+              : 'Crea un nuevo grupo para organizar tus clientes. Opcionalmente, puedes cargar un archivo Excel con clientes. El sistema detectará automáticamente las columnas: Nombre, Teléfono, Email, Dirección, Categoría, Comentario.'
             }
           </DialogDescription>
         </DialogHeader>
@@ -148,20 +263,88 @@ export function GroupModal({
               </span>
             </div>
           </div>
+
+          {/* File Upload Section - Only show when creating new group */}
+          {!editingGroup && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cargar Clientes (Opcional)
+              </label>
+              <div className="space-y-3">
+                {!selectedFile ? (
+                  <div
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                    onDrop={handleFileDrop}
+                    onDragOver={handleDragOver}
+                  >
+                    <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                                         <p className="text-sm text-gray-600 mb-2">
+                       Arrastra y suelta un archivo Excel aquí, o haz clic para seleccionar
+                     </p>
+                     <p className="text-xs text-gray-500 mb-2">
+                       Formatos soportados: .xlsx, .xls
+                     </p>
+                     <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                       <p className="font-medium mb-1">Columnas detectadas automáticamente:</p>
+                       <p>• <strong>Requeridas:</strong> Nombre, Teléfono</p>
+                       <p>• <strong>Opcionales:</strong> Email, Dirección, Categoría, Comentario</p>
+                     </div>
+                  </div>
+                ) : (
+                  <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileSpreadsheet className="h-8 w-8 text-green-600" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={removeFile}
+                        className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                      >
+                        <X className="h-4 w-4 text-gray-500" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+              </div>
+            </div>
+          )}
         </div>
         
         <DialogFooter>
           <Button 
             variant="outline" 
             onClick={handleClose}
+            disabled={isUploading}
           >
             Cancelar
           </Button>
           <Button 
             onClick={handleSave}
-            disabled={!localForm.name.trim()}
+            disabled={!localForm.name.trim() || isUploading}
           >
-            {editingGroup ? 'Actualizar' : 'Crear'}
+                         {isUploading ? (
+               <>
+                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                 {selectedFile ? 'Creando grupo y extrayendo clientes...' : 'Procesando...'}
+               </>
+             ) : (
+               editingGroup ? 'Actualizar' : 'Crear'
+             )}
           </Button>
         </DialogFooter>
       </DialogContent>
