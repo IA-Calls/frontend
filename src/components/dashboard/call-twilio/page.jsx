@@ -15,11 +15,14 @@ import { GroupModal } from "./components/GroupModal.jsx"
 import { DeleteGroupModal } from "./components/DeleteGroupModal.jsx"
 import { Badge } from "./components/ui/badge.tsx"
 import { useToast } from "./use-toast.ts"
-const EXTERNAL_OUTBOUND_CALL_API_URL = "https://twilio-call-754698887417.us-central1.run.app/outbound-call"
-const CLIENTS_PENDING_API_URL = "http://localhost:5000/clients/pending"
-const GROUPS_API_URL = "http://localhost:5000/api/groups"
-const EXTRACT_EXCEL_API_URL = "http://localhost:5000/clients/extract-excel"
-const OUTBOUND_CALL_PROXY_API_URL = "http://localhost:5000/calls/outbound"
+import config from "../../../config/environment.js"
+
+// Usar configuración de entorno
+const EXTERNAL_OUTBOUND_CALL_API_URL = config.TWILIO_CALL_URL
+const CLIENTS_PENDING_API_URL = config.CLIENTS_PENDING_API_URL
+const GROUPS_API_URL = config.GROUPS_API_URL
+const EXTRACT_EXCEL_API_URL = config.EXTRACT_EXCEL_API_URL
+const OUTBOUND_CALL_PROXY_API_URL = config.OUTBOUND_CALL_PROXY_API_URL
 
 export default function CallDashboard() {
   // Estados principales

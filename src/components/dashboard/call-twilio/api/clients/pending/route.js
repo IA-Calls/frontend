@@ -8,7 +8,9 @@ export async function GET(request) {
   const page = searchParams.get('page') || '1'
   const limit = searchParams.get('limit') || '5'
 
-  const url = `http://localhost:5000/clients/pending?page=1&limit=5`
+  // Usar variable de entorno o fallback a localhost
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000'
+  const url = `${backendUrl}/clients/pending?page=1&limit=5`
 
   try {
     const res = await fetch(url, {

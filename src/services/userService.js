@@ -1,8 +1,9 @@
 import { authService } from './authService';
+import config from '../config/environment.js';
 
 export class UserService {
   constructor() {
-    this.apiUrl = 'http://localhost:5000/api/users';
+    this.apiUrl = `${config.BACKEND_URL}/api/users`;
   }
 
   /**

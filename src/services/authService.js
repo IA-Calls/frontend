@@ -1,8 +1,10 @@
 // Servicio de autenticación - Capa de Infraestructura
+import config from '../config/environment.js';
+
 export class AuthService {
   constructor() {
     this.tokenKey = 'auth_token';
-    this.apiUrl = 'http://localhost:5000/api/auth';
+    this.apiUrl = `${config.BACKEND_URL}/api/auth`;
   }
 
   /**
