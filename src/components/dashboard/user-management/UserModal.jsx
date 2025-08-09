@@ -10,13 +10,61 @@ export const UserModal = ({ isOpen, onClose, onSave, user, loading }) => {
     role: 'user',
     status: 'active',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    deadline: 'no-expiration'
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [calculatedDeadline, setCalculatedDeadline] = useState(null);
 
   const isEditing = !!user;
+
+  // Función para calcular la fecha de deadline
+  const calculateDeadline = (deadlineType) => {
+    if (deadlineType === 'no-expiration') {
+      return null;
+    }
+
+    const now = new Date();
+    let deadline;
+
+    switch (deadlineType) {
+      case '1-minute':
+        deadline = new Date(now.getTime() + 1 * 60 * 1000); // 1 minuto
+        break;
+      case '1-day':
+        deadline = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000); // 1 día
+        break;
+      case '1-week':
+        deadline = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 1 semana
+        break;
+      case '1-month':
+        deadline = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 1 mes (aproximado)
+        break;
+      default:
+        deadline = null;
+    }
+
+    return deadline;
+  };
+
+  // Función para verificar si un deadline está próximo a expirar
+  const isDeadlineExpiringSoon = (deadline) => {
+    if (!deadline) return false;
+    const now = new Date();
+    const timeLeft = deadline - now;
+    const hoursLeft = timeLeft / (1000 * 60 * 60);
+    return hoursLeft <= 24 && hoursLeft > 0; // Próximo a expirar en 24 horas
+  };
+
+  // Función para obtener el color del deadline
+  const getDeadlineColor = (deadline) => {
+    if (!deadline) return 'text-gray-600';
+    if (deadline < new Date()) return 'text-red-600';
+    if (isDeadlineExpiringSoon(deadline)) return 'text-orange-600';
+    return 'text-green-600';
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -28,8 +76,16 @@ export const UserModal = ({ isOpen, onClose, onSave, user, loading }) => {
           role: user.role || 'user',
           status: user.status || 'active',
           password: '',
-          confirmPassword: ''
+          confirmPassword: '',
+          deadline: user.time ? 'custom' : 'no-expiration'
         });
+        
+        // Si el usuario ya tiene un deadline, mostrarlo
+        if (user.time) {
+          setCalculatedDeadline(new Date(user.time));
+        } else {
+          setCalculatedDeadline(null);
+        }
       } else {
         // Modo creación
         setFormData({
@@ -38,12 +94,26 @@ export const UserModal = ({ isOpen, onClose, onSave, user, loading }) => {
           role: 'user',
           status: 'active',
           password: '',
-          confirmPassword: ''
+          confirmPassword: '',
+          deadline: 'no-expiration'
         });
+        setCalculatedDeadline(null);
       }
       setErrors({});
     }
   }, [isOpen, user]);
+
+  // Calcular deadline cuando cambie el tipo
+  useEffect(() => {
+    if (formData.deadline === 'custom' && user?.time) {
+      // Si es modo edición y el usuario ya tiene deadline, mantener el existente
+      setCalculatedDeadline(new Date(user.time));
+    } else {
+      // Calcular nuevo deadline basado en el tipo seleccionado
+      const deadline = calculateDeadline(formData.deadline);
+      setCalculatedDeadline(deadline);
+    }
+  }, [formData.deadline, user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -112,6 +182,20 @@ export const UserModal = ({ isOpen, onClose, onSave, user, loading }) => {
         status: formData.status
       };
 
+      // Agregar deadline si se seleccionó uno
+      if (formData.deadline !== 'no-expiration') {
+        if (formData.deadline === 'custom' && user?.time) {
+          // Mantener el deadline existente del usuario
+          userData.time = user.time;
+        } else if (calculatedDeadline) {
+          // Usar el nuevo deadline calculado
+          userData.time = calculatedDeadline.toISOString();
+        }
+      } else {
+        // Sin expiración - enviar null explícitamente
+        userData.time = null;
+      }
+
       if (!isEditing) {
         userData.password = formData.password;
       }
@@ -131,6 +215,17 @@ export const UserModal = ({ isOpen, onClose, onSave, user, loading }) => {
     if (!isSubmitting) {
       onClose();
     }
+  };
+
+  const formatDeadline = (date) => {
+    if (!date) return 'Sin expiración';
+    return date.toLocaleString('es-ES', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (!isOpen) return null;
@@ -203,6 +298,47 @@ export const UserModal = ({ isOpen, onClose, onSave, user, loading }) => {
                 <option value="inactive">Inactivo</option>
                 <option value="pending">Pendiente</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Deadline de la cuenta
+              </label>
+              <select
+                name="deadline"
+                value={formData.deadline}
+                onChange={handleChange}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="no-expiration">Sin expiración</option>
+                <option value="1-minute">1 minuto</option>
+                <option value="1-day">1 día</option>
+                <option value="1-week">1 semana</option>
+                <option value="1-month">1 mes</option>
+                {isEditing && user?.time && (
+                  <option value="custom">Personalizado (actual)</option>
+                )}
+              </select>
+              
+              {calculatedDeadline && (
+                <div className={`mt-2 p-2 border rounded-lg ${
+                  calculatedDeadline < new Date() 
+                    ? 'bg-red-50 border-red-200' 
+                    : isDeadlineExpiringSoon(calculatedDeadline)
+                    ? 'bg-orange-50 border-orange-200'
+                    : 'bg-green-50 border-green-200'
+                }`}>
+                  <p className={`text-sm ${getDeadlineColor(calculatedDeadline)}`}>
+                    <span className="font-medium">Deadline calculado:</span><br />
+                    {formatDeadline(calculatedDeadline)}
+                    {isDeadlineExpiringSoon(calculatedDeadline) && (
+                      <span className="block mt-1 text-orange-700 font-medium">
+                        ⚠️ Próximo a expirar
+                      </span>
+                    )}
+                  </p>
+                </div>
+              )}
             </div>
 
             {!isEditing && (

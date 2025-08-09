@@ -184,6 +184,41 @@ export const UserManagementContent = ({ user: currentUser }) => {
     }
   };
 
+  // Función para formatear deadline y calcular tiempo restante
+  const formatDeadline = (deadlineString) => {
+    if (!deadlineString) return { text: 'Sin expiración', isExpired: false, timeLeft: null };
+    
+    const deadline = new Date(deadlineString);
+    const now = new Date();
+    const isExpired = deadline < now;
+    
+    if (isExpired) {
+      return { text: 'Expirado', isExpired: true, timeLeft: null };
+    }
+    
+    const timeLeft = deadline - now;
+    const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    
+    let timeLeftText = '';
+    if (days > 0) {
+      timeLeftText = `${days}d ${hours}h`;
+    } else if (hours > 0) {
+      timeLeftText = `${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+      timeLeftText = `${minutes}m`;
+    } else {
+      timeLeftText = 'Menos de 1m';
+    }
+    
+    return {
+      text: `${deadline.toLocaleDateString('es-ES')} ${deadline.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`,
+      isExpired: false,
+      timeLeft: timeLeftText
+    };
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -283,6 +318,19 @@ export const UserManagementContent = ({ user: currentUser }) => {
               </select>
             </div>
 
+            <div>
+              <select
+                value={filters.deadline || 'all'}
+                onChange={(e) => updateFilters({ deadline: e.target.value === 'all' ? '' : e.target.value })}
+                className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">Todos los deadlines</option>
+                <option value="expired">Expirados</option>
+                <option value="active">Activos (no expirados)</option>
+                <option value="no-expiration">Sin expiración</option>
+              </select>
+            </div>
+
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-700">
                 {pagination.total} usuario(s) encontrado(s)
@@ -306,6 +354,9 @@ export const UserManagementContent = ({ user: currentUser }) => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Estado
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Deadline
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Último Acceso
@@ -343,6 +394,47 @@ export const UserManagementContent = ({ user: currentUser }) => {
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(userItem.status)}`}>
                       {getStatusLabel(userItem.status)}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {(() => {
+                      const deadlineInfo = formatDeadline(userItem.time);
+                      const isExpiringSoon = userItem.time && !deadlineInfo.isExpired && 
+                        (new Date(userItem.time) - new Date()) <= 24 * 60 * 60 * 1000;
+                      
+                      return (
+                        <div className="flex flex-col space-y-1">
+                          <span className={`font-medium ${deadlineInfo.isExpired ? 'text-red-600' : 'text-gray-900'}`}>
+                            {deadlineInfo.text}
+                          </span>
+                          {deadlineInfo.timeLeft && (
+                            <span className={`text-xs font-medium ${
+                              isExpiringSoon ? 'text-orange-600' : 'text-blue-600'
+                            }`}>
+                              {deadlineInfo.timeLeft} restante
+                              {isExpiringSoon && ' ⚠️'}
+                            </span>
+                          )}
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            deadlineInfo.isExpired 
+                              ? 'bg-red-100 text-red-800' 
+                              : isExpiringSoon
+                              ? 'bg-orange-100 text-orange-800'
+                              : userItem.time 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {deadlineInfo.isExpired 
+                              ? 'Expirado' 
+                              : isExpiringSoon
+                              ? 'Próximo a expirar'
+                              : userItem.time 
+                                ? 'Activo' 
+                                : 'Sin expiración'
+                            }
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {userItem.lastLogin || 'Nunca'}

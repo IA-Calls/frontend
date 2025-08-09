@@ -17,7 +17,8 @@ export const useUsers = () => {
   const [filters, setFilters] = useState({
     search: '',
     role: '',
-    status: ''
+    status: '',
+    deadline: ''
   });
 
   // Cargar usuarios
@@ -31,7 +32,8 @@ export const useUsers = () => {
         limit: params.limit || pagination.limit,
         search: params.search !== undefined ? params.search : filters.search,
         role: params.role !== undefined ? params.role : filters.role,
-        status: params.status !== undefined ? params.status : filters.status
+        status: params.status !== undefined ? params.status : filters.status,
+        deadline: params.deadline !== undefined ? params.deadline : filters.deadline
       };
 
       // Limpiar parámetros vacíos
@@ -56,7 +58,7 @@ export const useUsers = () => {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.limit, filters.search, filters.role, filters.status]);
+  }, [pagination.page, pagination.limit, filters.search, filters.role, filters.status, filters.deadline]);
 
   // Cargar estadísticas
   const loadStats = useCallback(async () => {

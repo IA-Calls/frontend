@@ -25,6 +25,7 @@ export class UserService {
       if (params.search) queryParams.append('search', params.search);
       if (params.role) queryParams.append('role', params.role);
       if (params.status) queryParams.append('status', params.status);
+      if (params.deadline) queryParams.append('deadline', params.deadline);
 
       const url = `${this.apiUrl}?${queryParams.toString()}`;
       console.log('UserService - Making request to:', url);
@@ -54,6 +55,7 @@ export class UserService {
         lastName: user.last_name,
         role: user.role,
         status: user.is_active ? 'active' : 'inactive',
+        time: user.time || null, // Agregar campo time para deadline
         lastLogin: user.last_login || null,
         createdAt: user.created_at,
         updatedAt: user.updated_at
@@ -184,7 +186,8 @@ export class UserService {
         first_name: userData.firstName || userData.name?.split(' ')[0] || '',
         last_name: userData.lastName || userData.name?.split(' ').slice(1).join(' ') || '',
         role: userData.role,
-        is_active: userData.status === 'active'
+        is_active: userData.status === 'active',
+        time: userData.time || null // Agregar campo time para deadline
       };
 
       const response = await authService.authenticatedFetch(this.apiUrl, {
@@ -220,7 +223,8 @@ export class UserService {
         first_name: userData.firstName || userData.name?.split(' ')[0] || '',
         last_name: userData.lastName || userData.name?.split(' ').slice(1).join(' ') || '',
         role: userData.role,
-        is_active: userData.status === 'active'
+        is_active: userData.status === 'active',
+        time: userData.time || null // Agregar campo time para deadline
       };
 
       const response = await authService.authenticatedFetch(`${this.apiUrl}/${id}`, {
