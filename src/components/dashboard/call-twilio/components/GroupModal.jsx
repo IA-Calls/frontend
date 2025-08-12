@@ -4,6 +4,7 @@ import { Input } from "./ui/input.tsx"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog.tsx"
 import { Star, Upload, X, FileSpreadsheet, Loader2 } from "lucide-react"
 import { useToast } from "../use-toast.ts"
+import { AuthService } from "../../../../services/authService.js"
 
 export function GroupModal({ 
   isOpen, 
@@ -26,6 +27,7 @@ export function GroupModal({
   const [errors, setErrors] = useState({})
   const fileInputRef = useRef(null)
   const { toast } = useToast()
+  const authService = new AuthService()
 
   useEffect(() => {
     if (isOpen) {
@@ -67,17 +69,35 @@ export function GroupModal({
     if (!validateForm()) {
       return
     }
+
+    // Obtener el clientID del usuario autenticado
+    const clientId = authService.getClientId()
+    if (!clientId) {
+      toast({
+        title: "❌ Error",
+        description: "No se pudo obtener el ID del usuario. Por favor, inicia sesión nuevamente.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Preparar los datos del grupo con clientID
+    const groupData = {
+      ...localForm,
+      createdByClient: clientId
+    }
+
     if (selectedFile && !editingGroup) {
       setIsUploading(true)
       try {
         // Convert file to base64
         const base64File = await fileToBase64(selectedFile)
         
-        // Create group data with file
+        // Create group data with file and clientID
         const groupDataWithFile = {
-          ...localForm,
-          file: base64File,
-          filename: selectedFile.name
+          ...groupData,
+          base64: base64File,
+          document_name: selectedFile.name
         }
         
         await onSave(groupDataWithFile)
@@ -88,12 +108,12 @@ export function GroupModal({
           description: "Error al procesar el archivo. Inténtalo de nuevo.",
           variant: "destructive",
         })
-        await onSave(localForm)
+        await onSave(groupData)
       } finally {
         setIsUploading(false)
       }
     } else {
-      await onSave(localForm)
+      await onSave(groupData)
     }
   }
 

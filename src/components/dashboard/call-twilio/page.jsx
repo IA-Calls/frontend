@@ -16,6 +16,7 @@ import { DeleteGroupModal } from "./components/DeleteGroupModal.jsx"
 import { Badge } from "./components/ui/badge.tsx"
 import { useToast } from "./use-toast.ts"
 import config from "../../../config/environment.js"
+import { authService } from "../../../services/authService.js"
 
 // Usar configuración de entorno
 const EXTERNAL_OUTBOUND_CALL_API_URL = config.TWILIO_CALL_URL
@@ -68,7 +69,23 @@ export default function CallDashboard() {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await fetch(`${CLIENTS_PENDING_API_URL}`)
+      // Obtener el clientID del usuario autenticado
+      const clientId = authService.getClientId()
+      
+      // Construir la URL con o sin clientID
+      const url = clientId 
+        ? `${CLIENTS_PENDING_API_URL}/${clientId}`
+        : CLIENTS_PENDING_API_URL
+      
+      console.log('Fetching groups from URL:', url)
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authService.getToken() && { 'Authorization': `Bearer ${authService.getToken()}` })
+        }
+      })
 
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -76,30 +93,41 @@ export default function CallDashboard() {
 
       const data = await response.json()
 
-             // La API ahora devuelve un array directo de grupos o un objeto con data
-       const groupsArray = Array.isArray(data) ? data : (data.data || [])
-       setGroups(groupsArray)
-       
-       setPagination({
-         currentPage: 1, // El endpoint no maneja paginación por ahora
-         totalPages: 1,
-         totalGroups: groupsArray.length,
-         totalClients: data.totalClients || 0,
-         limit: limit,
-       })
+      // La API ahora devuelve un array directo de grupos o un objeto con data
+      const groupsArray = Array.isArray(data) ? data : (data.data || [])
+      setGroups(groupsArray)
+      
+      setPagination({
+        currentPage: 1, // El endpoint no maneja paginación por ahora
+        totalPages: 1,
+        totalGroups: groupsArray.length,
+        totalClients: data.totalClients || 0,
+        limit: limit,
+      })
 
-       toast({
-         title: "✅ Grupos cargados",
-         description: `Se cargaron ${groupsArray.length} grupos con ${data.totalClients || 0} clientes.`,
-       })
+      toast({
+        title: "✅ Grupos cargados",
+        description: `Se cargaron ${groupsArray.length} grupos con ${data.totalClients || 0} clientes.`,
+      })
     } catch (error) {
       console.error("Error fetching groups:", error)
-      setError(`No se pudieron cargar los grupos: ${error.message}`)
-      toast({
-        title: "❌ Error al cargar grupos",
-        description: "Verifica la conexión con la API.",
-        variant: "destructive",
-      })
+      
+      // Manejar error específico de autenticación
+      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        setError('Sesión expirada. Por favor, inicia sesión nuevamente.')
+        toast({
+          title: "❌ Sesión expirada",
+          description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+          variant: "destructive",
+        })
+      } else {
+        setError(`No se pudieron cargar los grupos: ${error.message}`)
+        toast({
+          title: "❌ Error al cargar grupos",
+          description: "Verifica la conexión con la API.",
+          variant: "destructive",
+        })
+      }
     } finally {
       setIsLoading(false)
     }
@@ -135,6 +163,11 @@ export default function CallDashboard() {
             base64: file,
             document_name: filename
           }
+          
+          console.log('Creating group with data:', {
+            ...groupDataWithExcel,
+            base64: groupDataWithExcel.base64 ? `${groupDataWithExcel.base64.substring(0, 50)}...` : 'No base64'
+          })
           
           const createGroupResponse = await fetch(GROUPS_API_URL, {
             method: 'POST',
@@ -183,6 +216,8 @@ export default function CallDashboard() {
           ? `${GROUPS_API_URL}/${editingGroup.id}`
           : GROUPS_API_URL
 
+        console.log('Creating/updating group with data:', groupData)
+        
         const response = await fetch(url, {
           method: editingGroup ? 'PUT' : 'POST',
           headers: {

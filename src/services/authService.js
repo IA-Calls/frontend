@@ -4,6 +4,7 @@ import config from '../config/environment.js';
 export class AuthService {
   constructor() {
     this.tokenKey = 'auth_token';
+    this.clientIdKey = 'client_id';
     this.apiUrl = `${config.BACKEND_URL}/api/auth`;
   }
 
@@ -44,6 +45,14 @@ export class AuthService {
         console.error('AuthService - No token found in response:', data);
       }
 
+      // Almacenar el clientID (user.id)
+      if (data.user && data.user.id) {
+        console.log('AuthService - Storing clientID:', data.user.id);
+        this.setClientId(data.user.id);
+      } else {
+        console.error('AuthService - No user ID found in response:', data);
+      }
+
       return {
         success: true,
         token: data.token,
@@ -67,6 +76,7 @@ export class AuthService {
    */
   logout() {
     this.removeToken();
+    this.removeClientId();
   }
 
   /**
@@ -99,6 +109,29 @@ export class AuthService {
    */
   removeToken() {
     localStorage.removeItem(this.tokenKey);
+  }
+
+  /**
+   * Obtener clientID almacenado
+   * @returns {string|null} ClientID del usuario
+   */
+  getClientId() {
+    return localStorage.getItem(this.clientIdKey);
+  }
+
+  /**
+   * Almacenar clientID
+   * @param {string|number} clientId - ID del cliente/usuario
+   */
+  setClientId(clientId) {
+    localStorage.setItem(this.clientIdKey, clientId.toString());
+  }
+
+  /**
+   * Eliminar clientID almacenado
+   */
+  removeClientId() {
+    localStorage.removeItem(this.clientIdKey);
   }
 
   /**
