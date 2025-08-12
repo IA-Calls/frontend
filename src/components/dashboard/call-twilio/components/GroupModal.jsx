@@ -23,6 +23,7 @@ export function GroupModal({
   
   const [selectedFile, setSelectedFile] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [errors, setErrors] = useState({})
   const fileInputRef = useRef(null)
   const { toast } = useToast()
 
@@ -40,7 +41,32 @@ export function GroupModal({
     }
   }, [isOpen, groupForm])
 
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!localForm.name.trim()) {
+      newErrors.name = 'El nombre del grupo es requerido'
+    }
+
+    if (localForm.name.trim().length < 3) {
+      newErrors.name = 'El nombre debe tener al menos 3 caracteres'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleInputChange = (field, value) => {
+    setLocalForm(prev => ({ ...prev, [field]: value }))
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }))
+    }
+  }
+
   const handleSave = async () => {
+    if (!validateForm()) {
+      return
+    }
     if (selectedFile && !editingGroup) {
       setIsUploading(true)
       try {
@@ -157,9 +183,7 @@ export function GroupModal({
     onClose()
   }
 
-  const handleInputChange = (field, value) => {
-    setLocalForm(prev => ({ ...prev, [field]: value }))
-  }
+
 
   const toggleFavorite = () => {
     setLocalForm(prev => ({ ...prev, favorite: !prev.favorite }))
@@ -214,10 +238,10 @@ export function GroupModal({
               value={localForm.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
               placeholder="Ej: Clientes VIP"
-              className={!localForm.name.trim() ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
+              className={errors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
             />
-            {!localForm.name.trim() && (
-              <p className="text-sm text-red-600 mt-1">El nombre del grupo es requerido</p>
+            {errors.name && (
+              <p className="text-sm text-red-600 mt-1">{errors.name}</p>
             )}
           </div>
           
@@ -335,7 +359,7 @@ export function GroupModal({
           </Button>
           <Button 
             onClick={handleSave}
-            disabled={!localForm.name.trim() || isUploading}
+            disabled={!localForm.name.trim() || isUploading || Object.keys(errors).length > 0}
           >
                          {isUploading ? (
                <>

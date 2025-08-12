@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { Phone, Mail, MapPin, Globe, Search, RefreshCw, UserIcon, Star, Building, FolderOpen } from "lucide-react"
+import { Phone, Mail, MapPin, Globe, Search, RefreshCw, UserIcon, Star, Building, FolderOpen, Edit, Trash2 } from "lucide-react"
 import { Button } from "./ui/button.tsx"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card.tsx"
 import { Checkbox } from "./ui/checkbox.tsx"
@@ -10,6 +10,8 @@ import { Badge } from "./ui/badge.tsx"
 import { ScrollArea } from "./ui/scroll-area.tsx"
 import { Avatar, AvatarFallback } from "./ui/avatar.tsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select.tsx"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog.tsx"
+import { ClientModal } from "./ClientModal.jsx"
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -71,6 +73,8 @@ export function UserList({
   onUserSelection,
   onSelectAll,
   onDeselectAll,
+  onUpdateClient,
+  onDeleteClient,
   isLoading = false,
   filterCategory,
   setFilterCategory,
@@ -81,6 +85,16 @@ export function UserList({
 }) {
   const [localSearchTerm, setLocalSearchTerm] = useState("")
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false)
+  const [selectedClient, setSelectedClient] = useState(null)
+  const [isClientLoading, setIsClientLoading] = useState(false)
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+  const [localSelectedUsers, setLocalSelectedUsers] = useState(new Set())
+
+  // Sync selectedUsers prop with local state
+  useEffect(() => {
+    setLocalSelectedUsers(selectedUsers || new Set())
+  }, [selectedUsers])
 
   // Debounce search term
   useEffect(() => {
@@ -92,6 +106,110 @@ export function UserList({
       clearTimeout(timerId)
     }
   }, [localSearchTerm])
+
+  const handleEditClient = (user) => {
+    setSelectedClient(user)
+    setIsClientModalOpen(true)
+  }
+
+  const handleSaveClient = async (formData) => {
+    if (!selectedClient) return
+    
+    setIsClientLoading(true)
+    try {
+      await onUpdateClient(selectedClient.groupId, selectedClient.clientId, formData)
+      setIsClientModalOpen(false)
+      setSelectedClient(null)
+    } catch (error) {
+      console.error('Error updating client:', error)
+    } finally {
+      setIsClientLoading(false)
+    }
+  }
+
+  const handleDeleteClient = async () => {
+    if (!selectedClient) return
+    
+    setIsClientLoading(true)
+    try {
+      await onDeleteClient(selectedClient.groupId, selectedClient.clientId)
+      setIsClientModalOpen(false)
+      setSelectedClient(null)
+    } catch (error) {
+      console.error('Error deleting client:', error)
+    } finally {
+      setIsClientLoading(false)
+    }
+  }
+
+  const handleDeleteUserFromGroup = async (user) => {
+    setSelectedClient(user)
+    setIsClientModalOpen(true)
+  }
+
+  const handleCloseClientModal = () => {
+    setIsClientModalOpen(false)
+    setSelectedClient(null)
+  }
+
+  const handleBulkDelete = () => {
+    if (localSelectedUsers.size > 0) {
+      setShowBulkDeleteConfirm(true)
+    }
+  }
+
+  const confirmBulkDelete = async () => {
+    setIsClientLoading(true)
+    try {
+      const selectedUsersArray = Array.from(localSelectedUsers)
+      const deletePromises = selectedUsersArray.map(async (userId) => {
+        const user = users.find(u => u.id === userId)
+        if (user) {
+          try {
+            await onDeleteClient(user.groupId, user.clientId)
+            return { success: true, userId, userName: user.name }
+          } catch (error) {
+            console.error(`Error deleting client ${user.name}:`, error)
+            return { success: false, userId, userName: user.name, error }
+          }
+        }
+        return { success: false, userId, error: 'User not found' }
+      })
+      
+      const results = await Promise.allSettled(deletePromises)
+      const successfulDeletes = results.filter(result => 
+        result.status === 'fulfilled' && result.value.success
+      ).length
+      
+      const failedDeletes = results.length - successfulDeletes
+      
+      console.log(`Bulk delete completed: ${successfulDeletes} successful, ${failedDeletes} failed`)
+      
+      setShowBulkDeleteConfirm(false)
+      setLocalSelectedUsers(new Set())
+      // Notify parent component
+      onUserSelection(new Set())
+    } catch (error) {
+      console.error('Error in bulk delete operation:', error)
+    } finally {
+      setIsClientLoading(false)
+    }
+  }
+
+  const cancelBulkDelete = () => {
+    setShowBulkDeleteConfirm(false)
+  }
+
+  const handleUserSelection = (userId, checked) => {
+    const newSelectedUsers = new Set(localSelectedUsers)
+    if (checked) {
+      newSelectedUsers.add(userId)
+    } else {
+      newSelectedUsers.delete(userId)
+    }
+    setLocalSelectedUsers(newSelectedUsers)
+    onUserSelection(userId, checked)
+  }
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
@@ -138,12 +256,18 @@ export function UserList({
   }
 
   return (
-    <Card className="bg-white border border-gray-200 shadow-sm">
-      <CardHeader className="bg-gray-50 border-b border-gray-200">
+    <>
+      <Card className="bg-white border border-gray-200 shadow-sm">
+        <CardHeader className="bg-gray-50 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-3">
             <UserIcon className="h-5 w-5 text-blue-600" />
             Lista de Usuarios ({filteredUsers.length})
+            {localSelectedUsers.size > 0 && (
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
+                {localSelectedUsers.size} seleccionado{localSelectedUsers.size > 1 ? 's' : ''}
+              </Badge>
+            )}
           </CardTitle>
           <div className="flex gap-2">
             <Button
@@ -152,6 +276,7 @@ export function UserList({
               onClick={onSelectAll}
               disabled={isLoading}
               className="border-gray-300"
+              title="Seleccionar todos los usuarios visibles"
             >
               Seleccionar Todos
             </Button>
@@ -161,9 +286,22 @@ export function UserList({
               onClick={onDeselectAll}
               disabled={isLoading}
               className="border-gray-300"
+              title="Deseleccionar todos los usuarios"
             >
               Deseleccionar Todos
             </Button>
+            {localSelectedUsers.size > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleBulkDelete}
+                disabled={isLoading || isClientLoading}
+                className="bg-red-600 hover:bg-red-700 shadow-sm"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Eliminar {localSelectedUsers.size} cliente{localSelectedUsers.size > 1 ? 's' : ''}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -221,7 +359,7 @@ export function UserList({
             ) : (
               filteredUsers.map((user) => {
                 const callStatus = callStatuses.get(user.id)
-                const isSelected = selectedUsers.has(user.id)
+                const isSelected = localSelectedUsers.has(user.id)
 
                 return (
                   <div
@@ -235,7 +373,7 @@ export function UserList({
                     <div className="flex items-start gap-4">
                       <Checkbox
                         checked={isSelected}
-                        onCheckedChange={(checked) => onUserSelection(user.id, checked)}
+                        onCheckedChange={(checked) => handleUserSelection(user.id, checked)}
                         className="mt-2 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                         disabled={isLoading}
                       />
@@ -284,13 +422,35 @@ export function UserList({
                               )}
                             </div>
                           </div>
-                          {callStatus && (
-                            <Badge
-                              className={`${getStatusColor(callStatus.status)}`}
-                            >
-                              {getStatusText(callStatus.status)}
-                            </Badge>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {callStatus && (
+                              <Badge
+                                className={`${getStatusColor(callStatus.status)}`}
+                              >
+                                {getStatusText(callStatus.status)}
+                              </Badge>
+                            )}
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEditClient(user)}
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                title="Editar cliente"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteUserFromGroup(user)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                title="Eliminar cliente"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -355,5 +515,61 @@ export function UserList({
         </ScrollArea>
       </CardContent>
     </Card>
+
+    {/* Client Modal */}
+    <ClientModal
+      isOpen={isClientModalOpen}
+      onClose={handleCloseClientModal}
+      onSave={handleSaveClient}
+      onDelete={handleDeleteClient}
+      client={selectedClient}
+      groupId={selectedClient?.groupId}
+      loading={isClientLoading}
+    />
+
+    {/* Bulk Delete Confirmation Dialog */}
+    <AlertDialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+      <AlertDialogContent className="max-w-md">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-red-600" />
+            Eliminación Masiva
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-left">
+            <div className="space-y-2">
+              <p>¿Estás seguro de que quieres eliminar <strong>{localSelectedUsers.size} cliente{localSelectedUsers.size > 1 ? 's' : ''}</strong>?</p>
+              <div className="bg-red-50 p-3 rounded-md border border-red-200">
+                <p className="text-sm text-red-700">
+                  ⚠️ Esta acción es <strong>irreversible</strong> y eliminará permanentemente los clientes seleccionados de sus grupos correspondientes.
+                </p>
+              </div>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex gap-2">
+          <AlertDialogCancel onClick={cancelBulkDelete} className="flex-1">
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={confirmBulkDelete} 
+            className="bg-red-600 hover:bg-red-700 flex-1"
+            disabled={isClientLoading}
+          >
+            {isClientLoading ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                Eliminando...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Eliminar {localSelectedUsers.size}
+              </>
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>
   )
 }

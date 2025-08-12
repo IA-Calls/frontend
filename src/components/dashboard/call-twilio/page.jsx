@@ -21,7 +21,6 @@ import config from "../../../config/environment.js"
 const EXTERNAL_OUTBOUND_CALL_API_URL = config.TWILIO_CALL_URL
 const CLIENTS_PENDING_API_URL = config.CLIENTS_PENDING_API_URL
 const GROUPS_API_URL = config.GROUPS_API_URL
-const EXTRACT_EXCEL_API_URL = config.EXTRACT_EXCEL_API_URL
 const OUTBOUND_CALL_PROXY_API_URL = config.OUTBOUND_CALL_PROXY_API_URL
 
 export default function CallDashboard() {
@@ -125,18 +124,24 @@ export default function CallDashboard() {
       
       let result
       
-      // If file is provided and this is a new group, create group first then extract clients
+      // If file is provided and this is a new group, create group with Excel processing
       if (file && filename && !editingGroup) {
         try {
-          console.log('Creating group first, then extracting clients from Excel')
+          console.log('Creating group with Excel processing')
           
-          // Step 1: Create the group using the regular endpoint
+          // Create group with Excel data in the new format
+          const groupDataWithExcel = {
+            ...groupData,
+            base64: file,
+            document_name: filename
+          }
+          
           const createGroupResponse = await fetch(GROUPS_API_URL, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(groupData),
+            body: JSON.stringify(groupDataWithExcel),
           })
 
           if (!createGroupResponse.ok) {
@@ -145,77 +150,26 @@ export default function CallDashboard() {
           }
 
           result = await createGroupResponse.json()
-          console.log('Group created successfully:', result)
+          console.log('Group created successfully with Excel processing:', result)
           
-          // Step 2: Extract clients from Excel using the created group ID
-          if (result.id) {
-            console.log('Extracting clients for group ID:', result.id)
-            
-            // Convert base64 back to file for FormData
-            const byteCharacters = atob(file)
-            const byteNumbers = new Array(byteCharacters.length)
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i)
-            }
-            const byteArray = new Uint8Array(byteNumbers)
-            const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-            const fileObject = new File([blob], filename, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-            
-            // Create FormData for client extraction
-            const formData = new FormData()
-            formData.append("file", fileObject)
-            formData.append("groupId", result.id.toString())
-            
-            const extractResponse = await fetch(EXTRACT_EXCEL_API_URL, {
-              method: 'POST',
-              body: formData,
-            })
-
-            console.log('Extract response status:', extractResponse.status)
-            
-            if (!extractResponse.ok) {
-              const extractErrorData = await extractResponse.json().catch(() => ({}))
-              console.error('File extraction failed:', extractErrorData)
-              toast({
-                title: "⚠️ Error al extraer clientes",
-                description: `El grupo se creó correctamente, pero no se pudieron extraer los clientes: ${extractErrorData.message || `Error ${extractResponse.status}`}`,
-                variant: "destructive",
-              })
-            } else {
-              const extractResult = await extractResponse.json().catch(() => ({}))
-              console.log('Extraction successful:', extractResult)
-              
-              if (extractResult.success) {
-                const clientCount = extractResult.data?.successfullyProcessed || 0
-                const totalExtracted = extractResult.data?.totalExtracted || 0
-                const errors = extractResult.data?.processingErrors || 0
-                
-                let message = `El grupo "${groupData.name}" se creó correctamente.`
-                
-                if (clientCount > 0) {
-                  message += ` Se procesaron ${clientCount} clientes exitosamente.`
-                }
-                
-                if (errors > 0) {
-                  message += ` ${errors} filas tuvieron errores.`
-                }
-                
-                toast({
-                  title: "✅ Grupo creado con clientes",
-                  description: message,
-                })
-              } else {
-                toast({
-                  title: "⚠️ Error en la extracción",
-                  description: extractResult.message || "Error desconocido al procesar el archivo",
-                  variant: "destructive",
-                })
-              }
-            }
+          // Show success message for group creation with Excel
+          let message = `El grupo "${groupData.name}" se creó correctamente.`
+          
+          if (result.data?.successfullyProcessed) {
+            message += ` Se procesaron ${result.data.successfullyProcessed} clientes exitosamente.`
           }
           
+          if (result.data?.processingErrors && result.data.processingErrors > 0) {
+            message += ` ${result.data.processingErrors} filas tuvieron errores.`
+          }
+          
+          toast({
+            title: "✅ Grupo creado con clientes",
+            description: message,
+          })
+          
         } catch (error) {
-          console.error('Error creating group or extracting clients:', error)
+          console.error('Error creating group with Excel:', error)
           toast({
             title: "❌ Error",
             description: `No se pudo crear el grupo: ${error.message}`,
@@ -558,6 +512,79 @@ export default function CallDashboard() {
   const handleRefresh = useCallback(() => {
     fetchGroups()
   }, [fetchGroups])
+
+  // Actualizar cliente
+  const handleUpdateClient = useCallback(async (groupId, clientId, clientData) => {
+    try {
+      const response = await fetch(`${GROUPS_API_URL}/${groupId}/clients/${clientId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(clientData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      
+      toast({
+        title: "✅ Cliente actualizado",
+        description: `El cliente "${clientData.name}" se actualizó correctamente.`,
+      })
+
+      // Refresh groups to show updated data
+      setTimeout(() => {
+        fetchGroups()
+      }, 500)
+      
+      return result
+    } catch (error) {
+      console.error('Error updating client:', error)
+      toast({
+        title: "❌ Error",
+        description: `No se pudo actualizar el cliente: ${error.message}`,
+        variant: "destructive",
+      })
+      throw error
+    }
+  }, [fetchGroups, toast])
+
+  // Eliminar cliente
+  const handleDeleteClient = useCallback(async (groupId, clientId) => {
+    try {
+      const response = await fetch(`${GROUPS_API_URL}/${groupId}/clients/${clientId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      toast({
+        title: "✅ Cliente eliminado",
+        description: "El cliente se eliminó correctamente.",
+      })
+
+      // Refresh groups to show updated data
+      setTimeout(() => {
+        fetchGroups()
+      }, 500)
+      
+    } catch (error) {
+      console.error('Error deleting client:', error)
+      toast({
+        title: "❌ Error",
+        description: `No se pudo eliminar el cliente: ${error.message}`,
+        variant: "destructive",
+      })
+      throw error
+    }
+  }, [fetchGroups, toast])
 
   const handleExportReport = useCallback(() => {
     try {
@@ -930,23 +957,25 @@ export default function CallDashboard() {
               </TabsList>
             </div>
 
-            <TabsContent value="users" className="p-6 space-y-6">
-              <UserList
-                users={selectedGroup ? filteredUsers : allUsers}
-                selectedUsers={selectedUsers}
-                callStatuses={callStatuses}
-                onUserSelection={handleUserSelection}
-                onSelectAll={handleSelectAll}
-                onDeselectAll={handleDeselectAll}
-                isLoading={isLoading}
-                filterCategory={filterCategory}
-                setFilterCategory={setFilterCategory}
-                filterCallStatus={filterCallStatus}
-                setFilterCallStatus={setFilterCallStatus}
-                uniqueCategories={uniqueCategories}
-                possibleCallStatuses={possibleCallStatuses}
-              />
-            </TabsContent>
+                         <TabsContent value="users" className="p-6 space-y-6">
+               <UserList
+                 users={selectedGroup ? filteredUsers : allUsers}
+                 selectedUsers={selectedUsers}
+                 callStatuses={callStatuses}
+                 onUserSelection={handleUserSelection}
+                 onSelectAll={handleSelectAll}
+                 onDeselectAll={handleDeselectAll}
+                 onUpdateClient={handleUpdateClient}
+                 onDeleteClient={handleDeleteClient}
+                 isLoading={isLoading}
+                 filterCategory={filterCategory}
+                 setFilterCategory={setFilterCategory}
+                 filterCallStatus={filterCallStatus}
+                 setFilterCallStatus={setFilterCallStatus}
+                 uniqueCategories={uniqueCategories}
+                 possibleCallStatuses={possibleCallStatuses}
+               />
+             </TabsContent>
 
             <TabsContent value="monitor" className="p-6">
               <CallMonitor 

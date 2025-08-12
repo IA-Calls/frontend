@@ -20,7 +20,6 @@ export const useUsers = () => {
     status: '',
     deadline: ''
   });
-
   // Cargar usuarios
   const loadUsers = useCallback(async (params = {}) => {
     setLoading(true);
