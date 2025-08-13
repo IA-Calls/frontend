@@ -4,6 +4,7 @@ import { DashboardContent } from './DashboardContent';
 import ExcelMapper from "./excelmap"
 import CallDashboard from './call-twilio/page'
 import { UserManagementContent } from './UserManagementContent';
+import { GroupDocumentsContent } from './GroupDocumentsContent';
 
 
 export const Dashboard = ({ user, onLogout }) => {
@@ -20,6 +21,8 @@ export const Dashboard = ({ user, onLogout }) => {
         return <UserManagementContent user={user} />;
       case 'twilio-call':
         return <CallDashboard user={user}/>
+      case 'group-documents':
+        return <GroupDocumentsContent user={user} />;
       default:
         return <DashboardContent user={user} />;
     }
@@ -35,6 +38,8 @@ export const Dashboard = ({ user, onLogout }) => {
         return 'Gestión de Usuarios';
       case 'twilio-call':
         return 'Gestion de llamadas'
+      case 'group-documents':
+        return 'Documentos de Grupos'
       default:
         return 'Panel de Control';
     }

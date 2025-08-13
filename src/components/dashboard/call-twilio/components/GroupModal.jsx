@@ -84,7 +84,7 @@ export function GroupModal({
     // Preparar los datos del grupo con clientID
     const groupData = {
       ...localForm,
-      createdByClient: clientId
+      clientId: parseInt(clientId)
     }
 
     if (selectedFile && !editingGroup) {

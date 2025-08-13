@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
-import { Phone, Users, Play, Square, RefreshCw, Zap, Target, Download, Search, Filter, Plus, Edit, Trash2, FolderOpen, UserPlus } from "lucide-react"
+import { Phone, Users, Play, Square, RefreshCw, Zap, Target, Download, Search, Filter, Plus, Edit, Trash2, FolderOpen, UserPlus, FileText } from "lucide-react"
 import { Button } from "./components/ui/button.tsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.tsx"
 import { UserList } from "./components/user-list.jsx"
@@ -13,6 +13,7 @@ import { Input } from "./components/ui/input.tsx"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "./components/ui/dialog.tsx"
 import { GroupModal } from "./components/GroupModal.jsx"
 import { DeleteGroupModal } from "./components/DeleteGroupModal.jsx"
+import { GroupDocuments } from "./components/GroupDocuments.jsx"
 import { Badge } from "./components/ui/badge.tsx"
 import { useToast } from "./use-toast.ts"
 import config from "../../../config/environment.js"
@@ -974,7 +975,7 @@ export default function CallDashboard() {
         <Tabs defaultValue="users" className="space-y-6">
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
             <div className="p-6 border-b border-gray-200">
-              <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg max-w-md">
+              <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1 rounded-lg max-w-2xl">
                 <TabsTrigger
                   value="users"
                   className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
@@ -988,6 +989,13 @@ export default function CallDashboard() {
                 >
                   <Phone className="h-4 w-4 mr-2" />
                   Monitor de Llamadas
+                </TabsTrigger>
+                <TabsTrigger
+                  value="documents"
+                  className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Documentos Grupos
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -1018,6 +1026,10 @@ export default function CallDashboard() {
                 callStatuses={callStatuses} 
                 totalUsers={selectedGroup ? filteredUsers.length : allUsers.length} 
               />
+            </TabsContent>
+
+            <TabsContent value="documents" className="p-6">
+              <GroupDocuments />
             </TabsContent>
           </div>   
         </Tabs>
