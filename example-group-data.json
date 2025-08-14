@@ -1,0 +1,15 @@
+{
+  "name": "Grupo Internacional",
+  "description": "Clientes de diferentes países",
+  "prompt": "Eres un asistente multilingüe",
+  "color": "#F59E0B",
+  "favorite": true,
+  "idioma": "en",
+  "variables": {
+    "pais": "https://api.example.com/country-data",
+    "zona_horaria": "https://api.example.com/timezone-data",
+    "moneda": "https://api.example.com/currency-data",
+    "configuracion": "https://api.example.com/config-data"
+  },
+  "clientId": 123
+}
