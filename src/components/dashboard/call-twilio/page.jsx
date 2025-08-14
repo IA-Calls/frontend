@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { GroupModal } from "./components/GroupModal.jsx"
 import { DeleteGroupModal } from "./components/DeleteGroupModal.jsx"
 import { GroupDocuments } from "./components/GroupDocuments.jsx"
+import { TestCallModal } from "./components/TestCallModal.jsx"
 import { Badge } from "./components/ui/badge.tsx"
 import { useToast } from "./use-toast.ts"
 import config from "../../../config/environment.js"
@@ -48,6 +49,9 @@ export default function CallDashboard() {
   })
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState({ open: false, groupId: null, groupName: '' })
   const [isDeletingGroup, setIsDeletingGroup] = useState(false)
+
+  // Estados para modal de prueba de llamada
+  const [isTestCallModalOpen, setIsTestCallModalOpen] = useState(false)
 
 
 
@@ -537,6 +541,28 @@ export default function CallDashboard() {
     })
   }, [toast])
 
+  // Función para manejar llamada de prueba
+  const handleTestCall = useCallback(async (callData) => {
+    try {
+      // Aquí iría la lógica real para iniciar la llamada de prueba
+      // Por ahora simulamos una llamada
+      console.log('Iniciando llamada de prueba:', callData)
+      
+      // Simular delay de la llamada
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      toast({
+        title: "✅ Llamada de prueba completada",
+        description: `Llamada a ${callData.name} finalizada exitosamente.`,
+      })
+      
+      setIsTestCallModalOpen(false)
+    } catch (error) {
+      console.error('Error en llamada de prueba:', error)
+      throw error
+    }
+  }, [toast])
+
   const handleConfirmDelete = useCallback(() => {
     deleteGroup(deleteConfirmDialog.groupId)
   }, [deleteGroup, deleteConfirmDialog.groupId])
@@ -939,6 +965,15 @@ export default function CallDashboard() {
                 )}
               </Button>
 
+              <Button
+                onClick={() => setIsTestCallModalOpen(true)}
+                disabled={isCallingState}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Phone className="h-4 w-4 mr-2" />
+                Probar Llamada
+              </Button>
+
               {isCallingState && (
                 <Button
                   onClick={handleStopCalls}
@@ -1041,6 +1076,13 @@ export default function CallDashboard() {
           onConfirm={handleConfirmDelete}
           groupName={deleteConfirmDialog.groupName}
           isLoading={isDeletingGroup}
+        />
+
+        {/* Modal de Prueba de Llamada */}
+        <TestCallModal
+          isOpen={isTestCallModalOpen}
+          onClose={() => setIsTestCallModalOpen(false)}
+          onStartCall={handleTestCall}
         />
       </div>
     </div>
