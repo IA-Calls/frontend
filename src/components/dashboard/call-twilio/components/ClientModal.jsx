@@ -4,6 +4,7 @@ import { Input } from "./ui/input.tsx"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog.tsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select.tsx"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog.tsx"
+import { Trash2 } from "lucide-react"
 
 export function ClientModal({ 
   isOpen, 
@@ -110,33 +111,58 @@ export function ClientModal({
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] bg-white">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-gray-900">
-            {client ? 'Editar Cliente' : 'Nuevo Cliente'}
-          </DialogTitle>
-          <DialogDescription>
-            {client 
-              ? 'Modifica la información del cliente seleccionado.' 
-              : 'Agrega un nuevo cliente al grupo.'
-            }
-          </DialogDescription>
-        </DialogHeader>
+      {/* Overlay de fondo oscuro */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-[9998]"
+          style={{ zIndex: 9998 }}
+          onClick={onClose}
+        />
+      )}
+      
+             <Dialog open={isOpen} onOpenChange={onClose}>
+         <DialogContent 
+           className="sm:max-w-[600px] max-h-[90vh] overflow-hidden bg-white border-gray-200 shadow-xl"
+           style={{ 
+             position: 'fixed',
+             top: '50%',
+             left: '50%',
+             transform: 'translate(-50%, -50%)',
+             backgroundColor: 'white',
+             border: '1px solid #e5e7eb',
+             borderRadius: '12px',
+             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+             zIndex: 9999
+           }}
+           onPointerDownOutside={(e) => e.preventDefault()}
+           onInteractOutside={(e) => e.preventDefault()}
+         >
+                 <DialogHeader className="bg-white border-b border-gray-100 p-6">
+           <DialogTitle className="flex items-center gap-2 text-xl font-semibold text-gray-900">
+             {client ? 'Editar Cliente' : 'Nuevo Cliente'}
+           </DialogTitle>
+           <DialogDescription className="text-sm text-gray-600 mt-2">
+             {client 
+               ? 'Modifica la información del cliente seleccionado.' 
+               : 'Agrega un nuevo cliente al grupo.'
+             }
+           </DialogDescription>
+         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+                 <div className="flex-1 overflow-y-auto">
+           <form onSubmit={handleSubmit} className="space-y-6 p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nombre *
               </label>
-              <Input
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="Nombre completo"
-                error={errors.name}
-                required
-              />
+                             <Input
+                 value={formData.name}
+                 onChange={(e) => handleInputChange('name', e.target.value)}
+                 placeholder="Nombre completo"
+                 className={errors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
+                 required
+               />
               {errors.name && (
                 <p className="text-sm text-red-600 mt-1">{errors.name}</p>
               )}
@@ -146,13 +172,13 @@ export function ClientModal({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Teléfono *
               </label>
-              <Input
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="+1-555-0123"
-                error={errors.phone}
-                required
-              />
+                             <Input
+                 value={formData.phone}
+                 onChange={(e) => handleInputChange('phone', e.target.value)}
+                 placeholder="+1-555-0123"
+                 className={errors.phone ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
+                 required
+               />
               {errors.phone && (
                 <p className="text-sm text-red-600 mt-1">{errors.phone}</p>
               )}
@@ -164,13 +190,13 @@ export function ClientModal({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email
               </label>
-              <Input
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="email@ejemplo.com"
-                type="email"
-                error={errors.email}
-              />
+                             <Input
+                 value={formData.email}
+                 onChange={(e) => handleInputChange('email', e.target.value)}
+                 placeholder="email@ejemplo.com"
+                 type="email"
+                 className={errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
+               />
               {errors.email && (
                 <p className="text-sm text-red-600 mt-1">{errors.email}</p>
               )}
@@ -230,56 +256,74 @@ export function ClientModal({
               placeholder="Comentarios adicionales sobre el cliente..."
               rows={3}
               className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        </form>
+                         />
+           </div>
+         </form>
+         </div>
 
-        <DialogFooter className="flex justify-between">
-          <div className="flex gap-2">
-            {client && (
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={loading}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                Eliminar Cliente
-              </Button>
-            )}
-          </div>
-          
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={loading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={loading || !formData.name.trim() || !formData.phone.trim()}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {loading ? 'Guardando...' : (client ? 'Actualizar' : 'Crear')}
-            </Button>
-          </div>
-        </DialogFooter>
+                 <DialogFooter className="bg-white border-t border-gray-100 p-6">
+           <div className="flex justify-between w-full">
+             <div>
+               {client && (
+                 <Button
+                   variant="destructive"
+                   onClick={handleDelete}
+                   disabled={loading}
+                   className="bg-red-600 hover:bg-red-700"
+                 >
+                   Eliminar Cliente
+                 </Button>
+               )}
+             </div>
+             
+             <div className="flex gap-2">
+               <Button
+                 variant="outline"
+                 onClick={onClose}
+                 disabled={loading}
+               >
+                 Cancelar
+               </Button>
+               <Button
+                 onClick={handleSubmit}
+                 disabled={loading || !formData.name.trim() || !formData.phone.trim()}
+                 className="bg-blue-600 hover:bg-blue-700"
+               >
+                 {loading ? 'Guardando...' : (client ? 'Actualizar' : 'Crear')}
+               </Button>
+             </div>
+           </div>
+         </DialogFooter>
       </DialogContent>
     </Dialog>
 
     {/* Delete Confirmation Dialog */}
     <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-      <AlertDialogContent>
+      <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
-          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Esta acción no se puede deshacer. Esto eliminará permanentemente el cliente "{client?.name}" del grupo.
+          <AlertDialogTitle className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-red-600" />
+            Eliminar Cliente
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-left">
+            <div className="space-y-2">
+              <p>¿Estás seguro de que quieres eliminar al cliente <strong>"{client?.name}"</strong>?</p>
+              <div className="bg-red-50 p-3 rounded-md border border-red-200">
+                <p className="text-sm text-red-700">
+                  ⚠️ Esta acción es <strong>irreversible</strong> y eliminará permanentemente el cliente del grupo.
+                </p>
+              </div>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={cancelDelete}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+        <AlertDialogFooter className="flex gap-2">
+          <AlertDialogCancel onClick={cancelDelete} className="flex-1">
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={confirmDelete} 
+            className="bg-red-600 hover:bg-red-700 flex-1"
+          >
             Eliminar
           </AlertDialogAction>
         </AlertDialogFooter>

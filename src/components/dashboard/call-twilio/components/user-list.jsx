@@ -89,6 +89,8 @@ export function UserList({
   const [selectedClient, setSelectedClient] = useState(null)
   const [isClientLoading, setIsClientLoading] = useState(false)
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [userToDelete, setUserToDelete] = useState(null)
   const [localSelectedUsers, setLocalSelectedUsers] = useState(new Set())
 
   // Sync selectedUsers prop with local state
@@ -143,8 +145,29 @@ export function UserList({
   }
 
   const handleDeleteUserFromGroup = async (user) => {
-    setSelectedClient(user)
-    setIsClientModalOpen(true)
+    console.log('Delete button clicked for user:', user)
+    setUserToDelete(user)
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return
+    
+    setIsClientLoading(true)
+    try {
+      await onDeleteClient(userToDelete.groupId, userToDelete.clientId)
+      setShowDeleteConfirm(false)
+      setUserToDelete(null)
+    } catch (error) {
+      console.error('Error deleting client:', error)
+    } finally {
+      setIsClientLoading(false)
+    }
+  }
+
+  const cancelDeleteUser = () => {
+    setShowDeleteConfirm(false)
+    setUserToDelete(null)
   }
 
   const handleCloseClientModal = () => {
@@ -443,7 +466,10 @@ export function UserList({
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleDeleteUserFromGroup(user)}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteUserFromGroup(user)
+                                }}
                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                 title="Eliminar cliente"
                               >
@@ -564,6 +590,50 @@ export function UserList({
               <>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Eliminar {localSelectedUsers.size}
+              </>
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* Individual Delete Confirmation Dialog */}
+    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <AlertDialogContent className="max-w-md">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-red-600" />
+            Eliminar Cliente
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-left">
+            <div className="space-y-2">
+              <p>¿Estás seguro de que quieres eliminar al cliente <strong>"{userToDelete?.name}"</strong>?</p>
+              <div className="bg-red-50 p-3 rounded-md border border-red-200">
+                <p className="text-sm text-red-700">
+                  ⚠️ Esta acción es <strong>irreversible</strong> y eliminará permanentemente el cliente del grupo.
+                </p>
+              </div>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex gap-2">
+          <AlertDialogCancel onClick={cancelDeleteUser} className="flex-1">
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={confirmDeleteUser} 
+            className="bg-red-600 hover:bg-red-700 flex-1"
+            disabled={isClientLoading}
+          >
+            {isClientLoading ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                Eliminando...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Eliminar
               </>
             )}
           </AlertDialogAction>
