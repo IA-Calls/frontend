@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
-import { Phone, Users, Play, Square, RefreshCw, Zap, Target, Download, Search, Filter, Plus, Edit, Trash2, FolderOpen, UserPlus, FileText } from "lucide-react"
+import { Phone, Users, Play, Square, RefreshCw, Zap, Target, Download, Search, Filter, Plus, Edit, Trash2, FolderOpen, UserPlus, FileText, CheckCircle } from "lucide-react"
 import { Button } from "./components/ui/button.tsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.tsx"
 import { UserList } from "./components/user-list.jsx"
@@ -17,6 +17,7 @@ import { GroupDocuments } from "./components/GroupDocuments.jsx"
 import { TestCallModal } from "./components/TestCallModal.jsx"
 import { Badge } from "./components/ui/badge.tsx"
 import { useToast } from "./use-toast.ts"
+import { ActivityLog } from "./components/ActivityLog.jsx"
 import config from "../../../config/environment.js"
 import { authService } from "../../../services/authService.js"
 
@@ -52,6 +53,10 @@ export default function CallDashboard() {
 
   // Estados para modal de prueba de llamada
   const [isTestCallModalOpen, setIsTestCallModalOpen] = useState(false)
+
+  // Estados para preparación de agente
+  const [agentPreparationStatus, setAgentPreparationStatus] = useState(new Map()) // Map<groupId, boolean>
+  const [isPreparingAgent, setIsPreparingAgent] = useState(false)
 
 
 
@@ -201,6 +206,11 @@ export default function CallDashboard() {
             message += ` ${result.data.processingErrors} filas tuvieron errores.`
           }
           
+          // Mostrar log de éxito
+          if (window.addActivityLog) {
+            window.addActivityLog(`✅ Grupo "${groupData.name}" creado exitosamente con ${result.data?.successfullyProcessed || 0} clientes`, 'success', 8000)
+          }
+          
           toast({
             title: "✅ Grupo creado con clientes",
             description: message,
@@ -237,6 +247,11 @@ export default function CallDashboard() {
         }
 
         result = await response.json()
+        
+        // Mostrar log de éxito
+        if (window.addActivityLog) {
+          window.addActivityLog(`✅ Grupo "${groupData.name}" ${editingGroup ? 'actualizado' : 'creado'} exitosamente`, 'success', 8000)
+        }
         
         // Show success message for regular group creation/update
         toast({
@@ -277,6 +292,11 @@ export default function CallDashboard() {
         throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
       }
 
+      // Mostrar log de éxito
+      if (window.addActivityLog) {
+        window.addActivityLog('✅ Grupo eliminado exitosamente', 'success', 8000)
+      }
+      
       toast({
         title: "✅ Grupo eliminado",
         description: "El grupo se eliminó correctamente.",
@@ -400,6 +420,11 @@ export default function CallDashboard() {
 
         if (result.Success === true && result["Call-sid"]) {
           const callId = result["Call-sid"]
+          // Mostrar log de llamada exitosa
+          if (window.addActivityLog) {
+            window.addActivityLog(`📞 Llamada iniciada a ${user.name}`, 'success', 4000)
+          }
+          
           toast({
             title: "📞 Llamada iniciada",
             description: `Llamando a ${user.name} (${user.phone}). SID: ${callId.slice(-8)}`,
@@ -428,6 +453,11 @@ export default function CallDashboard() {
                 }),
               ),
           )
+          // Mostrar log de error en llamada
+          if (window.addActivityLog) {
+            window.addActivityLog(`❌ Error al llamar a ${user.name}`, 'error', 6000)
+          }
+          
           toast({
             title: "❌ Error en llamada",
             description: `No se pudo llamar a ${user.name}`,
@@ -446,6 +476,11 @@ export default function CallDashboard() {
               }),
             ),
         )
+        // Mostrar log de error en llamada
+        if (window.addActivityLog) {
+          window.addActivityLog(`❌ Error de conexión al llamar a ${user.name}`, 'error', 6000)
+        }
+        
         toast({
           title: "❌ Error en llamada",
           description: `No se pudo llamar a ${user.name}: ${error.message}`,
@@ -466,11 +501,31 @@ export default function CallDashboard() {
       return
     }
 
+    // Verificar si el agente está preparado cuando hay un grupo seleccionado
+    if (selectedGroup && !isAgentPrepared(selectedGroup.id)) {
+      toast({
+        title: "⚠️ Agente no preparado",
+        description: "Debes preparar el agente antes de hacer llamadas.",
+        variant: "destructive",
+      })
+      
+      // Mostrar log de advertencia
+      if (window.addActivityLog) {
+        window.addActivityLog(`⚠️ No se pueden hacer llamadas: agente no preparado para el grupo "${selectedGroup.name}"`, 'warning', 8000)
+      }
+      return
+    }
+
     setIsCallingState(true)
     stopCallingRef.current = false
     const usersToCall = selectedGroup 
       ? filteredUsers.filter((user) => selectedUsers.has(user.id))
       : allUsers.filter((user) => selectedUsers.has(user.id))
+    // Mostrar log de inicio de llamadas masivas
+    if (window.addActivityLog) {
+      window.addActivityLog(`🚀 Iniciando ${usersToCall.length} llamadas masivas`, 'info', 5000)
+    }
+    
     toast({
       title: "🚀 Iniciando llamadas",
       description: `Iniciando ${usersToCall.length} llamadas...`,
@@ -497,6 +552,21 @@ export default function CallDashboard() {
       return
     }
 
+    // Verificar si el agente está preparado para este grupo
+    if (!isAgentPrepared(group.id)) {
+      toast({
+        title: "⚠️ Agente no preparado",
+        description: "Debes preparar el agente antes de hacer llamadas a este grupo.",
+        variant: "destructive",
+      })
+      
+      // Mostrar log de advertencia
+      if (window.addActivityLog) {
+        window.addActivityLog(`⚠️ No se pueden hacer llamadas: agente no preparado para el grupo "${group.name}"`, 'warning', 8000)
+      }
+      return
+    }
+
     setIsCallingState(true)
     stopCallingRef.current = false
     
@@ -516,6 +586,11 @@ export default function CallDashboard() {
       groupColor: group.color
     }))
 
+    // Mostrar log de inicio de llamadas de grupo
+    if (window.addActivityLog) {
+      window.addActivityLog(`🚀 Iniciando llamadas al grupo "${group.name}" (${groupUsers.length} clientes)`, 'info', 5000)
+    }
+    
     toast({
       title: "🚀 Iniciando llamadas de grupo",
       description: `Llamando a ${groupUsers.length} clientes del grupo "${group.name}"`,
@@ -535,6 +610,12 @@ export default function CallDashboard() {
   const handleStopCalls = useCallback(() => {
     stopCallingRef.current = true
     setIsCallingState(false)
+    
+    // Mostrar log de detención de llamadas
+    if (window.addActivityLog) {
+      window.addActivityLog('⏹️ Proceso de llamadas detenido', 'warning', 5000)
+    }
+    
     toast({
       title: "⏹️ Llamadas detenidas",
       description: "Se ha detenido el proceso de llamadas.",
@@ -593,6 +674,11 @@ export default function CallDashboard() {
 
       const result = await response.json()
       
+      // Mostrar log de éxito
+      if (window.addActivityLog) {
+        window.addActivityLog(`✅ Cliente "${clientData.name}" actualizado exitosamente`, 'success', 6000)
+      }
+      
       toast({
         title: "✅ Cliente actualizado",
         description: `El cliente "${clientData.name}" se actualizó correctamente.`,
@@ -615,6 +701,89 @@ export default function CallDashboard() {
     }
   }, [fetchGroups, toast])
 
+  // Función para preparar agente
+  const prepareAgent = useCallback(async (groupId) => {
+    if (!groupId) {
+      toast({
+        title: "❌ Error",
+        description: "ID de grupo no válido.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Obtener el ID del usuario logueado
+    const userId = authService.getClientId()
+    if (!userId) {
+      toast({
+        title: "❌ Error",
+        description: "No se pudo obtener el ID del usuario. Por favor, inicia sesión nuevamente.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsPreparingAgent(true)
+    
+    try {
+      const response = await fetch(`${GROUPS_API_URL}/${groupId}/prepare-agent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId: userId })
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        // Marcar el agente como preparado para este grupo
+        setAgentPreparationStatus(prev => new Map(prev.set(groupId, true)))
+        
+        // Mostrar log de éxito
+        if (window.addActivityLog) {
+          window.addActivityLog(`✅ ${result.message}`, 'success', 8000)
+        }
+        
+        toast({
+          title: "✅ Agente preparado",
+          description: result.message,
+        })
+      } else {
+        // Mostrar log de error
+        if (window.addActivityLog) {
+          window.addActivityLog(`❌ ${result.message}`, 'error', 8000)
+        }
+        
+        toast({
+          title: "❌ Error",
+          description: result.message,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Error preparing agent:', error)
+      
+      // Mostrar log de error
+      if (window.addActivityLog) {
+        window.addActivityLog('❌ Error de conexión al preparar agente', 'error', 8000)
+      }
+      
+      toast({
+        title: "❌ Error de conexión",
+        description: "No se pudo conectar con el servidor.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsPreparingAgent(false)
+    }
+  }, [toast])
+
+  // Función para verificar si el agente está preparado
+  const isAgentPrepared = useCallback((groupId) => {
+    return agentPreparationStatus.get(groupId) || false
+  }, [agentPreparationStatus])
+
   // Eliminar cliente
   const handleDeleteClient = useCallback(async (groupId, clientId) => {
     try {
@@ -627,6 +796,11 @@ export default function CallDashboard() {
         throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
       }
 
+      // Mostrar log de éxito
+      if (window.addActivityLog) {
+        window.addActivityLog('✅ Cliente eliminado exitosamente', 'success', 6000)
+      }
+      
       toast({
         title: "✅ Cliente eliminado",
         description: "El cliente se eliminó correctamente.",
@@ -915,18 +1089,41 @@ export default function CallDashboard() {
                        <Badge variant="secondary">
                          {group.clients ? group.clients.length : 0} clientes
                        </Badge>
-                      <Button
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleCallGroup(group)
-                        }}
-                                                 disabled={isCallingState || !group.clients || group.clients.length === 0}
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        <Phone className="h-3 w-3 mr-1" />
-                        Llamar Grupo
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            prepareAgent(group.id)
+                          }}
+                          disabled={isPreparingAgent || isAgentPrepared(group.id)}
+                          className={`${
+                            isAgentPrepared(group.id) 
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : 'bg-purple-600 hover:bg-purple-700'
+                          } text-white`}
+                        >
+                          {isPreparingAgent ? (
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                          ) : isAgentPrepared(group.id) ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : (
+                            <Zap className="h-3 w-3" />
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleCallGroup(group)
+                          }}
+                          disabled={isCallingState || !group.clients || group.clients.length === 0 || !isAgentPrepared(group.id)}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <Phone className="h-3 w-3 mr-1" />
+                          Llamar Grupo
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -973,6 +1170,35 @@ export default function CallDashboard() {
                 <Phone className="h-4 w-4 mr-2" />
                 Probar Llamada
               </Button>
+
+              {selectedGroup && (
+                <Button
+                  onClick={() => prepareAgent(selectedGroup.id)}
+                  disabled={isCallingState || isPreparingAgent || isAgentPrepared(selectedGroup.id)}
+                  className={`${
+                    isAgentPrepared(selectedGroup.id) 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-purple-600 hover:bg-purple-700'
+                  } text-white`}
+                >
+                  {isPreparingAgent ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Preparando...
+                    </>
+                  ) : isAgentPrepared(selectedGroup.id) ? (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Agente Preparado
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-4 w-4 mr-2" />
+                      Preparar Agente
+                    </>
+                  )}
+                </Button>
+              )}
 
               {isCallingState && (
                 <Button
@@ -1084,6 +1310,9 @@ export default function CallDashboard() {
           onClose={() => setIsTestCallModalOpen(false)}
           onStartCall={handleTestCall}
         />
+
+        {/* Componente de Logs de Actividad */}
+        <ActivityLog />
       </div>
     </div>
   )
