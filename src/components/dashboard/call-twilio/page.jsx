@@ -1147,14 +1147,14 @@ export default function CallDashboard() {
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Grupos de Clientes</h1>
                     <p className="text-gray-600">Gestiona y organiza tus campañas de llamadas</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    {/* Buscador */}
-                    <div className="mb-6">
-                      <div className="relative max-w-md">
+                    <div className="flex items-center gap-3">
+                      {/* Buscador */}
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-full flex-1">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
                           type="text"
-                          placeholder="Buscar grupos por nombre o descripción..."
+                          placeholder="Buscar grupos..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           className="pl-10 pr-4 py-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -1389,236 +1389,211 @@ export default function CallDashboard() {
 
         {/* Vista de Detalle del Grupo */}
         {currentView === 'group-detail' && selectedGroup && (
-          <div className="space-y-6">
-            {/* Header del Grupo */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-              <div className="p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-4">
+          <div className="w-full flex-1 flex flex-col overflow-hidden">
+            {/* Header del Grupo - Más Compacto */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm w-full flex-shrink-0 mb-4">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
                     <Button
-                      onClick={handleBackToGroups}
                       variant="ghost"
-                      className="text-gray-600 hover:text-gray-900"
+                      onClick={handleBackToGroups}
+                      className="text-gray-600 hover:text-gray-800 p-2"
                     >
-                      <ArrowLeft className="h-5 w-5 mr-2" />
-                      Volver
+                      <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>
-                      <h1 className="text-3xl font-bold text-gray-900">{selectedGroup.name}</h1>
-                      <p className="text-gray-600 mt-1">{selectedGroup.description}</p>
+                      <h2 className="text-xl font-semibold text-gray-900">{selectedGroup.name}</h2>
+                      <p className="text-gray-500 text-sm line-clamp-1 max-w-2xl">
+                        {selectedGroup.description}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Estadísticas Rápidas */}
-                  <div className="flex gap-4">
-                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-5 w-5 text-blue-600" />
-                        <div>
-                          <p className="text-sm text-blue-600 font-medium">Total Llamadas</p>
-                          <p className="text-2xl font-bold text-blue-900">
-                            {filteredUsers.length}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                        <div>
-                          <p className="text-sm text-green-600 font-medium">Exitosas</p>
-                          <p className="text-2xl font-bold text-green-900">
-                            {Array.from(callStatuses.values()).filter(s => s.status === "completed").length}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-                      <div className="flex items-center gap-2">
-                        <XCircle className="h-5 w-5 text-red-600" />
-                        <div>
-                          <p className="text-sm text-red-600 font-medium">Fallidas</p>
-                          <p className="text-2xl font-bold text-red-900">
-                            {Array.from(callStatuses.values()).filter(s => s.status === "failed").length}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Controles de Acción */}
-                <div className="flex flex-wrap items-center gap-3">
-                  <Button
-                    onClick={isAgentPrepared(selectedGroup.id) ?
-                      () => startGroupCall(selectedGroup.id) :
-                      () => prepareAgent(selectedGroup.id)
-                    }
-                    disabled={isCallingState || isPreparingAgent}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-sm"
-                  >
-                    {isCallingState ? (
-                      <>
-                        <Square className="h-5 w-5 mr-2" />
-                        Llamando...
-                      </>
-                    ) : isAgentPrepared(selectedGroup.id) ? (
-                      <>
-                        <Play className="h-5 w-5 mr-2" />
-                        Llamar Grupo
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="h-5 w-5 mr-2" />
-                        Preparar Agente
-                      </>
-                    )}
-                  </Button>
-
-                  <Button
-                    onClick={() => setIsTestCallModalOpen(true)}
-                    disabled={isCallingState}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-sm"
-                  >
-                    <Phone className="h-5 w-5 mr-2" />
-                    Probar Llamada
-                  </Button>
-
-                  {isCallingState && (
+                  {/* Botones de Acción */}
+                  <div className="flex items-center gap-2">
                     <Button
-                      onClick={handleStopCalls}
-                      variant="destructive"
-                      className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg shadow-sm"
+                      onClick={isAgentPrepared(selectedGroup.id) ?
+                        () => startGroupCall(selectedGroup.id) :
+                        () => prepareAgent(selectedGroup.id)
+                      }
+                      disabled={isPreparingAgent || isCallingState}
+                      size="sm"
+                      className={`${
+                        isAgentPrepared(selectedGroup.id)
+                          ? 'bg-green-600 hover:bg-green-700'
+                          : 'bg-blue-600 hover:bg-blue-700'
+                      } text-white`}
                     >
-                      <Square className="h-5 w-5 mr-2" />
-                      Detener Llamadas
+                      {isPreparingAgent ? (
+                        <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                      ) : isAgentPrepared(selectedGroup.id) ? (
+                        <Phone className="h-3 w-3 mr-1" />
+                      ) : (
+                        <Zap className="h-3 w-3 mr-1" />
+                      )}
+                      {isAgentPrepared(selectedGroup.id) ? 'Llamar Grupo' : 'Preparar Agente'}
                     </Button>
-                  )}
+                    <Button
+                      onClick={() => setIsTestCallModalOpen(true)}
+                      variant="outline"
+                      size="sm"
+                      className="border-green-300 text-green-700 hover:bg-green-50"
+                    >
+                      <Phone className="h-3 w-3 mr-1" />
+                      Probar Llamada
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Tabla de Usuarios */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-              <div className="p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Clientes del Grupo</h2>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={handleSelectAll}
-                      variant="outline"
-                      className="border-gray-300"
-                    >
-                      Seleccionar Todos
-                    </Button>
-                    <Button
-                      onClick={handleDeselectAll}
-                      variant="outline"
-                      className="border-gray-300"
-                    >
-                      Deseleccionar
-                    </Button>
-                  </div>
-                </div>
+            {/* Contenido Principal */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm w-full flex-1 overflow-hidden">
+              <Tabs defaultValue="users" className="w-full h-full flex flex-col">
+                <TabsList className="w-full justify-start border-b rounded-none p-0 h-10">
+                  <TabsTrigger value="users" className="flex items-center gap-2 px-4 py-2 text-sm data-[state=active]:border-b-2 data-[state=active]:border-blue-500">
+                    <Users className="h-3 w-3" />
+                    Clientes del Grupo
+                  </TabsTrigger>
+                  <TabsTrigger value="monitor" className="flex items-center gap-2 px-4 py-2 text-sm data-[state=active]:border-b-2 data-[state=active]:border-blue-500">
+                    <Phone className="h-3 w-3" />
+                    Monitor de Llamadas
+                  </TabsTrigger>
+                </TabsList>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-4 px-6 font-semibold text-gray-900">Nombre</th>
-                        <th className="text-left py-4 px-6 font-semibold text-gray-900">Teléfono</th>
-                        <th className="text-left py-4 px-6 font-semibold text-gray-900">Estado</th>
-                        <th className="text-left py-4 px-6 font-semibold text-gray-900">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredUsers.map((user) => {
-                        const status = callStatuses.get(user.id)
-                        return (
-                          <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-3">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedUsers.has(user.id)}
-                                  onChange={(e) => handleUserSelection(user.id, e.target.checked)}
-                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                                <div>
-                                  <p className="font-medium text-gray-900">{user.name}</p>
-                                  <p className="text-sm text-gray-500">{user.email}</p>
+                <TabsContent value="users" className="flex-1 p-4 overflow-y-auto">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Clientes del Grupo</h3>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleSelectAll}
+                        variant="outline"
+                        size="sm"
+                        className="border-gray-300"
+                      >
+                        Seleccionar Todos
+                      </Button>
+                      <Button
+                        onClick={handleDeselectAll}
+                        variant="outline"
+                        size="sm"
+                        className="border-gray-300"
+                      >
+                        Deseleccionar
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 font-semibold text-gray-900 text-sm">Nombre</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-900 text-sm">Teléfono</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-900 text-sm">Estado</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-900 text-sm">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredUsers.map((user) => {
+                          const status = callStatuses.get(user.id)
+                          return (
+                            <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedUsers.has(user.id)}
+                                    onChange={(e) => handleUserSelection(user.id, e.target.checked)}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <div>
+                                    <p className="font-medium text-gray-900 text-sm">{user.name}</p>
+                                    <p className="text-xs text-gray-500">{user.email}</p>
+                                  </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="py-4 px-6">
-                              <p className="text-gray-900">{user.phone}</p>
-                            </td>
-                            <td className="py-4 px-6">
-                              {status ? (
-                                <Badge
-                                  variant="secondary"
-                                  className={
-                                    status.status === 'completed'
-                                      ? 'bg-green-100 text-green-800'
-                                      : status.status === 'failed'
-                                        ? 'bg-red-100 text-red-800'
-                                        : 'bg-yellow-100 text-yellow-800'
-                                  }
-                                >
-                                  {status.status === 'completed' ? 'Completado' :
-                                    status.status === 'failed' ? 'Fallido' :
-                                      status.status === 'pending' ? 'Pendiente' :
-                                        status.status === 'initiated' ? 'Iniciada' :
-                                          status.status}
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary" className="bg-gray-100 text-gray-800">
-                                  No Llamado
-                                </Badge>
-                              )}
-                            </td>
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    // Lógica para editar cliente
-                                  }}
-                                  className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
-                                >
-                                  <Edit className="h-3 w-3 mr-1" />
-                                  Editar
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    // Lógica para eliminar cliente
-                                  }}
-                                  className="border-red-300 text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-3 w-3 mr-1" />
-                                  Eliminar
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={() => makeCall(user)}
-                                  disabled={isCallingState}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                                >
-                                  <Phone className="h-3 w-3 mr-1" />
-                                  Llamar
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <p className="text-gray-900 text-sm">{user.phone}</p>
+                              </td>
+                              <td className="py-3 px-4">
+                                {status ? (
+                                  <Badge
+                                    variant="secondary"
+                                    className={
+                                      status.status === 'completed'
+                                        ? 'bg-green-100 text-green-800'
+                                        : status.status === 'failed'
+                                          ? 'bg-red-100 text-red-800'
+                                          : 'bg-yellow-100 text-yellow-800'
+                                    }
+                                  >
+                                    {status.status === 'completed' ? 'Completado' :
+                                      status.status === 'failed' ? 'Fallido' :
+                                        status.status === 'pending' ? 'Pendiente' :
+                                          status.status === 'initiated' ? 'Iniciada' :
+                                            status.status}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+                                    No Llamado
+                                  </Badge>
+                                )}
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      // Lógica para editar cliente
+                                    }}
+                                    className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                                  >
+                                    <Edit className="h-3 w-3 mr-1" />
+                                    Editar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      // Lógica para eliminar cliente
+                                    }}
+                                    className="border-red-300 text-red-700 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Eliminar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => makeCall(user)}
+                                    disabled={isCallingState}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                  >
+                                    <Phone className="h-3 w-3 mr-1" />
+                                    Llamar
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="monitor" className="flex-1 p-4 overflow-y-auto">
+                  <CallMonitor
+                    users={filteredUsers}
+                    callStatuses={callStatuses}
+                    totalUsers={filteredUsers.length}
+                    groupId={selectedGroup?.id}
+                    currentBatchId={currentBatchId}
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         )}
@@ -1635,44 +1610,7 @@ export default function CallDashboard() {
 
 
 
-        {/* Contenido Principal - Solo visible en vista de detalle */}
-        {currentView === 'group-detail' && (
-          <Tabs defaultValue="monitor" className="space-y-6">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-              <div className="p-6 border-b border-gray-200">
-                <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg max-w-md">
-                  <TabsTrigger
-                    value="monitor"
-                    className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
-                  >
-                    <Phone className="h-4 w-4 mr-2" />
-                    Monitor de Llamadas
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="documents"
-                    className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Documentos
-                  </TabsTrigger>
-                </TabsList>
-              </div>
 
-              <TabsContent value="monitor" className="p-6">
-                <CallMonitor
-                  users={filteredUsers}
-                  callStatuses={callStatuses}
-                  totalUsers={filteredUsers.length}
-                  groupId={selectedGroup?.id}
-                />
-              </TabsContent>
-
-              <TabsContent value="documents" className="p-6">
-                <GroupDocuments />
-              </TabsContent>
-            </div>
-          </Tabs>
-        )}
 
         {/* Modal de Confirmación para Eliminar Grupo */}
         <DeleteGroupModal

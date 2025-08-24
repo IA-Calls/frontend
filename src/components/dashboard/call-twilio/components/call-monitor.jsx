@@ -247,70 +247,39 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
   const progressPercentage = stats.total > 0 ? (stats.called / stats.total) * 100 : 0
 
   return (
-    <div className="space-y-6">
-   
-
-      {/* Barra de progreso */}
-      <Card className="bg-white border border-gray-200">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Progreso General</CardTitle>
-        </CardHeader>    
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
-         <Card className="bg-white border border-gray-200">
-           <CardContent className="p-6">
-             <div className="flex items-center justify-between">
-               <div>
-                 <p className="text-sm font-medium text-gray-600">Total Llamadas</p>
-                 <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-               </div>
-               <div className="p-3 bg-blue-100 rounded-lg">
-                 <Phone className="h-6 w-6 text-blue-600" />
-               </div>
-             </div>
-           </CardContent>
-         </Card>
-
-         <Card className="bg-white border border-gray-200">
-           <CardContent className="p-6">
-             <div className="flex items-center justify-between">
-               <div>
-                 <p className="text-sm font-medium text-gray-600">Completadas</p>
-                 <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
-               </div>
-               <div className="p-3 bg-green-100 rounded-lg">
-                 <CheckCircle className="h-6 w-6 text-green-600" />
-               </div>
-             </div>
-           </CardContent>
-         </Card>
-
-         <Card className="bg-white border border-gray-200">
-           <CardContent className="p-6">
-             <div className="flex items-center justify-between">
-               <div>
-                 <p className="text-sm font-medium text-gray-600">Tasa de Éxito</p>
-                 <p className="text-2xl font-bold text-gray-900">{stats.successRate !== undefined ? `${stats.successRate.toFixed(1)}%` : 'N/A'}</p>
-               </div>
-               <div className="p-3 bg-green-100 rounded-lg">
-                 <CheckCircle className="h-6 w-6 text-green-600" />
-               </div>
-             </div>
-           </CardContent>
-         </Card>
-       </div>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Llamadas realizadas</span>
-              <span className="font-medium text-gray-900">
-                {stats.called} de {stats.total}
-              </span>
-            </div>
-            <Progress value={progressPercentage} className="h-3" />
-            <p className="text-xs text-gray-500">{progressPercentage.toFixed(1)}% completado</p>
+    <div className="space-y-4">
+      {/* Estadísticas Compactas */}
+      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <Phone className="h-4 w-4 text-blue-600" />
+            <span className="text-sm text-gray-600">Total:</span>
+            <span className="font-medium text-gray-900">{stats.total}</span>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <span className="text-sm text-gray-600">Completadas:</span>
+            <span className="font-medium text-gray-900">{stats.completed}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Progreso:</span>
+            <span className="font-medium text-gray-900">{progressPercentage.toFixed(0)}%</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {isConnected ? (
+            <div className="flex items-center gap-1 text-green-600">
+              <Wifi className="h-3 w-3" />
+              <span className="text-xs">Conectado</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 text-red-600">
+              <WifiOff className="h-3 w-3" />
+              <span className="text-xs">Desconectado</span>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Lista de llamadas recientes */}
       <Card className="bg-white border border-gray-200">
