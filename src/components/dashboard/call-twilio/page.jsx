@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
-import { Phone, Users, Play, Square, RefreshCw, Zap, Target, Download, Search, Filter, Plus, Edit, Trash2, FolderOpen, UserPlus, FileText, CheckCircle } from "lucide-react"
+import { Phone, Users, Play, Square, RefreshCw, Zap, Target, Download, Search, Filter, Plus, Edit, Trash2, FolderOpen, UserPlus, FileText, CheckCircle, ArrowLeft, XCircle, X } from "lucide-react"
 import { Button } from "./components/ui/button.tsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.tsx"
 import { UserList } from "./components/user-list.jsx"
@@ -38,6 +38,9 @@ export default function CallDashboard() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  // Estado para navegación de vistas
+  const [currentView, setCurrentView] = useState('groups') // 'groups' | 'group-detail'
+
   // Estados para gestión de grupos
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false)
   const [editingGroup, setEditingGroup] = useState(null)
@@ -57,7 +60,7 @@ export default function CallDashboard() {
   // Estados para preparación de agente
   const [agentPreparationStatus, setAgentPreparationStatus] = useState(new Map()) // Map<groupId, boolean>
   const [isPreparingAgent, setIsPreparingAgent] = useState(false)
-  
+
   // Estados para monitor de batch
   const [currentBatchId, setCurrentBatchId] = useState(null)
 
@@ -75,6 +78,7 @@ export default function CallDashboard() {
   // Estados para filtros
   const [filterCategory, setFilterCategory] = useState("all")
   const [filterCallStatus, setFilterCallStatus] = useState("all")
+  const [searchTerm, setSearchTerm] = useState("")
 
   const { toast } = useToast()
   // Limpiar batchId cuando cambie el grupo seleccionado
@@ -93,14 +97,14 @@ export default function CallDashboard() {
     try {
       // Obtener el clientID del usuario autenticado
       const clientId = authService.getClientId()
-      
+
       // Construir la URL con o sin clientID
-      const url = clientId 
+      const url = clientId
         ? `${CLIENTS_PENDING_API_URL}/${clientId}`
         : CLIENTS_PENDING_API_URL
-      
+
       console.log('Fetching groups from URL:', url)
-      
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -118,7 +122,7 @@ export default function CallDashboard() {
       // La API ahora devuelve un array directo de grupos o un objeto con data
       const groupsArray = Array.isArray(data) ? data : (data.data || [])
       setGroups(groupsArray)
-      
+
       setPagination({
         currentPage: 1, // El endpoint no maneja paginación por ahora
         totalPages: 1,
@@ -133,7 +137,7 @@ export default function CallDashboard() {
       })
     } catch (error) {
       console.error("Error fetching groups:", error)
-      
+
       // Manejar error específico de autenticación
       if (error.message.includes('401') || error.message.includes('Unauthorized')) {
         setError('Sesión expirada. Por favor, inicia sesión nuevamente.')
@@ -155,10 +159,10 @@ export default function CallDashboard() {
     }
   }, [toast])
 
-    // Crear o actualizar grupo
+  // Crear o actualizar grupo
   const saveGroup = useCallback(async (formData = null) => {
     const dataToSave = formData || groupForm
-    
+
     if (!dataToSave.name.trim()) {
       toast({
         title: "⚠️ Campo requerido",
@@ -171,26 +175,26 @@ export default function CallDashboard() {
     try {
       // Extract file data if present (for new group creation)
       const { file, filename, ...groupData } = dataToSave
-      
+
       let result
-      
+
       // If file is provided and this is a new group, create group with Excel processing
       if (file && filename && !editingGroup) {
         try {
           console.log('Creating group with Excel processing')
-          
+
           // Create group with Excel data in the new format
           const groupDataWithExcel = {
             ...groupData,
             base64: file,
             document_name: filename
           }
-          
+
           console.log('Creating group with data:', {
             ...groupDataWithExcel,
             base64: groupDataWithExcel.base64 ? `${groupDataWithExcel.base64.substring(0, 50)}...` : 'No base64'
           })
-          
+
           const createGroupResponse = await fetch(GROUPS_API_URL, {
             method: 'POST',
             headers: {
@@ -206,28 +210,28 @@ export default function CallDashboard() {
 
           result = await createGroupResponse.json()
           console.log('Group created successfully with Excel processing:', result)
-          
+
           // Show success message for group creation with Excel
           let message = `El grupo "${groupData.name}" se creó correctamente.`
-          
+
           if (result.data?.successfullyProcessed) {
             message += ` Se procesaron ${result.data.successfullyProcessed} clientes exitosamente.`
           }
-          
+
           if (result.data?.processingErrors && result.data.processingErrors > 0) {
             message += ` ${result.data.processingErrors} filas tuvieron errores.`
           }
-          
+
           // Mostrar log de éxito
           if (window.addActivityLog) {
             window.addActivityLog(`✅ Grupo "${groupData.name}" creado exitosamente con ${result.data?.successfullyProcessed || 0} clientes`, 'success', 8000)
           }
-          
+
           toast({
             title: "✅ Grupo creado con clientes",
             description: message,
           })
-          
+
         } catch (error) {
           console.error('Error creating group with Excel:', error)
           toast({
@@ -239,12 +243,12 @@ export default function CallDashboard() {
         }
       } else {
         // Regular group creation/update without file
-        const url = editingGroup 
+        const url = editingGroup
           ? `${GROUPS_API_URL}/${editingGroup.id}`
           : GROUPS_API_URL
 
         console.log('Creating/updating group with data:', groupData)
-        
+
         const response = await fetch(url, {
           method: editingGroup ? 'PUT' : 'POST',
           headers: {
@@ -259,12 +263,12 @@ export default function CallDashboard() {
         }
 
         result = await response.json()
-        
+
         // Mostrar log de éxito
         if (window.addActivityLog) {
           window.addActivityLog(`✅ Grupo "${groupData.name}" ${editingGroup ? 'actualizado' : 'creado'} exitosamente`, 'success', 8000)
         }
-        
+
         // Show success message for regular group creation/update
         toast({
           title: editingGroup ? "✅ Grupo actualizado" : "✅ Grupo creado",
@@ -275,12 +279,12 @@ export default function CallDashboard() {
       setIsGroupDialogOpen(false)
       setEditingGroup(null)
       setGroupForm({ name: '', description: '', prompt: '', color: '#3B82F6', favorite: false })
-      
+
       // Refresh groups to show the new clients
       setTimeout(() => {
         fetchGroups()
       }, 1000)
-      
+
     } catch (error) {
       console.error('Error saving group:', error)
       toast({
@@ -291,7 +295,7 @@ export default function CallDashboard() {
     }
   }, [groupForm, editingGroup, fetchGroups, toast])
 
-    // Eliminar grupo
+  // Eliminar grupo
   const deleteGroup = useCallback(async (groupId) => {
     setIsDeletingGroup(true)
     try {
@@ -308,7 +312,7 @@ export default function CallDashboard() {
       if (window.addActivityLog) {
         window.addActivityLog('✅ Grupo eliminado exitosamente', 'success', 8000)
       }
-      
+
       toast({
         title: "✅ Grupo eliminado",
         description: "El grupo se eliminó correctamente.",
@@ -338,14 +342,14 @@ export default function CallDashboard() {
   const allUsers = useMemo(() => {
     const users = []
     const seenUsers = new Set() // Para evitar duplicados
-    
+
     groups.forEach(group => {
       // Verificar si el grupo tiene clientes
       if (group.clients && Array.isArray(group.clients)) {
         group.clients.forEach(client => {
           // Crear un ID único combinando client.id y group.id
           const uniqueId = `${client.id}-${group.id}`
-          
+
           // Solo agregar si no hemos visto este usuario en este grupo antes
           if (!seenUsers.has(uniqueId)) {
             seenUsers.add(uniqueId)
@@ -436,7 +440,7 @@ export default function CallDashboard() {
           if (window.addActivityLog) {
             window.addActivityLog(`📞 Llamada iniciada a ${user.name}`, 'success', 4000)
           }
-          
+
           toast({
             title: "📞 Llamada iniciada",
             description: `Llamando a ${user.name} (${user.phone}). SID: ${callId.slice(-8)}`,
@@ -469,7 +473,7 @@ export default function CallDashboard() {
           if (window.addActivityLog) {
             window.addActivityLog(`❌ Error al llamar a ${user.name}`, 'error', 6000)
           }
-          
+
           toast({
             title: "❌ Error en llamada",
             description: `No se pudo llamar a ${user.name}`,
@@ -492,7 +496,7 @@ export default function CallDashboard() {
         if (window.addActivityLog) {
           window.addActivityLog(`❌ Error de conexión al llamar a ${user.name}`, 'error', 6000)
         }
-        
+
         toast({
           title: "❌ Error en llamada",
           description: `No se pudo llamar a ${user.name}: ${error.message}`,
@@ -520,7 +524,7 @@ export default function CallDashboard() {
         description: "Debes preparar el agente antes de hacer llamadas.",
         variant: "destructive",
       })
-      
+
       // Mostrar log de advertencia
       if (window.addActivityLog) {
         window.addActivityLog(`⚠️ No se pueden hacer llamadas: agente no preparado para el grupo "${selectedGroup.name}"`, 'warning', 8000)
@@ -530,14 +534,14 @@ export default function CallDashboard() {
 
     setIsCallingState(true)
     stopCallingRef.current = false
-    const usersToCall = selectedGroup 
+    const usersToCall = selectedGroup
       ? filteredUsers.filter((user) => selectedUsers.has(user.id))
       : allUsers.filter((user) => selectedUsers.has(user.id))
     // Mostrar log de inicio de llamadas masivas
     if (window.addActivityLog) {
       window.addActivityLog(`🚀 Iniciando ${usersToCall.length} llamadas masivas`, 'info', 5000)
     }
-    
+
     toast({
       title: "🚀 Iniciando llamadas",
       description: `Iniciando ${usersToCall.length} llamadas...`,
@@ -571,7 +575,7 @@ export default function CallDashboard() {
         description: "Debes preparar el agente antes de hacer llamadas a este grupo.",
         variant: "destructive",
       })
-      
+
       // Mostrar log de advertencia
       if (window.addActivityLog) {
         window.addActivityLog(`⚠️ No se pueden hacer llamadas: agente no preparado para el grupo "${group.name}"`, 'warning', 8000)
@@ -581,7 +585,7 @@ export default function CallDashboard() {
 
     setIsCallingState(true)
     stopCallingRef.current = false
-    
+
     const groupUsers = group.clients.map(client => ({
       id: `${client.id}-${group.id}`, // ID único
       clientId: client.id, // ID original del cliente
@@ -602,7 +606,7 @@ export default function CallDashboard() {
     if (window.addActivityLog) {
       window.addActivityLog(`🚀 Iniciando llamadas al grupo "${group.name}" (${groupUsers.length} clientes)`, 'info', 5000)
     }
-    
+
     toast({
       title: "🚀 Iniciando llamadas de grupo",
       description: `Llamando a ${groupUsers.length} clientes del grupo "${group.name}"`,
@@ -622,12 +626,12 @@ export default function CallDashboard() {
   const handleStopCalls = useCallback(() => {
     stopCallingRef.current = true
     setIsCallingState(false)
-    
+
     // Mostrar log de detención de llamadas
     if (window.addActivityLog) {
       window.addActivityLog('⏹️ Proceso de llamadas detenido', 'warning', 5000)
     }
-    
+
     toast({
       title: "⏹️ Llamadas detenidas",
       description: "Se ha detenido el proceso de llamadas.",
@@ -640,15 +644,15 @@ export default function CallDashboard() {
       // Aquí iría la lógica real para iniciar la llamada de prueba
       // Por ahora simulamos una llamada
       console.log('Iniciando llamada de prueba:', callData)
-      
+
       // Simular delay de la llamada
       await new Promise(resolve => setTimeout(resolve, 2000))
-      
+
       toast({
         title: "✅ Llamada de prueba completada",
         description: `Llamada a ${callData.name} finalizada exitosamente.`,
       })
-      
+
       setIsTestCallModalOpen(false)
     } catch (error) {
       console.error('Error en llamada de prueba:', error)
@@ -668,6 +672,18 @@ export default function CallDashboard() {
     fetchGroups()
   }, [fetchGroups])
 
+  // Funciones de navegación
+  const handleGroupSelect = useCallback((group) => {
+    setSelectedGroup(group)
+    setCurrentView('group-detail')
+  }, [])
+
+  const handleBackToGroups = useCallback(() => {
+    setCurrentView('groups')
+    setSelectedGroup(null)
+    setSelectedUsers(new Set())
+  }, [])
+
   // Actualizar cliente
   const handleUpdateClient = useCallback(async (groupId, clientId, clientData) => {
     try {
@@ -685,12 +701,12 @@ export default function CallDashboard() {
       }
 
       const result = await response.json()
-      
+
       // Mostrar log de éxito
       if (window.addActivityLog) {
         window.addActivityLog(`✅ Cliente "${clientData.name}" actualizado exitosamente`, 'success', 6000)
       }
-      
+
       toast({
         title: "✅ Cliente actualizado",
         description: `El cliente "${clientData.name}" se actualizó correctamente.`,
@@ -700,7 +716,7 @@ export default function CallDashboard() {
       setTimeout(() => {
         fetchGroups()
       }, 500)
-      
+
       return result
     } catch (error) {
       console.error('Error updating client:', error)
@@ -736,7 +752,7 @@ export default function CallDashboard() {
     }
 
     setIsPreparingAgent(true)
-    
+
     try {
       const response = await fetch(`${GROUPS_API_URL}/${groupId}/prepare-agent`, {
         method: 'POST',
@@ -747,16 +763,16 @@ export default function CallDashboard() {
       })
 
       const result = await response.json()
-      
+
       if (result.success) {
         // Marcar el agente como preparado para este grupo
         setAgentPreparationStatus(prev => new Map(prev.set(groupId, true)))
-        
+
         // Mostrar log de éxito
         if (window.addActivityLog) {
           window.addActivityLog(`✅ ${result.message}`, 'success', 8000)
         }
-        
+
         toast({
           title: "✅ Agente preparado",
           description: result.message,
@@ -766,7 +782,7 @@ export default function CallDashboard() {
         if (window.addActivityLog) {
           window.addActivityLog(`❌ ${result.message}`, 'error', 8000)
         }
-        
+
         toast({
           title: "❌ Error",
           description: result.message,
@@ -775,12 +791,12 @@ export default function CallDashboard() {
       }
     } catch (error) {
       console.error('Error preparing agent:', error)
-      
+
       // Mostrar log de error
       if (window.addActivityLog) {
         window.addActivityLog('❌ Error de conexión al preparar agente', 'error', 8000)
       }
-      
+
       toast({
         title: "❌ Error de conexión",
         description: "No se pudo conectar con el servidor.",
@@ -820,28 +836,28 @@ export default function CallDashboard() {
     try {
       const response = await fetch(`${GROUPS_API_URL}/${groupId}/call`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json' 
+        headers: {
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           userId: userId,
           agentPhoneNumberId: phoneNumberId
         })
       });
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         // Mostrar log de éxito
         if (window.addActivityLog) {
           window.addActivityLog(`✅ ${result.message}`, 'success', 8000)
         }
-        
+
         toast({
           title: "✅ Llamadas iniciadas",
           description: result.message,
         })
-        
+
         // Guardar el batchId para el monitor
         if (result.data?.batchId) {
           setCurrentBatchId(result.data.batchId);
@@ -852,7 +868,7 @@ export default function CallDashboard() {
         if (window.addActivityLog) {
           window.addActivityLog(`❌ ${result.message}`, 'error', 8000)
         }
-        
+
         toast({
           title: "❌ Error",
           description: result.message,
@@ -861,12 +877,12 @@ export default function CallDashboard() {
       }
     } catch (error) {
       console.error('Error starting group call:', error)
-      
+
       // Mostrar log de error
       if (window.addActivityLog) {
         window.addActivityLog('❌ Error de conexión al iniciar llamadas de grupo', 'error', 8000)
       }
-      
+
       toast({
         title: "❌ Error de conexión",
         description: "No se pudo conectar con el servidor.",
@@ -891,7 +907,7 @@ export default function CallDashboard() {
       if (window.addActivityLog) {
         window.addActivityLog('✅ Cliente eliminado exitosamente', 'success', 6000)
       }
-      
+
       toast({
         title: "✅ Cliente eliminado",
         description: "El cliente se eliminó correctamente.",
@@ -901,7 +917,7 @@ export default function CallDashboard() {
       setTimeout(() => {
         fetchGroups()
       }, 500)
-      
+
     } catch (error) {
       console.error('Error deleting client:', error)
       toast({
@@ -916,10 +932,10 @@ export default function CallDashboard() {
   const handleExportReport = useCallback(() => {
     try {
       const csvData = []
-      
+
       const headers = [
         "ID",
-        "Nombre", 
+        "Nombre",
         "Telefono",
         "Email",
         "Categoria",
@@ -929,15 +945,15 @@ export default function CallDashboard() {
         "Estado Llamada",
         "ID Llamada",
         "Ultima Actualizacion"
-      ]      
+      ]
       csvData.push(headers)
-      
+
       allUsers.forEach((user) => {
         const status = callStatuses.get(user.id)
         const row = [
           user.id || "N/A",
           user.name || "N/A",
-          user.phone || "N/A", 
+          user.phone || "N/A",
           user.email || "N/A",
           user.category || "N/A",
           user.address || "N/A",
@@ -949,25 +965,25 @@ export default function CallDashboard() {
         ]
         csvData.push(row)
       })
-      
+
       const csvContent = csvData
-        .map(row => 
+        .map(row =>
           row.map(field => {
             const escapedField = String(field).replace(/"/g, '""')
             return `"${escapedField}"`
           }).join(';')
         )
         .join('\n')
-      
+
       const BOM = '\uFEFF'
-      const blob = new Blob([BOM + csvContent], { 
-        type: 'text/csv;charset=utf-8;' 
+      const blob = new Blob([BOM + csvContent], {
+        type: 'text/csv;charset=utf-8;'
       })
-      
+
       const now = new Date()
       const timestamp = now.toISOString().slice(0, 19).replace(/:/g, '-')
       const filename = `reporte_llamadas_${timestamp}.csv`
-      
+
       const url = URL.createObjectURL(blob)
       const link = document.createElement("a")
       link.setAttribute("href", url)
@@ -991,6 +1007,96 @@ export default function CallDashboard() {
       })
     }
   }, [allUsers, callStatuses, toast])
+
+  const handleExportGroupReport = useCallback((group) => {
+    try {
+      const csvData = []
+
+      const headers = [
+        "ID",
+        "Nombre",
+        "Telefono",
+        "Email",
+        "Categoria",
+        "Direccion",
+        "Sitio Web",
+        "Estado Llamada",
+        "ID Llamada",
+        "Ultima Actualizacion"
+      ]
+      csvData.push(headers)
+
+      // Filtrar usuarios del grupo específico
+      const groupUsers = allUsers.filter(user => user.groupId === group.id)
+
+      groupUsers.forEach((user) => {
+        const status = callStatuses.get(user.id)
+        const row = [
+          user.id || "N/A",
+          user.name || "N/A",
+          user.phone || "N/A",
+          user.email || "N/A",
+          user.category || "N/A",
+          user.address || "N/A",
+          user.website || "N/A",
+          status ? status.status : "No Llamado",
+          status?.callId || "N/A",
+          status ? status.timestamp.toLocaleString() : "N/A"
+        ]
+        csvData.push(row)
+      })
+
+      const csvContent = csvData
+        .map(row =>
+          row.map(field => {
+            const escapedField = String(field).replace(/"/g, '""')
+            return `"${escapedField}"`
+          }).join(';')
+        )
+        .join('\n')
+
+      const BOM = '\uFEFF'
+      const blob = new Blob([BOM + csvContent], {
+        type: 'text/csv;charset=utf-8;'
+      })
+
+      const now = new Date()
+      const timestamp = now.toISOString().slice(0, 19).replace(/:/g, '-')
+      const filename = `reporte_${group.name.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}.csv`
+
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.setAttribute("href", url)
+      link.setAttribute("download", filename)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      toast({
+        title: "📄 Reporte Exportado",
+        description: `Reporte del grupo "${group.name}" descargado como ${filename}`,
+      })
+    } catch (error) {
+      console.error('Error exporting group CSV:', error)
+      toast({
+        title: "❌ Error en exportación",
+        description: "No se pudo generar el reporte del grupo.",
+        variant: "destructive",
+      })
+    }
+  }, [allUsers, callStatuses, toast])
+  // Filtrar grupos por búsqueda
+  const filteredGroups = useMemo(() => {
+    if (!searchTerm.trim()) return groups
+
+    return groups.filter(group =>
+      group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      group.description.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [groups, searchTerm])
+
   const uniqueCategories = useMemo(() => {
     const categories = new Set()
     allUsers.forEach((user) => {
@@ -1016,306 +1122,506 @@ export default function CallDashboard() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto p-6 space-y-6 max-w-7xl">
-        
-        {/* Header Principal */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-                  Gestión de Llamadas por Grupos
-                </h1>
-                <p className="text-gray-600">
-                  Organiza y gestiona llamadas masivas por grupos de clientes
-                </p>
-              </div>
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRefresh}
-                  disabled={isLoading}
-                  className="border-gray-300"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-                  Actualizar
-                </Button>
-                <Button
-                  onClick={handleExportReport}
-                  disabled={allUsers.length === 0}
-                  variant="outline"
-                  size="sm"
-                  className="border-gray-300"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar
-                </Button>
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 h-screen w-full overflow-hidden">
+      <div className="p-6 w-full h-full flex flex-col">
+
+        <style jsx>{`
+          .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+        `}</style>
+
+
+
+        {/* Vista de Grupos */}
+        {currentView === 'groups' && (
+          <div className="w-full flex-1 flex flex-col">
+            {/* Header de Grupos - Estático */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm w-full flex-shrink-0">
+              <div className="p-8 w-full">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Grupos de Clientes</h1>
+                    <p className="text-gray-600">Gestiona y organiza tus campañas de llamadas</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {/* Buscador */}
+                    <div className="mb-6">
+                      <div className="relative max-w-md">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          type="text"
+                          placeholder="Buscar grupos por nombre o descripción..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10 pr-4 py-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        {searchTerm && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSearchTerm("")}
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      {searchTerm && (
+                        <p className="text-sm text-gray-600 mt-2">
+                          {filteredGroups.length} grupo{filteredGroups.length !== 1 ? 's' : ''} encontrado{filteredGroups.length !== 1 ? 's' : ''}
+                        </p>
+                      )}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      onClick={handleRefresh}
+                      disabled={isLoading}
+                      className="border-gray-300 px-4 py-2"
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                      Actualizar
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setEditingGroup(null)
+                        setGroupForm({ name: '', description: '', prompt: '', color: '#3B82F6', favorite: false })
+                        setIsGroupDialogOpen(true)
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-sm"
+                    >
+                      <Plus className="h-5 w-5 mr-2" />
+                      Crear Grupo
+                    </Button>
+                  </div>
+                </div>
+
+
+                {/* Contenedor con Scroll Interno */}
+                <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                    {/* Opción "Todos los grupos" */}
+                    <Card
+                      className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 hover:border-blue-200"
+                      onClick={() => handleGroupSelect(null)}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-gray-400 to-gray-500 rounded-xl flex items-center justify-center">
+                            <Users className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-lg text-gray-900">Todos los Grupos</h3>
+                            <p className="text-sm text-gray-500">Vista general</p>
+                          </div>
+                        </div>
+                        <p className="text-gray-600 mb-4 line-clamp-2">Ver todos los clientes de todos los grupos en una vista unificada</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleExportReport()
+                              }}
+                              className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg px-3 py-1 text-xs font-medium"
+                            >
+                              <Download className="h-3 w-3 mr-1" />
+                              Exportar
+                            </Button>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            Ver detalles →
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Grupos existentes */}
+                    {filteredGroups.map((group) => (
+                      <Card
+                        key={group.id}
+                        className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 hover:border-blue-200"
+                        onClick={() => handleGroupSelect(group)}
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-4">
+                              <div
+                                className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
+                                style={{ backgroundColor: group.color }}
+                              >
+                                <FolderOpen className="h-6 w-6 text-white" />
+                              </div>
+                              <div>
+                                <h3 className="font-bold text-lg text-gray-900">{group.name}</h3>
+                                <p className="text-sm text-gray-500">{group.clients ? group.clients.length : 0} clientes</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setEditingGroup(group)
+                                  setGroupForm({
+                                    name: group.name,
+                                    description: group.description,
+                                    prompt: group.prompt || '',
+                                    color: group.color,
+                                    favorite: group.favorite || false
+                                  })
+                                  setIsGroupDialogOpen(true)
+                                }}
+                                className="text-gray-400 hover:text-gray-600"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setDeleteConfirmDialog({
+                                    open: true,
+                                    groupId: group.id,
+                                    groupName: group.name
+                                  })
+                                }}
+                                className="text-gray-400 hover:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="text-gray-600 mb-4 line-clamp-2">{group.description}</p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  prepareAgent(group.id)
+                                }}
+                                disabled={isPreparingAgent || isAgentPrepared(group.id)}
+                                className={`${isAgentPrepared(group.id)
+                                    ? 'bg-green-100 text-green-700 border-green-200'
+                                    : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                  } rounded-lg px-3 py-1 text-xs font-medium`}
+                              >
+                                {isPreparingAgent ? (
+                                  <RefreshCw className="h-3 w-3 animate-spin mr-1" />
+                                ) : isAgentPrepared(group.id) ? (
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                ) : (
+                                  <Zap className="h-3 w-3 mr-1" />
+                                )}
+                                {isAgentPrepared(group.id) ? 'Preparado' : 'Preparar'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleCallGroup(group)
+                                }}
+                                disabled={isCallingState || !group.clients || group.clients.length === 0 || !isAgentPrepared(group.id)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-1 text-xs font-medium"
+                              >
+                                <Phone className="h-3 w-3 mr-1" />
+                                Llamar
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleExportGroupReport(group)
+                                }}
+                                className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg px-3 py-1 text-xs font-medium"
+                              >
+                                <Download className="h-3 w-3 mr-1" />
+                                Exportar
+                              </Button>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-blue-600 hover:text-blue-700"
+                            >
+                              Ver detalles →
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
-
+            <GroupModal
+              isOpen={isGroupDialogOpen}
+              onClose={() => {
+                setIsGroupDialogOpen(false)
+                setEditingGroup(null)
+                setGroupForm({ name: '', description: '', prompt: '', color: '#3B82F6', favorite: false })
+              }}
+              onSave={async (formData) => {
+                setGroupForm(formData)
+                await saveGroup(formData)
+              }}
+              editingGroup={editingGroup}
+              groupForm={groupForm}
+              setGroupForm={setGroupForm}
+            />
           </div>
-        </div>
+        )}
 
-        {/* Gestión de Grupos */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Grupos de Clientes</h2>
-              <Button 
-                                onClick={() => {
-                  setEditingGroup(null)
-                  setGroupForm({ name: '', description: '', prompt: '', color: '#3B82F6', favorite: false })
-                  setIsGroupDialogOpen(true)
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Crear Grupo
-              </Button>
-              
-              <GroupModal
-                isOpen={isGroupDialogOpen}
-                                 onClose={() => {
-                   setIsGroupDialogOpen(false)
-                   setEditingGroup(null)
-                   setGroupForm({ name: '', description: '', prompt: '', color: '#3B82F6', favorite: false })
-                 }}
-                                 onSave={async (formData) => {
-                   setGroupForm(formData)
-                   await saveGroup(formData)
-                 }}
-                editingGroup={editingGroup}
-                groupForm={groupForm}
-                setGroupForm={setGroupForm}
-                             />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Opción "Todos los grupos" */}
-              <Card 
-                className={`cursor-pointer transition-all duration-200 ${
-                  !selectedGroup 
-                    ? 'ring-2 ring-blue-500 bg-blue-50' 
-                    : 'hover:bg-gray-50'
-                }`}
-                onClick={() => setSelectedGroup(null)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 bg-gray-400 rounded"></div>
-                      <h3 className="font-semibold text-gray-900">Todos los Grupos</h3>
+        {/* Vista de Detalle del Grupo */}
+        {currentView === 'group-detail' && selectedGroup && (
+          <div className="space-y-6">
+            {/* Header del Grupo */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+              <div className="p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <Button
+                      onClick={handleBackToGroups}
+                      variant="ghost"
+                      className="text-gray-600 hover:text-gray-900"
+                    >
+                      <ArrowLeft className="h-5 w-5 mr-2" />
+                      Volver
+                    </Button>
+                    <div>
+                      <h1 className="text-3xl font-bold text-gray-900">{selectedGroup.name}</h1>
+                      <p className="text-gray-600 mt-1">{selectedGroup.description}</p>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">Ver todos los clientes de todos los grupos</p>
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary">
-                      {allUsers.length} clientes
-                    </Badge>
+
+                  {/* Estadísticas Rápidas */}
+                  <div className="flex gap-4">
+                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-5 w-5 text-blue-600" />
+                        <div>
+                          <p className="text-sm text-blue-600 font-medium">Total Llamadas</p>
+                          <p className="text-2xl font-bold text-blue-900">
+                            {filteredUsers.length}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="text-sm text-green-600 font-medium">Exitosas</p>
+                          <p className="text-2xl font-bold text-green-900">
+                            {Array.from(callStatuses.values()).filter(s => s.status === "completed").length}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+                      <div className="flex items-center gap-2">
+                        <XCircle className="h-5 w-5 text-red-600" />
+                        <div>
+                          <p className="text-sm text-red-600 font-medium">Fallidas</p>
+                          <p className="text-2xl font-bold text-red-900">
+                            {Array.from(callStatuses.values()).filter(s => s.status === "failed").length}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
 
-              {/* Grupos existentes */}
-              {groups.map((group) => (
-                <Card 
-                  key={group.id}
-                  className={`cursor-pointer transition-all duration-200 ${
-                    selectedGroup?.id === group.id 
-                      ? 'ring-2 ring-blue-500 bg-blue-50' 
-                      : 'hover:bg-gray-50'
-                  }`}
-                  onClick={() => setSelectedGroup(group)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        <div 
-                          className="w-4 h-4 rounded" 
-                          style={{ backgroundColor: group.color }}
-                        ></div>
-                        <h3 className="font-semibold text-gray-900">{group.name}</h3>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setEditingGroup(group)
-                                                         setGroupForm({
-                               name: group.name,
-                               description: group.description,
-                               prompt: group.prompt || '',
-                               color: group.color,
-                               favorite: group.favorite || false
-                             })
-                            setIsGroupDialogOpen(true)
-                          }}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setDeleteConfirmDialog({
-                              open: true,
-                              groupId: group.id,
-                              groupName: group.name
-                            })
-                          }}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-3">{group.description}</p>
-                                         <div className="flex items-center justify-between">
-                       <Badge variant="secondary">
-                         {group.clients ? group.clients.length : 0} clientes
-                       </Badge>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            prepareAgent(group.id)
-                          }}
-                          disabled={isPreparingAgent || isAgentPrepared(group.id)}
-                          className={`${
-                            isAgentPrepared(group.id) 
-                              ? 'bg-gray-400 cursor-not-allowed' 
-                              : 'bg-purple-600 hover:bg-purple-700'
-                          } text-white`}
-                        >
-                          {isPreparingAgent ? (
-                            <RefreshCw className="h-3 w-3 animate-spin" />
-                          ) : isAgentPrepared(group.id) ? (
-                            <CheckCircle className="h-3 w-3" />
-                          ) : (
-                            <Zap className="h-3 w-3" />
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleCallGroup(group)
-                          }}
-                          disabled={isCallingState || !group.clients || group.clients.length === 0 || !isAgentPrepared(group.id)}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <Phone className="h-3 w-3 mr-1" />
-                          Llamar Grupo
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
+                {/* Controles de Acción */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    onClick={isAgentPrepared(selectedGroup.id) ?
+                      () => startGroupCall(selectedGroup.id) :
+                      () => prepareAgent(selectedGroup.id)
+                    }
+                    disabled={isCallingState || isPreparingAgent}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-sm"
+                  >
+                    {isCallingState ? (
+                      <>
+                        <Square className="h-5 w-5 mr-2" />
+                        Llamando...
+                      </>
+                    ) : isAgentPrepared(selectedGroup.id) ? (
+                      <>
+                        <Play className="h-5 w-5 mr-2" />
+                        Llamar Grupo
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-5 w-5 mr-2" />
+                        Preparar Agente
+                      </>
+                    )}
+                  </Button>
 
-        {/* Controles de Acción */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Controles de Llamadas
-              {selectedGroup && (
-                <span className="ml-2 text-sm font-normal text-gray-600">
-                  - Grupo: {selectedGroup.name}
-                </span>
-              )}
-            </h2>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                onClick={selectedGroup && isAgentPrepared(selectedGroup.id) ? 
-                  () => startGroupCall(selectedGroup.id) : 
-                  handleCallSelected
-                }
-                disabled={isCallingState || (
-                  selectedGroup && isAgentPrepared(selectedGroup.id) ? 
-                    false : 
-                    selectedUsers.size === 0
-                )}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {isCallingState ? (
-                  <>
-                    <Square className="h-4 w-4 mr-2" />
-                    Llamando...
-                  </>
-                ) : selectedGroup && isAgentPrepared(selectedGroup.id) ? (
-                  <>
-                    <Play className="h-4 w-4 mr-2" />
-                    Llamar Grupo
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 mr-2" />
-                    Llamar Seleccionados ({selectedUsers.size})
-                  </>
-                )}
-              </Button>
+                  <Button
+                    onClick={() => setIsTestCallModalOpen(true)}
+                    disabled={isCallingState}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-sm"
+                  >
+                    <Phone className="h-5 w-5 mr-2" />
+                    Probar Llamada
+                  </Button>
 
-              <Button
-                onClick={() => setIsTestCallModalOpen(true)}
-                disabled={isCallingState}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                <Phone className="h-4 w-4 mr-2" />
-                Probar Llamada
-              </Button>
-
-              {selectedGroup && (
-                <Button
-                  onClick={() => prepareAgent(selectedGroup.id)}
-                  disabled={isCallingState || isPreparingAgent || isAgentPrepared(selectedGroup.id)}
-                  className={`${
-                    isAgentPrepared(selectedGroup.id) 
-                      ? 'bg-gray-400 cursor-not-allowed' 
-                      : 'bg-purple-600 hover:bg-purple-700'
-                  } text-white`}
-                >
-                  {isPreparingAgent ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Preparando...
-                    </>
-                  ) : isAgentPrepared(selectedGroup.id) ? (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Agente Preparado
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="h-4 w-4 mr-2" />
-                      Preparar Agente
-                    </>
+                  {isCallingState && (
+                    <Button
+                      onClick={handleStopCalls}
+                      variant="destructive"
+                      className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg shadow-sm"
+                    >
+                      <Square className="h-5 w-5 mr-2" />
+                      Detener Llamadas
+                    </Button>
                   )}
-                </Button>
-              )}
+                </div>
+              </div>
+            </div>
 
-              {isCallingState && (
-                <Button
-                  onClick={handleStopCalls}
-                  variant="destructive"
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  <Square className="h-4 w-4 mr-2" />
-                  Detener Llamadas
-                </Button>
-              )}
+            {/* Tabla de Usuarios */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+              <div className="p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Clientes del Grupo</h2>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleSelectAll}
+                      variant="outline"
+                      className="border-gray-300"
+                    >
+                      Seleccionar Todos
+                    </Button>
+                    <Button
+                      onClick={handleDeselectAll}
+                      variant="outline"
+                      className="border-gray-300"
+                    >
+                      Deseleccionar
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-4 px-6 font-semibold text-gray-900">Nombre</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-900">Teléfono</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-900">Estado</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-900">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredUsers.map((user) => {
+                        const status = callStatuses.get(user.id)
+                        return (
+                          <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-4 px-6">
+                              <div className="flex items-center gap-3">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedUsers.has(user.id)}
+                                  onChange={(e) => handleUserSelection(user.id, e.target.checked)}
+                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <div>
+                                  <p className="font-medium text-gray-900">{user.name}</p>
+                                  <p className="text-sm text-gray-500">{user.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <p className="text-gray-900">{user.phone}</p>
+                            </td>
+                            <td className="py-4 px-6">
+                              {status ? (
+                                <Badge
+                                  variant="secondary"
+                                  className={
+                                    status.status === 'completed'
+                                      ? 'bg-green-100 text-green-800'
+                                      : status.status === 'failed'
+                                        ? 'bg-red-100 text-red-800'
+                                        : 'bg-yellow-100 text-yellow-800'
+                                  }
+                                >
+                                  {status.status === 'completed' ? 'Completado' :
+                                    status.status === 'failed' ? 'Fallido' :
+                                      status.status === 'pending' ? 'Pendiente' :
+                                        status.status === 'initiated' ? 'Iniciada' :
+                                          status.status}
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+                                  No Llamado
+                                </Badge>
+                              )}
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    // Lógica para editar cliente
+                                  }}
+                                  className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Editar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    // Lógica para eliminar cliente
+                                  }}
+                                  className="border-red-300 text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  Eliminar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => makeCall(user)}
+                                  disabled={isCallingState}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                  <Phone className="h-3 w-3 mr-1" />
+                                  Llamar
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Error display */}
         {error && (
@@ -1327,77 +1633,46 @@ export default function CallDashboard() {
           </div>
         )}
 
-        {/* Stats Cards Detalladas */}
-        <StatsCards
-          totalUsers={selectedGroup ? filteredUsers.length : allUsers.length}
-          selectedUsers={selectedUsers.size}
-          callStatuses={callStatuses}
-          isCallInProgress={isCallingState}
-        />
 
-        {/* Contenido Principal */}
-        <Tabs defaultValue="users" className="space-y-6">
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div className="p-6 border-b border-gray-200">
-              <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1 rounded-lg max-w-2xl">
-                <TabsTrigger
-                  value="users"
-                  className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Gestión de Usuarios
-                </TabsTrigger>
-                <TabsTrigger
-                  value="monitor"
-                  className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
-                >
-                  <Phone className="h-4 w-4 mr-2" />
-                  Monitor de Llamadas
-                </TabsTrigger>
-                <TabsTrigger
-                  value="documents"
-                  className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Documentos Grupos
-                </TabsTrigger>
-              </TabsList>
+
+        {/* Contenido Principal - Solo visible en vista de detalle */}
+        {currentView === 'group-detail' && (
+          <Tabs defaultValue="monitor" className="space-y-6">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+              <div className="p-6 border-b border-gray-200">
+                <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg max-w-md">
+                  <TabsTrigger
+                    value="monitor"
+                    className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+                  >
+                    <Phone className="h-4 w-4 mr-2" />
+                    Monitor de Llamadas
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="documents"
+                    className="rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Documentos
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value="monitor" className="p-6">
+                <CallMonitor
+                  users={filteredUsers}
+                  callStatuses={callStatuses}
+                  totalUsers={filteredUsers.length}
+                  groupId={selectedGroup?.id}
+                />
+              </TabsContent>
+
+              <TabsContent value="documents" className="p-6">
+                <GroupDocuments />
+              </TabsContent>
             </div>
-
-                         <TabsContent value="users" className="p-6 space-y-6">
-               <UserList
-                 users={selectedGroup ? filteredUsers : allUsers}
-                 selectedUsers={selectedUsers}
-                 callStatuses={callStatuses}
-                 onUserSelection={handleUserSelection}
-                 onSelectAll={handleSelectAll}
-                 onDeselectAll={handleDeselectAll}
-                 onUpdateClient={handleUpdateClient}
-                 onDeleteClient={handleDeleteClient}
-                 isLoading={isLoading}
-                 filterCategory={filterCategory}
-                 setFilterCategory={setFilterCategory}
-                 filterCallStatus={filterCallStatus}
-                 setFilterCallStatus={setFilterCallStatus}
-                 uniqueCategories={uniqueCategories}
-                 possibleCallStatuses={possibleCallStatuses}
-               />
-             </TabsContent>
-
-            <TabsContent value="monitor" className="p-6">
-              <CallMonitor 
-                users={selectedGroup ? filteredUsers : allUsers} 
-                callStatuses={callStatuses} 
-                totalUsers={selectedGroup ? filteredUsers.length : allUsers.length}
-                groupId={selectedGroup?.id}
-              />
-            </TabsContent>
-
-            <TabsContent value="documents" className="p-6">
-              <GroupDocuments />
-            </TabsContent>
-          </div>   
-        </Tabs>
+          </Tabs>
+        )}
 
         {/* Modal de Confirmación para Eliminar Grupo */}
         <DeleteGroupModal
