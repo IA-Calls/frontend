@@ -57,6 +57,9 @@ export default function CallDashboard() {
   // Estados para preparación de agente
   const [agentPreparationStatus, setAgentPreparationStatus] = useState(new Map()) // Map<groupId, boolean>
   const [isPreparingAgent, setIsPreparingAgent] = useState(false)
+  
+  // Estados para monitor de batch
+  const [currentBatchId, setCurrentBatchId] = useState(null)
 
 
 
@@ -74,6 +77,15 @@ export default function CallDashboard() {
   const [filterCallStatus, setFilterCallStatus] = useState("all")
 
   const { toast } = useToast()
+  // Limpiar batchId cuando cambie el grupo seleccionado
+  useEffect(() => {
+    if (selectedGroup && currentBatchId) {
+      // Solo limpiar si el batchId no corresponde al grupo actual
+      // Esto se puede mejorar cuando tengas más información sobre qué batch pertenece a qué grupo
+      // Por ahora, lo mantenemos simple
+    }
+  }, [selectedGroup, currentBatchId])
+
   // Obtener todos los grupos desde clients/pending
   const fetchGroups = useCallback(async (page = 1, limit = 10) => {
     setIsLoading(true)
@@ -784,6 +796,85 @@ export default function CallDashboard() {
     return agentPreparationStatus.get(groupId) || false
   }, [agentPreparationStatus])
 
+  // Función para limpiar batchId cuando se complete
+  const clearBatchId = useCallback(() => {
+    setCurrentBatchId(null);
+  }, [])
+
+  // Función para iniciar llamadas de grupo
+  const startGroupCall = useCallback(async (groupId) => {
+    // Obtener el ID del usuario logueado
+    const userId = authService.getClientId()
+    if (!userId) {
+      toast({
+        title: "❌ Error",
+        description: "No se pudo obtener el ID del usuario. Por favor, inicia sesión nuevamente.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Phone number ID quemado como especificaste
+    const phoneNumberId = "phnum_4301k3d047vdfq682hvy29kr5r2g"
+
+    try {
+      const response = await fetch(`${GROUPS_API_URL}/${groupId}/call`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({
+          userId: userId,
+          agentPhoneNumberId: phoneNumberId
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Mostrar log de éxito
+        if (window.addActivityLog) {
+          window.addActivityLog(`✅ ${result.message}`, 'success', 8000)
+        }
+        
+        toast({
+          title: "✅ Llamadas iniciadas",
+          description: result.message,
+        })
+        
+        // Guardar el batchId para el monitor
+        if (result.data?.batchId) {
+          setCurrentBatchId(result.data.batchId);
+          console.log('Batch iniciado:', result.data.batchId);
+        }
+      } else {
+        // Mostrar log de error
+        if (window.addActivityLog) {
+          window.addActivityLog(`❌ ${result.message}`, 'error', 8000)
+        }
+        
+        toast({
+          title: "❌ Error",
+          description: result.message,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Error starting group call:', error)
+      
+      // Mostrar log de error
+      if (window.addActivityLog) {
+        window.addActivityLog('❌ Error de conexión al iniciar llamadas de grupo', 'error', 8000)
+      }
+      
+      toast({
+        title: "❌ Error de conexión",
+        description: "No se pudo conectar con el servidor.",
+        variant: "destructive",
+      })
+    }
+  }, [toast])
+
   // Eliminar cliente
   const handleDeleteClient = useCallback(async (groupId, clientId) => {
     try {
@@ -1145,14 +1236,26 @@ export default function CallDashboard() {
             </h2>
             <div className="flex flex-wrap items-center gap-3">
               <Button
-                onClick={handleCallSelected}
-                disabled={isCallingState || selectedUsers.size === 0}
+                onClick={selectedGroup && isAgentPrepared(selectedGroup.id) ? 
+                  () => startGroupCall(selectedGroup.id) : 
+                  handleCallSelected
+                }
+                disabled={isCallingState || (
+                  selectedGroup && isAgentPrepared(selectedGroup.id) ? 
+                    false : 
+                    selectedUsers.size === 0
+                )}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {isCallingState ? (
                   <>
                     <Square className="h-4 w-4 mr-2" />
                     Llamando...
+                  </>
+                ) : selectedGroup && isAgentPrepared(selectedGroup.id) ? (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Llamar Grupo
                   </>
                 ) : (
                   <>
@@ -1285,7 +1388,8 @@ export default function CallDashboard() {
               <CallMonitor 
                 users={selectedGroup ? filteredUsers : allUsers} 
                 callStatuses={callStatuses} 
-                totalUsers={selectedGroup ? filteredUsers.length : allUsers.length} 
+                totalUsers={selectedGroup ? filteredUsers.length : allUsers.length}
+                groupId={selectedGroup?.id}
               />
             </TabsContent>
 
