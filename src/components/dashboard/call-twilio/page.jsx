@@ -57,6 +57,24 @@ export default function CallDashboard() {
   // Estados para modal de prueba de llamada
   const [isTestCallModalOpen, setIsTestCallModalOpen] = useState(false)
 
+  // Estados para modal de edición de usuario
+  const [isUserEditModalOpen, setIsUserEditModalOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState(null)
+  const [userForm, setUserForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    category: '',
+    address: '',
+    website: ''
+  })
+
+  // Estados para modal de confirmación de eliminación de usuario
+  const [deleteUserConfirmDialog, setDeleteUserConfirmDialog] = useState({ 
+    open: false, 
+    user: null 
+  })
+
   // Estados para preparación de agente
   const [agentPreparationStatus, setAgentPreparationStatus] = useState(new Map()) // Map<groupId, boolean>
   const [isPreparingAgent, setIsPreparingAgent] = useState(false)
@@ -81,6 +99,12 @@ export default function CallDashboard() {
   const [searchTerm, setSearchTerm] = useState("")
 
   const { toast } = useToast()
+  
+  // Debug: Monitorear cambios en el estado del modal
+  useEffect(() => {
+    console.log('Estado del modal de edición cambió:', { isUserEditModalOpen, editingUser })
+  }, [isUserEditModalOpen, editingUser])
+  
   // Limpiar batchId cuando cambie el grupo seleccionado
   useEffect(() => {
     if (selectedGroup && currentBatchId) {
@@ -684,15 +708,33 @@ export default function CallDashboard() {
     setSelectedUsers(new Set())
   }, [])
 
-  // Actualizar cliente
-  const handleUpdateClient = useCallback(async (groupId, clientId, clientData) => {
+  // Función para abrir modal de edición de usuario
+  const handleEditUser = useCallback((user) => {
+    console.log('Abriendo modal de edición para usuario:', user)
+    setEditingUser(user)
+    setUserForm({
+      name: user.name || '',
+      phone: user.phone || '',
+      email: user.email || '',
+      category: user.category || '',
+      address: user.address || '',
+      website: user.website || ''
+    })
+    setIsUserEditModalOpen(true)
+    console.log('Estado del modal después de abrir:', { isUserEditModalOpen: true, editingUser: user })
+  }, [])
+
+  // Función para guardar cambios del usuario
+  const handleSaveUser = useCallback(async () => {
+    if (!editingUser) return
+
     try {
-      const response = await fetch(`${GROUPS_API_URL}/${groupId}/clients/${clientId}`, {
+      const response = await fetch(`${GROUPS_API_URL}/${editingUser.groupId}/clients/${editingUser.clientId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(clientData),
+        body: JSON.stringify(userForm),
       })
 
       if (!response.ok) {
@@ -704,12 +746,24 @@ export default function CallDashboard() {
 
       // Mostrar log de éxito
       if (window.addActivityLog) {
-        window.addActivityLog(`✅ Cliente "${clientData.name}" actualizado exitosamente`, 'success', 6000)
+        window.addActivityLog(`✅ Cliente "${userForm.name}" actualizado exitosamente`, 'success', 6000)
       }
 
       toast({
         title: "✅ Cliente actualizado",
-        description: `El cliente "${clientData.name}" se actualizó correctamente.`,
+        description: `El cliente "${userForm.name}" se actualizó correctamente.`,
+      })
+
+      // Cerrar modal y limpiar estado
+      setIsUserEditModalOpen(false)
+      setEditingUser(null)
+      setUserForm({
+        name: '',
+        phone: '',
+        email: '',
+        category: '',
+        address: '',
+        website: ''
       })
 
       // Refresh groups to show updated data
@@ -725,9 +779,59 @@ export default function CallDashboard() {
         description: `No se pudo actualizar el cliente: ${error.message}`,
         variant: "destructive",
       })
-      throw error
+    }
+  }, [editingUser, userForm, fetchGroups, toast])
+
+  // Función para abrir modal de confirmación de eliminación
+  const handleDeleteUserClick = useCallback((user) => {
+    console.log('Abriendo modal de confirmación para eliminar usuario:', user)
+    setDeleteUserConfirmDialog({ open: true, user })
+  }, [])
+
+  // Función para eliminar usuario
+  const handleDeleteUser = useCallback(async (user) => {
+    try {
+      const response = await fetch(`${GROUPS_API_URL}/${user.groupId}/clients/${user.clientId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+      }
+
+      // Mostrar log de éxito
+      if (window.addActivityLog) {
+        window.addActivityLog(`✅ Cliente "${user.name}" eliminado exitosamente`, 'success', 6000)
+      }
+
+      toast({
+        title: "✅ Cliente eliminado",
+        description: `El cliente "${user.name}" se eliminó correctamente.`,
+      })
+
+      // Cerrar modal de confirmación
+      setDeleteUserConfirmDialog({ open: false, user: null })
+
+      // Refresh groups to show updated data
+      setTimeout(() => {
+        fetchGroups()
+      }, 500)
+
+    } catch (error) {
+      console.error('Error deleting client:', error)
+      toast({
+        title: "❌ Error",
+        description: `No se pudo eliminar el cliente: ${error.message}`,
+        variant: "destructive",
+      })
     }
   }, [fetchGroups, toast])
+
+  // Función para cerrar modal de confirmación de eliminación
+  const handleCloseDeleteUserModal = useCallback(() => {
+    setDeleteUserConfirmDialog({ open: false, user: null })
+  }, [])
 
   // Función para preparar agente
   const prepareAgent = useCallback(async (groupId) => {
@@ -1546,9 +1650,7 @@ export default function CallDashboard() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => {
-                                      // Lógica para editar cliente
-                                    }}
+                                    onClick={() => handleEditUser(user)}
                                     className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
                                   >
                                     <Edit className="h-3 w-3 mr-1" />
@@ -1557,9 +1659,7 @@ export default function CallDashboard() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => {
-                                      // Lógica para eliminar cliente
-                                    }}
+                                    onClick={() => handleDeleteUserClick(user)}
                                     className="border-red-300 text-red-700 hover:bg-red-50"
                                   >
                                     <Trash2 className="h-3 w-3 mr-1" />
@@ -1627,6 +1727,188 @@ export default function CallDashboard() {
           onClose={() => setIsTestCallModalOpen(false)}
           onStartCall={handleTestCall}
         />
+
+        {/* Modal de Edición de Usuario - Implementación Personalizada */}
+        {isUserEditModalOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+            {/* Overlay */}
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm"
+              onClick={() => {
+                setIsUserEditModalOpen(false)
+                setEditingUser(null)
+                setUserForm({
+                  name: '',
+                  phone: '',
+                  email: '',
+                  category: '',
+                  address: '',
+                  website: ''
+                })
+              }}
+            />
+            
+            {/* Modal Content */}
+            <div className="relative bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Editar Cliente</h2>
+                  <p className="text-sm text-gray-600 mt-1">Modifica la información del cliente</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsUserEditModalOpen(false)
+                    setEditingUser(null)
+                    setUserForm({
+                      name: '',
+                      phone: '',
+                      email: '',
+                      category: '',
+                      address: '',
+                      website: ''
+                    })
+                  }}
+                  className="h-8 w-8 p-0 hover:bg-gray-100"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Content */}
+              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Nombre</label>
+                  <Input
+                    value={userForm.name}
+                    onChange={(e) => setUserForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Nombre del cliente"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Teléfono</label>
+                  <Input
+                    value={userForm.phone}
+                    onChange={(e) => setUserForm(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="Número de teléfono"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Email</label>
+                  <Input
+                    value={userForm.email}
+                    onChange={(e) => setUserForm(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="Correo electrónico"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Categoría</label>
+                  <Input
+                    value={userForm.category}
+                    onChange={(e) => setUserForm(prev => ({ ...prev, category: e.target.value }))}
+                    placeholder="Categoría del cliente"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Dirección</label>
+                  <Input
+                    value={userForm.address}
+                    onChange={(e) => setUserForm(prev => ({ ...prev, address: e.target.value }))}
+                    placeholder="Dirección"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Sitio Web</label>
+                  <Input
+                    value={userForm.website}
+                    onChange={(e) => setUserForm(prev => ({ ...prev, website: e.target.value }))}
+                    placeholder="Sitio web"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsUserEditModalOpen(false)
+                    setEditingUser(null)
+                    setUserForm({
+                      name: '',
+                      phone: '',
+                      email: '',
+                      category: '',
+                      address: '',
+                      website: ''
+                    })
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button onClick={handleSaveUser}>
+                  Guardar Cambios
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Confirmación para Eliminar Usuario - Implementación Personalizada */}
+        {deleteUserConfirmDialog.open && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+            {/* Overlay */}
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm"
+              onClick={handleCloseDeleteUserModal}
+            />
+            
+            {/* Modal Content */}
+            <div className="relative bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Confirmar Eliminación</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    ¿Estás seguro de que quieres eliminar al cliente "{deleteUserConfirmDialog.user?.name}"? Esta acción no se puede deshacer.
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCloseDeleteUserModal}
+                  className="h-8 w-8 p-0 hover:bg-gray-100"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+                <Button
+                  variant="outline"
+                  onClick={handleCloseDeleteUserModal}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  variant="destructive"
+                  onClick={() => handleDeleteUser(deleteUserConfirmDialog.user)}
+                >
+                  Eliminar Cliente
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Componente de Logs de Actividad */}
         <ActivityLog />
