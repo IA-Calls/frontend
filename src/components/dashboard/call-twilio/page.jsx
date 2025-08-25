@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
-import { Phone, Users, Play, Square, RefreshCw, Zap, Target, Download, Search, Filter, Plus, Edit, Trash2, FolderOpen, UserPlus, FileText, CheckCircle, ArrowLeft, XCircle, X } from "lucide-react"
+import { Phone, Users, Play, Square, RefreshCw, Zap, Target, Download, Search, Filter, Plus, Edit, Trash2, FolderOpen, UserPlus, FileText, CheckCircle, ArrowLeft, XCircle, X, Star} from "lucide-react"
 import { Button } from "./components/ui/button.tsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.tsx"
 import { UserList } from "./components/user-list.jsx"
@@ -47,9 +47,13 @@ export default function CallDashboard() {
   const [groupForm, setGroupForm] = useState({
     name: '',
     description: '',
-    prompt: '',
+    prefix: '+57',
+    selectedCountryCode: 'CO',
     color: '#3B82F6',
-    favorite: false
+    prompt: '',
+    firstMessage: '',
+    language: 'es',
+    phoneNumberId: 'phnum_4301k3d047vdfq682hvy29kr5r2g'
   })
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState({ open: false, groupId: null, groupName: '' })
   const [isDeletingGroup, setIsDeletingGroup] = useState(false)
@@ -1290,14 +1294,24 @@ export default function CallDashboard() {
                       <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
                       Actualizar
                     </Button>
-                    <Button
-                      onClick={() => {
-                        setEditingGroup(null)
-                        setGroupForm({ name: '', description: '', prompt: '', color: '#3B82F6', favorite: false })
-                        setIsGroupDialogOpen(true)
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-sm"
-                    >
+                                          <Button 
+                        onClick={() => {
+                          setEditingGroup(null)
+                          setGroupForm({ 
+                            name: '', 
+                            description: '', 
+                            prefix: '+57',
+                            selectedCountryCode: 'CO',
+                            color: '#3B82F6', 
+                            prompt: '',
+                            firstMessage: '',
+                            language: 'es',
+                            phoneNumberId: 'phnum_4301k3d047vdfq682hvy29kr5r2g'
+                          })
+                          setIsGroupDialogOpen(true)
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-sm"
+                      >
                       <Plus className="h-5 w-5 mr-2" />
                       Crear Grupo
                     </Button>
@@ -1367,7 +1381,12 @@ export default function CallDashboard() {
                                 <FolderOpen className="h-6 w-6 text-white" />
                               </div>
                               <div>
-                                <h3 className="font-bold text-lg text-gray-900">{group.name}</h3>
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-bold text-lg text-gray-900">{group.name}</h3>
+                                  {group.favorite && (
+                                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                  )}
+                                </div>
                                 <p className="text-sm text-gray-500">{group.clients ? group.clients.length : 0} clientes</p>
                               </div>
                             </div>
@@ -1478,7 +1497,17 @@ export default function CallDashboard() {
               onClose={() => {
                 setIsGroupDialogOpen(false)
                 setEditingGroup(null)
-                setGroupForm({ name: '', description: '', prompt: '', color: '#3B82F6', favorite: false })
+                setGroupForm({ 
+                  name: '', 
+                  description: '', 
+                  prefix: '+57',
+                  selectedCountryCode: 'CO',
+                  color: '#3B82F6', 
+                  prompt: '',
+                  firstMessage: '',
+                  language: 'es',
+                  phoneNumberId: 'phnum_4301k3d047vdfq682hvy29kr5r2g'
+                })
               }}
               onSave={async (formData) => {
                 setGroupForm(formData)
