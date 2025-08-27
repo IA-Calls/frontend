@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LoginPage } from './components/auth/LoginPage';
 import { Dashboard } from './components/dashboard/Dashboard';
+import { LandingPage } from './components/landing/LandingPage';
 import { authService } from './services/authService';
 import { ThemeProvider } from './contexts/ThemeContext';
 
@@ -8,6 +9,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     // Verificar si hay un usuario autenticado al cargar la app
@@ -42,6 +44,15 @@ function App() {
     authService.logout();
     setUser(null);
     setIsAuthenticated(false);
+    setShowLogin(true); // Ir al login en lugar de la landing page
+  };
+
+  const handleLoginClick = () => {
+    setShowLogin(true);
+  };
+
+  const handleBackToLanding = () => {
+    setShowLogin(false);
   };
 
   // Mostrar loading mientras verificamos autenticación
@@ -56,14 +67,21 @@ function App() {
     );
   }
 
-  // Mostrar dashboard si está autenticado, sino mostrar login
+  // Mostrar dashboard si está autenticado
+  if (isAuthenticated) {
+    return (
+      <ThemeProvider>
+        <Dashboard user={user} onLogout={handleLogout} />
+      </ThemeProvider>
+    );
+  }
+
+  // Mostrar login o landing page según el estado
   return (
     <ThemeProvider>
-      {isAuthenticated ? (
-        <Dashboard user={user} onLogout={handleLogout} />
-      ) : (
+      {showLogin ? (
         <div>
-          <LoginPage onLogin={handleLogin} />
+          <LoginPage onLogin={handleLogin} onBackToLanding={handleBackToLanding} />
           
           {/* Credenciales de ejemplo */}
           <div className="fixed bottom-4 right-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-w-sm">
@@ -79,6 +97,8 @@ function App() {
             </p>
           </div>
         </div>
+      ) : (
+        <LandingPage onLoginClick={handleLoginClick} />
       )}
     </ThemeProvider>
   );
