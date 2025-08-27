@@ -150,19 +150,19 @@ export const UserManagementContent = ({ user: currentUser }) => {
 
   const getRoleColor = (role) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'moderator': return 'bg-yellow-100 text-yellow-800';
-      case 'user': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'admin': return 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400';
+      case 'moderator': return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400';
+      case 'user': return 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-gray-100 text-gray-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active': return 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400';
+      case 'inactive': return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+      case 'pending': return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     }
   };
 
@@ -222,11 +222,11 @@ export const UserManagementContent = ({ user: currentUser }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Gestión de Usuarios</h2>
-            <p className="text-gray-600">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Gestión de Usuarios</h2>
+            <p className="text-gray-600 dark:text-gray-400">
               Administra usuarios, roles y permisos de la plataforma.
             </p>
           </div>
@@ -245,7 +245,7 @@ export const UserManagementContent = ({ user: currentUser }) => {
       {isAdmin && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Estadísticas de Usuarios</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Estadísticas de Usuarios</h3>
             <Button
               variant="secondary"
               size="sm"
@@ -264,13 +264,13 @@ export const UserManagementContent = ({ user: currentUser }) => {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <svg className="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
-              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
             <Button variant="secondary" size="sm" onClick={clearError}>
               Cerrar
@@ -280,7 +280,7 @@ export const UserManagementContent = ({ user: currentUser }) => {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
@@ -296,7 +296,7 @@ export const UserManagementContent = ({ user: currentUser }) => {
               <select
                 value={filters.role || 'all'}
                 onChange={(e) => handleRoleFilterChange(e.target.value)}
-                className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">Todos los roles</option>
                 <option value="admin">Administradores</option>
@@ -309,7 +309,7 @@ export const UserManagementContent = ({ user: currentUser }) => {
               <select
                 value={filters.status || 'all'}
                 onChange={(e) => handleStatusFilterChange(e.target.value)}
-                className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">Todos los estados</option>
                 <option value="active">Activos</option>
@@ -322,7 +322,7 @@ export const UserManagementContent = ({ user: currentUser }) => {
               <select
                 value={filters.deadline || 'all'}
                 onChange={(e) => updateFilters({ deadline: e.target.value === 'all' ? '' : e.target.value })}
-                className="block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">Todos los deadlines</option>
                 <option value="expired">Expirados</option>
@@ -332,7 +332,7 @@ export const UserManagementContent = ({ user: currentUser }) => {
             </div>
 
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-gray-700 dark:text-gray-300">
                 {pagination.total} usuario(s) encontrado(s)
               </span>
             </div>
@@ -341,10 +341,10 @@ export const UserManagementContent = ({ user: currentUser }) => {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Usuario
@@ -369,9 +369,9 @@ export const UserManagementContent = ({ user: currentUser }) => {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {users.map((userItem) => (
-                <tr key={userItem.id} className="hover:bg-gray-50">
+                <tr key={userItem.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
@@ -380,8 +380,8 @@ export const UserManagementContent = ({ user: currentUser }) => {
                         </span>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{userItem.name}</div>
-                        <div className="text-sm text-gray-500">{userItem.email}</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{userItem.name}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{userItem.email}</div>
                       </div>
                     </div>
                   </td>
@@ -403,12 +403,12 @@ export const UserManagementContent = ({ user: currentUser }) => {
                       
                       return (
                         <div className="flex flex-col space-y-1">
-                          <span className={`font-medium ${deadlineInfo.isExpired ? 'text-red-600' : 'text-gray-900'}`}>
+                          <span className={`font-medium ${deadlineInfo.isExpired ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
                             {deadlineInfo.text}
                           </span>
                           {deadlineInfo.timeLeft && (
                             <span className={`text-xs font-medium ${
-                              isExpiringSoon ? 'text-orange-600' : 'text-blue-600'
+                              isExpiringSoon ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'
                             }`}>
                               {deadlineInfo.timeLeft} restante
                               {isExpiringSoon && ' ⚠️'}
@@ -416,12 +416,12 @@ export const UserManagementContent = ({ user: currentUser }) => {
                           )}
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             deadlineInfo.isExpired 
-                              ? 'bg-red-100 text-red-800' 
+                              ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' 
                               : isExpiringSoon
-                              ? 'bg-orange-100 text-orange-800'
+                              ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-400'
                               : userItem.time 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-gray-100 text-gray-800'
+                                ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' 
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                           }`}>
                             {deadlineInfo.isExpired 
                               ? 'Expirado' 
@@ -436,10 +436,10 @@ export const UserManagementContent = ({ user: currentUser }) => {
                       );
                     })()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {userItem.lastLogin || 'Nunca'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

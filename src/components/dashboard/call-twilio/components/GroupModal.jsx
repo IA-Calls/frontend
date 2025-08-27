@@ -363,14 +363,12 @@ export function GroupModal({
       
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent 
-          className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-white border-gray-200 shadow-xl"
+          className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl"
           style={{ 
             position: 'fixed',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            backgroundColor: 'white',
-            border: '1px solid #e5e7eb',
             borderRadius: '12px',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
             zIndex: 9999
@@ -378,11 +376,11 @@ export function GroupModal({
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
         >
-          <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b border-gray-100">
-            <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
+          <DialogHeader className="sticky top-0 bg-white dark:bg-gray-800 z-10 pb-4 border-b border-gray-100 dark:border-gray-700">
+            <DialogTitle className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white">
               {editingGroup ? 'Editar Grupo' : 'Crear Nuevo Grupo'}
             </DialogTitle>
-            <DialogDescription className="text-sm text-gray-600">
+            <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
               {editingGroup 
                 ? 'Modifica la información del grupo seleccionado.' 
                 : 'Crea un nuevo grupo para organizar tus clientes y configurar el agente IA.'
@@ -406,7 +404,7 @@ export function GroupModal({
             <TabsContent value="group-config" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Nombre del Grupo *
                   </label>
                   <Input
@@ -421,7 +419,7 @@ export function GroupModal({
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Prefijo Telefónico *
                   </label>
                   
@@ -431,8 +429,8 @@ export function GroupModal({
                       type="button"
                       onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
                       className={`w-full px-3 py-2 text-left border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.prefix ? 'border-red-300' : 'border-gray-300'
-                      } bg-white hover:bg-gray-50 transition-colors`}
+                        errors.prefix ? 'border-red-300' : 'border-gray-300 dark:border-gray-600'
+                      } bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -440,10 +438,10 @@ export function GroupModal({
                             <>
                               <span className="text-lg">{getCountryFlag(selectedCountry.code)}</span>
                               <span className="text-sm font-medium">{selectedCountry.name}</span>
-                              <span className="text-sm text-gray-500">({selectedCountry.callingCode})</span>
+                              <span className="text-sm text-gray-500 dark:text-gray-400">({selectedCountry.callingCode})</span>
                             </>
                           ) : (
-                            <span className="text-gray-500">Seleccionar país...</span>
+                            <span className="text-gray-500 dark:text-gray-400">Seleccionar país...</span>
                           )}
                         </div>
                         <svg
@@ -461,16 +459,16 @@ export function GroupModal({
 
                     {/* Dropdown de países */}
                     {isCountryDropdownOpen && (
-                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
-                        {/* Buscador dentro del dropdown */}
-                        <div className="p-3 border-b border-gray-100">
+                      <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                                                  {/* Buscador dentro del dropdown */}
+                          <div className="p-3 border-b border-gray-100 dark:border-gray-700">
                           <div className="relative">
                             <input
                               type="text"
                               placeholder="Buscar país o código..."
                               value={countrySearchTerm}
                               onChange={(e) => setCountrySearchTerm(e.target.value)}
-                              className="w-full px-3 py-2 pl-8 pr-8 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-3 py-2 pl-8 pr-8 border border-gray-200 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                               autoFocus
                             />
                             <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -488,7 +486,7 @@ export function GroupModal({
                         {/* Lista de países */}
                         <div className="max-h-48 overflow-y-auto">
                           {filteredCountries.length === 0 ? (
-                            <div className="px-3 py-4 text-center text-sm text-gray-500">
+                            <div className="px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                               No se encontraron países
                             </div>
                           ) : (
@@ -502,15 +500,15 @@ export function GroupModal({
                                   setIsCountryDropdownOpen(false)
                                   setCountrySearchTerm("")
                                 }}
-                                className={`w-full px-3 py-2 text-left hover:bg-blue-50 transition-colors ${
-                                  localForm.selectedCountryCode === country.code ? 'bg-blue-100 text-blue-900' : 'text-gray-900'
+                                className={`w-full px-3 py-2 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${
+                                  localForm.selectedCountryCode === country.code ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-900 dark:text-blue-400' : 'text-gray-900 dark:text-white'
                                 }`}
                               >
                                 <div className="flex items-center gap-3">
                                   <span className="text-lg">{getCountryFlag(country.code)}</span>
                                   <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm">{country.name}</div>
-                                    <div className="text-xs text-gray-500">{country.callingCode}</div>
+                                    <div className="font-medium text-sm text-gray-900 dark:text-white">{country.name}</div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">{country.callingCode}</div>
                                   </div>
                                   {localForm.selectedCountryCode === country.code && (
                                     <CheckCircle className="h-4 w-4 text-blue-600" />
@@ -523,9 +521,9 @@ export function GroupModal({
 
                         {/* Contador de resultados */}
                         {countrySearchTerm && (
-                          <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 text-xs text-gray-500">
-                            {filteredCountries.length} país(es) encontrado(s)
-                          </div>
+                                                  <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400">
+                          {filteredCountries.length} país(es) encontrado(s)
+                        </div>
                         )}
                       </div>
                     )}
@@ -538,7 +536,7 @@ export function GroupModal({
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Descripción
                 </label>
                 <textarea
@@ -546,13 +544,13 @@ export function GroupModal({
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   placeholder="Descripción del grupo"
                   rows={3}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
               <div className="flex items-center gap-4">
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Color
                   </label>
                   <div className="flex items-center gap-3">
@@ -562,7 +560,7 @@ export function GroupModal({
                       onChange={(e) => handleInputChange('color', e.target.value)}
                       className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
                     />
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
                       Color para identificar el grupo
                     </span>
                   </div>
@@ -571,14 +569,14 @@ export function GroupModal({
 
               {/* File Upload Section - Only show when creating new group */}
               {!editingGroup && (
-                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Carga Masiva (Opcional)
                   </label>
                   <div className="space-y-3">
                     {!selectedFile ? (
                       <div
-                        className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors cursor-pointer"
+                        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer"
                         onClick={() => fileInputRef.current?.click()}
                         onDrop={handleFileDrop}
                         onDragOver={handleDragOver}
@@ -658,7 +656,7 @@ export function GroupModal({
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Número Telefónico a Usar
                   </label>
-                  <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                  <div className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
                     {isLoadingPhoneNumbers ? (
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
@@ -732,7 +730,7 @@ export function GroupModal({
                   onChange={(e) => handleInputChange('firstMessage', e.target.value)}
                   placeholder="El primer mensaje que dirá el agente. Si está vacío, el agente esperará a que el usuario inicie la conversación."
                   rows={3}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Si está vacío, el agente esperará a que el usuario inicie la conversación.
@@ -748,8 +746,8 @@ export function GroupModal({
                   onChange={(e) => handleInputChange('prompt', e.target.value)}
                   placeholder="Explica que el prompt es para suministrar la personalidad del agente"
                   rows={4}
-                  className={`block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.prompt ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
+                  className={`block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white ${
+                    errors.prompt ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600'
                   }`}
                 />
                 {errors.prompt && (
@@ -762,7 +760,7 @@ export function GroupModal({
             </TabsContent>
           </Tabs>
           
-          <DialogFooter className="sticky bottom-0 bg-white border-t border-gray-100 pt-4">
+          <DialogFooter className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 pt-4">
             <Button 
               variant="outline" 
               onClick={handleClose}

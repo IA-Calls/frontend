@@ -46,7 +46,7 @@ export const Dashboard = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar */}
       <Sidebar
         activeSection={activeSection}
@@ -62,18 +62,18 @@ export const Dashboard = ({ user, onLogout }) => {
         sidebarCollapsed ? 'ml-16' : 'ml-64'
       }`}>
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
+        <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                className="lg:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <h1 className="text-2xl font-semibold text-gray-900">
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
                 {getSectionTitle()}
               </h1>
             </div>
@@ -85,7 +85,7 @@ export const Dashboard = ({ user, onLogout }) => {
                     {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                   </span>
                 </div>
-                <span className="hidden sm:block text-sm font-medium text-gray-700">
+                <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300">
                   {user?.name || 'Usuario'}
                 </span>
               </div>
@@ -94,7 +94,7 @@ export const Dashboard = ({ user, onLogout }) => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto bg-gray-50">
+        <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
           <div className="p-6">
             {renderContent()}
           </div>

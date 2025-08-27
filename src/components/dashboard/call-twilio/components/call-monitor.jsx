@@ -209,19 +209,19 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
   const getStatusColor = (status) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400"
       case "initiated":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400"
       case "completed":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400"
       case "failed":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400"
       case "busy":
-        return "bg-orange-100 text-orange-800"
+        return "bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-400"
       case "no-answer":
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300"
     }
   }
 
@@ -249,21 +249,21 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
   return (
     <div className="space-y-4">
       {/* Estadísticas Compactas */}
-      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <Phone className="h-4 w-4 text-blue-600" />
-            <span className="text-sm text-gray-600">Total:</span>
-            <span className="font-medium text-gray-900">{stats.total}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Total:</span>
+            <span className="font-medium text-gray-900 dark:text-white">{stats.total}</span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle className="h-4 w-4 text-green-600" />
-            <span className="text-sm text-gray-600">Completadas:</span>
-            <span className="font-medium text-gray-900">{stats.completed}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Completadas:</span>
+            <span className="font-medium text-gray-900 dark:text-white">{stats.completed}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Progreso:</span>
-            <span className="font-medium text-gray-900">{progressPercentage.toFixed(0)}%</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Progreso:</span>
+            <span className="font-medium text-gray-900 dark:text-white">{progressPercentage.toFixed(0)}%</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -282,15 +282,15 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
       </div>
 
       {/* Lista de llamadas recientes */}
-      <Card className="bg-white border border-gray-200">
+      <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Actividad Reciente</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Actividad Reciente</CardTitle>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[400px]">
             {recentCalls.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                <Phone className="h-12 w-12 mb-4 text-gray-400" />
+              <div className="flex flex-col items-center justify-center py-8 text-gray-500 dark:text-gray-400">
+                <Phone className="h-12 w-12 mb-4 text-gray-400 dark:text-gray-500" />
                 <p>No hay actividad de llamadas aún</p>
               </div>
             ) : (
@@ -298,15 +298,15 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
                                  {recentCalls.map(({ user, status, recipient }) => (
                    <div
                      key={`${user?.id}-${status.timestamp.getTime()}`}
-                     className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors"
+                     className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                    >
                      <div className="flex items-center gap-3">
                        {getStatusIcon(status.status)}
                        <div className="flex-1">
-                         <p className="font-medium text-gray-900">{user?.name}</p>
-                         <p className="text-sm text-gray-600">{user?.phone}</p>
+                         <p className="font-medium text-gray-900 dark:text-white">{user?.name}</p>
+                         <p className="text-sm text-gray-600 dark:text-gray-400">{user?.phone}</p>
                          {recipient?.summary && (
-                           <p className="text-xs text-gray-700 mt-1 overflow-hidden" style={{
+                           <p className="text-xs text-gray-700 dark:text-gray-300 mt-1 overflow-hidden" style={{
                              display: '-webkit-box',
                              WebkitLineClamp: 2,
                              WebkitBoxOrient: 'vertical'
@@ -315,7 +315,7 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
                            </p>
                          )}
                          {recipient?.duration_secs && (
-                           <p className="text-xs text-blue-600 mt-1">
+                           <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                              Duración: {Math.floor(recipient.duration_secs / 60)}:{(recipient.duration_secs % 60).toString().padStart(2, '0')}
                            </p>
                          )}
@@ -326,7 +326,7 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
                        <Badge variant="secondary" className={`${getStatusColor(status.status)}`}>
                          {getStatusText(status.status)}
                        </Badge>
-                       <p className="text-xs text-gray-500">{status.timestamp.toLocaleTimeString()}</p>
+                       <p className="text-xs text-gray-500 dark:text-gray-400">{status.timestamp.toLocaleTimeString()}</p>
                        {recipient && recipient.transcript && (
                          <Button
                            size="sm"
@@ -361,24 +361,24 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
            />
            
            {/* Modal Content */}
-           <div className="relative bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+           <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
              {/* Header */}
-             <div className="flex items-center justify-between p-6 border-b">
+             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                <div className="flex items-center gap-2">
                  <Phone className="h-6 w-6 text-blue-600" />
-                 <h2 className="text-xl font-semibold">Detalles de la Llamada</h2>
+                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Detalles de la Llamada</h2>
                </div>
                <Button
                  variant="ghost"
                  size="sm"
                  onClick={closeCallDetails}
-                 className="h-8 w-8 p-0 hover:bg-gray-100"
+                 className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700"
                >
                  <X className="h-4 w-4" />
                </Button>
              </div>
              
-             <p className="px-6 pb-4 text-gray-600 text-sm">
+             <p className="px-6 pb-4 text-gray-600 dark:text-gray-400 text-sm">
                Información completa de la conversación y audio de la llamada
              </p>
 
@@ -387,16 +387,16 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
                {/* Panel izquierdo - Información básica y resumen */}
                <div className="w-1/3 space-y-4 overflow-y-auto">
                  {/* Información básica */}
-                 <div className="bg-gray-50 p-4 rounded-lg">
-                   <h3 className="font-semibold text-gray-900 mb-3">Información del Cliente</h3>
+                 <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                   <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Información del Cliente</h3>
                    <div className="space-y-2">
                      <div>
-                       <p className="text-sm font-medium text-gray-600">Nombre</p>
-                       <p className="text-gray-900">{selectedCall.user.name}</p>
+                       <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Nombre</p>
+                       <p className="text-gray-900 dark:text-white">{selectedCall.user.name}</p>
                      </div>
                      <div>
-                       <p className="text-sm font-medium text-gray-600">Teléfono</p>
-                       <p className="text-gray-900">{selectedCall.user.phone}</p>
+                       <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Teléfono</p>
+                       <p className="text-gray-900 dark:text-white">{selectedCall.user.phone}</p>
                      </div>
                      <div>
                        <p className="text-sm font-medium text-gray-600">Estado</p>

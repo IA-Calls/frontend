@@ -36,16 +36,16 @@ const getFileTypeColor = (fileName) => {
   switch (extension) {
     case 'xlsx':
     case 'xls':
-      return "bg-green-100 text-green-800"
+      return "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400"
     case 'pdf':
-      return "bg-red-100 text-red-800"
+      return "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400"
     case 'jpg':
     case 'jpeg':
     case 'png':
     case 'gif':
-      return "bg-blue-100 text-blue-800"
+      return "bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400"
     default:
-      return "bg-gray-100 text-gray-800"
+      return "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300"
   }
 }
 
@@ -297,13 +297,13 @@ export function GroupDocuments() {
 
   if (isLoading) {
     return (
-      <Card className="bg-white border border-gray-200 shadow-sm">
+      <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <CardContent className="flex flex-col items-center justify-center py-16">
           <RefreshCw className="h-12 w-12 text-blue-600 animate-spin mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Cargando documentos...
           </h3>
-          <p className="text-gray-600 text-center">Obteniendo documentos desde la API</p>
+          <p className="text-gray-600 dark:text-gray-400 text-center">Obteniendo documentos desde la API</p>
         </CardContent>
       </Card>
     )
@@ -311,13 +311,13 @@ export function GroupDocuments() {
 
   if (error) {
     return (
-      <Card className="bg-white border border-gray-200 shadow-sm">
+      <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
         <CardContent className="flex flex-col items-center justify-center py-16">
           <FileText className="h-12 w-12 text-red-500 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Error al cargar documentos
           </h3>
-          <p className="text-gray-600 text-center mb-4">{error}</p>
+          <p className="text-gray-600 dark:text-gray-400 text-center mb-4">{error}</p>
                      <Button onClick={() => fetchDocuments(1, 10)} variant="outline">
              <RefreshCw className="h-4 w-4 mr-2" />
              Reintentar
@@ -329,10 +329,10 @@ export function GroupDocuments() {
 
   return (
     <>
-      <Card className="bg-white border border-gray-200 shadow-sm">
-        <CardHeader className="bg-gray-50 border-b border-gray-200">
+      <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+        <CardHeader className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-3">
+            <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-3">
               <FileText className="h-5 w-5 text-blue-600" />
               Documentos de Grupos ({filteredDocuments.length})
             </CardTitle>
@@ -341,7 +341,7 @@ export function GroupDocuments() {
                size="sm"
                onClick={() => fetchDocuments(pagination.page, pagination.limit)}
                disabled={isLoading}
-               className="border-gray-300"
+               className="border-gray-300 dark:border-gray-600"
              >
                <RefreshCw className="h-4 w-4 mr-2" />
                Actualizar
@@ -350,21 +350,21 @@ export function GroupDocuments() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
               <Input
                 placeholder="Buscar documentos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-gray-300"
+                className="pl-10 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 disabled={isLoading}
               />
             </div>
 
             <Select value={filterGroup} onValueChange={setFilterGroup} disabled={isLoading}>
-              <SelectTrigger className="border-gray-300">
+              <SelectTrigger className="border-gray-300 dark:border-gray-600">
                 <SelectValue placeholder="Filtrar por Grupo" />
               </SelectTrigger>
-              <SelectContent className="bg-white text-gray-900">
+              <SelectContent className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                 <SelectItem value="all">Todos los Grupos</SelectItem>
                 {groups.map((group) => (
                   <SelectItem key={group} value={group}>
@@ -375,10 +375,10 @@ export function GroupDocuments() {
             </Select>
 
             <Select value={filterType} onValueChange={setFilterType} disabled={isLoading}>
-              <SelectTrigger className="border-gray-300">
+              <SelectTrigger className="border-gray-300 dark:border-gray-600">
                 <SelectValue placeholder="Filtrar por Tipo" />
               </SelectTrigger>
-              <SelectContent className="bg-white text-gray-900">
+              <SelectContent className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                 <SelectItem value="all">Todos los Tipos</SelectItem>
                 {fileTypes.map((type) => (
                   <SelectItem key={type} value={type}>
@@ -394,16 +394,16 @@ export function GroupDocuments() {
           <ScrollArea className="h-[600px]">
             <div className="p-6 space-y-4">
               {filteredDocuments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                  <FileText className="h-12 w-12 mb-4 text-gray-400" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No se encontraron documentos</h3>
+                <div className="flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400">
+                  <FileText className="h-12 w-12 mb-4 text-gray-400 dark:text-gray-500" />
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No se encontraron documentos</h3>
                   <p className="text-center">Ajusta tus filtros o tu búsqueda.</p>
                 </div>
               ) : (
                 filteredDocuments.map((document) => (
                   <div
                     key={document.id}
-                    className="p-6 border rounded-lg bg-white hover:bg-gray-50 border-gray-200 hover:border-gray-300 transition-all duration-200"
+                    className="p-6 border rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200"
                   >
                     <div className="flex items-start gap-4">
                                              <div className="flex-shrink-0">
@@ -413,7 +413,7 @@ export function GroupDocuments() {
                       <div className="flex-1 space-y-3">
                         <div className="flex items-center justify-between">
                                                      <div>
-                             <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                             <h4 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                {document.originalName}
                                <Badge className={getFileTypeColor(document.originalName)}>
                                  {document.originalName?.split('.').pop()?.toUpperCase()}
@@ -421,13 +421,13 @@ export function GroupDocuments() {
                              </h4>
                              <div className="flex items-center gap-2 mt-1">
                                {(document.groupInfo?.name || document.metadata?.groupName) && (
-                                 <Badge variant="outline" className="border-gray-300">
+                                 <Badge variant="outline" className="border-gray-300 dark:border-gray-600">
                                    <FolderOpen className="h-3 w-3 mr-1" />
                                    {document.groupInfo?.name || document.metadata?.groupName}
                                  </Badge>
                                )}
                                {document.fileSize && (
-                                 <Badge variant="outline" className="border-gray-300">
+                                 <Badge variant="outline" className="border-gray-300 dark:border-gray-600">
                                    {formatFileSize(document.fileSize)}
                                  </Badge>
                                )}
@@ -469,14 +469,14 @@ export function GroupDocuments() {
 
                                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                            {document.uploadedBy && (
-                             <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-md">
+                             <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-600 p-3 rounded-md">
                                <User className="h-4 w-4 text-blue-600" />
                                <span className="font-medium">Subido por: {document.uploadedBy}</span>
                              </div>
                            )}
 
                            {document.createdAt && (
-                             <div className="flex items-center gap-2 text-gray-700 bg-gray-50 p-3 rounded-md">
+                             <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-600 p-3 rounded-md">
                                <Calendar className="h-4 w-4 text-green-600" />
                                <span className="font-medium">{formatDate(document.createdAt)}</span>
                              </div>
@@ -484,14 +484,14 @@ export function GroupDocuments() {
                          </div>
 
                          {document.groupInfo?.description && (
-                           <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
-                             <p className="text-sm text-gray-700">{document.groupInfo.description}</p>
+                           <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border border-blue-200 dark:border-blue-800">
+                             <p className="text-sm text-gray-700 dark:text-gray-300">{document.groupInfo.description}</p>
                            </div>
                          )}
 
                          {document.metadata?.totalClients && (
-                           <div className="bg-green-50 p-3 rounded-md border border-green-200">
-                             <p className="text-sm text-gray-700">
+                           <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-md border border-green-200 dark:border-green-800">
+                             <p className="text-sm text-gray-700 dark:text-gray-300">
                                <strong>Total de clientes:</strong> {document.metadata.totalClients}
                              </p>
                            </div>

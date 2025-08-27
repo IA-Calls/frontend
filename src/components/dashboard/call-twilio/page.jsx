@@ -1230,7 +1230,7 @@ export default function CallDashboard() {
   }, [])
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 h-screen w-full overflow-hidden">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 h-screen w-full overflow-hidden">
       <div className="p-6 w-full h-full flex flex-col">
 
         <style jsx>{`
@@ -1248,24 +1248,24 @@ export default function CallDashboard() {
         {currentView === 'groups' && (
           <div className="w-full flex-1 flex flex-col">
             {/* Header de Grupos - Estático */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm w-full flex-shrink-0">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-shrink-0">
               <div className="p-8 w-full">
                 <div className="flex items-center justify-between mb-8">
                   <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Grupos de Clientes</h1>
-                    <p className="text-gray-600">Gestiona y organiza tus campañas de llamadas</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Grupos de Clientes</h1>
+                    <p className="text-gray-600 dark:text-gray-400">Gestiona y organiza tus campañas de llamadas</p>
                   </div>
                     <div className="flex items-center gap-3">
                       {/* Buscador */}
                       <div className="flex items-center gap-3">
                         <div className="relative w-full flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                         <Input
                           type="text"
                           placeholder="Buscar grupos..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 pr-4 py-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="pl-10 pr-4 py-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                         {searchTerm && (
                           <Button
@@ -1279,7 +1279,7 @@ export default function CallDashboard() {
                         )}
                       </div>
                       {searchTerm && (
-                        <p className="text-sm text-gray-600 mt-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                           {filteredGroups.length} grupo{filteredGroups.length !== 1 ? 's' : ''} encontrado{filteredGroups.length !== 1 ? 's' : ''}
                         </p>
                       )}
@@ -1289,7 +1289,7 @@ export default function CallDashboard() {
                       variant="outline"
                       onClick={handleRefresh}
                       disabled={isLoading}
-                      className="border-gray-300 px-4 py-2"
+                      className="border-gray-300 dark:border-gray-600 px-4 py-2"
                     >
                       <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
                       Actualizar
@@ -1324,7 +1324,7 @@ export default function CallDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
                     {/* Opción "Todos los grupos" */}
                     <Card
-                      className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 hover:border-blue-200"
+                      className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-400"
                       onClick={() => handleGroupSelect(null)}
                     >
                       <CardContent className="p-6">
@@ -1333,11 +1333,11 @@ export default function CallDashboard() {
                             <Users className="h-6 w-6 text-white" />
                           </div>
                           <div>
-                            <h3 className="font-bold text-lg text-gray-900">Todos los Grupos</h3>
-                            <p className="text-sm text-gray-500">Vista general</p>
+                            <h3 className="font-bold text-lg text-gray-900 dark:text-white">Todos los Grupos</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Vista general</p>
                           </div>
                         </div>
-                        <p className="text-gray-600 mb-4 line-clamp-2">Ver todos los clientes de todos los grupos en una vista unificada</p>
+                        <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">Ver todos los clientes de todos los grupos en una vista unificada</p>
                         <div className="flex items-center justify-between">
                           <div className="flex gap-2">
                             <Button
@@ -1347,7 +1347,7 @@ export default function CallDashboard() {
                                 e.stopPropagation()
                                 handleExportReport()
                               }}
-                              className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg px-3 py-1 text-xs font-medium"
+                              className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-3 py-1 text-xs font-medium"
                             >
                               <Download className="h-3 w-3 mr-1" />
                               Exportar
@@ -1368,7 +1368,7 @@ export default function CallDashboard() {
                     {filteredGroups.map((group) => (
                       <Card
                         key={group.id}
-                        className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 hover:border-blue-200"
+                        className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-400"
                         onClick={() => handleGroupSelect(group)}
                       >
                         <CardContent className="p-6">
@@ -1382,12 +1382,12 @@ export default function CallDashboard() {
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <h3 className="font-bold text-lg text-gray-900">{group.name}</h3>
+                                  <h3 className="font-bold text-lg text-gray-900 dark:text-white">{group.name}</h3>
                                   {group.favorite && (
                                     <Star className="h-4 w-4 text-yellow-500 fill-current" />
                                   )}
                                 </div>
-                                <p className="text-sm text-gray-500">{group.clients ? group.clients.length : 0} clientes</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{group.clients ? group.clients.length : 0} clientes</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-1">
@@ -1406,7 +1406,7 @@ export default function CallDashboard() {
                                   })
                                   setIsGroupDialogOpen(true)
                                 }}
-                                className="text-gray-400 hover:text-gray-600"
+                                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -1524,20 +1524,20 @@ export default function CallDashboard() {
         {currentView === 'group-detail' && selectedGroup && (
           <div className="w-full flex-1 flex flex-col overflow-hidden">
             {/* Header del Grupo - Más Compacto */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm w-full flex-shrink-0 mb-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-shrink-0 mb-4">
               <div className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <Button
                       variant="ghost"
                       onClick={handleBackToGroups}
-                      className="text-gray-600 hover:text-gray-800 p-2"
+                      className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 p-2"
                     >
                       <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>
-                      <h2 className="text-xl font-semibold text-gray-900">{selectedGroup.name}</h2>
-                      <p className="text-gray-500 text-sm line-clamp-1 max-w-2xl">
+                      <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{selectedGroup.name}</h2>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-1 max-w-2xl">
                         {selectedGroup.description}
                       </p>
                     </div>
@@ -1582,7 +1582,7 @@ export default function CallDashboard() {
             </div>
 
             {/* Contenido Principal */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm w-full flex-1 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-1 overflow-hidden">
               <Tabs defaultValue="users" className="w-full h-full flex flex-col">
                 <TabsList className="w-full justify-start border-b rounded-none p-0 h-10">
                   <TabsTrigger value="users" className="flex items-center gap-2 px-4 py-2 text-sm data-[state=active]:border-b-2 data-[state=active]:border-blue-500">
@@ -1597,13 +1597,13 @@ export default function CallDashboard() {
 
                 <TabsContent value="users" className="flex-1 p-4 overflow-y-auto">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Clientes del Grupo</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Clientes del Grupo</h3>
                     <div className="flex gap-2">
                       <Button
                         onClick={handleSelectAll}
                         variant="outline"
                         size="sm"
-                        className="border-gray-300"
+                        className="border-gray-300 dark:border-gray-600"
                       >
                         Seleccionar Todos
                       </Button>
@@ -1611,7 +1611,7 @@ export default function CallDashboard() {
                         onClick={handleDeselectAll}
                         variant="outline"
                         size="sm"
-                        className="border-gray-300"
+                        className="border-gray-300 dark:border-gray-600"
                       >
                         Deseleccionar
                       </Button>
@@ -1621,34 +1621,34 @@ export default function CallDashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-left py-3 px-4 font-semibold text-gray-900 text-sm">Nombre</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-900 text-sm">Teléfono</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-900 text-sm">Estado</th>
-                          <th className="text-left py-3 px-4 font-semibold text-gray-900 text-sm">Acciones</th>
+                        <tr className="border-b border-gray-200 dark:border-gray-700">
+                          <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white text-sm">Nombre</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white text-sm">Teléfono</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white text-sm">Estado</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white text-sm">Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredUsers.map((user) => {
                           const status = callStatuses.get(user.id)
                           return (
-                            <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <tr key={user.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                               <td className="py-3 px-4">
                                 <div className="flex items-center gap-3">
                                   <input
                                     type="checkbox"
                                     checked={selectedUsers.has(user.id)}
                                     onChange={(e) => handleUserSelection(user.id, e.target.checked)}
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
                                   />
                                   <div>
-                                    <p className="font-medium text-gray-900 text-sm">{user.name}</p>
-                                    <p className="text-xs text-gray-500">{user.email}</p>
+                                    <p className="font-medium text-gray-900 dark:text-white text-sm">{user.name}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
                                   </div>
                                 </div>
                               </td>
                               <td className="py-3 px-4">
-                                <p className="text-gray-900 text-sm">{user.phone}</p>
+                                <p className="text-gray-900 dark:text-white text-sm">{user.phone}</p>
                               </td>
                               <td className="py-3 px-4">
                                 {status ? (
@@ -1656,10 +1656,10 @@ export default function CallDashboard() {
                                     variant="secondary"
                                     className={
                                       status.status === 'completed'
-                                        ? 'bg-green-100 text-green-800'
+                                        ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400'
                                         : status.status === 'failed'
-                                          ? 'bg-red-100 text-red-800'
-                                          : 'bg-yellow-100 text-yellow-800'
+                                          ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400'
+                                          : 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400'
                                     }
                                   >
                                     {status.status === 'completed' ? 'Completado' :
@@ -1669,7 +1669,7 @@ export default function CallDashboard() {
                                             status.status}
                                   </Badge>
                                 ) : (
-                                  <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+                                  <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                                     No Llamado
                                   </Badge>
                                 )}
@@ -1778,30 +1778,30 @@ export default function CallDashboard() {
             />
             
             {/* Modal Content */}
-            <div className="relative bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-md w-full mx-4 overflow-hidden">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Editar Cliente</h2>
-                  <p className="text-sm text-gray-600 mt-1">Modifica la información del cliente</p>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Editar Cliente</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Modifica la información del cliente</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setIsUserEditModalOpen(false)
-                    setEditingUser(null)
-                    setUserForm({
-                      name: '',
-                      phone: '',
-                      email: '',
-                      category: '',
-                      address: '',
-                      website: ''
-                    })
-                  }}
-                  className="h-8 w-8 p-0 hover:bg-gray-100"
-                >
+                                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setIsUserEditModalOpen(false)
+                      setEditingUser(null)
+                      setUserForm({
+                        name: '',
+                        phone: '',
+                        email: '',
+                        category: '',
+                        address: '',
+                        website: ''
+                      })
+                    }}
+                    className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -1809,7 +1809,7 @@ export default function CallDashboard() {
               {/* Content */}
               <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Nombre</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Nombre</label>
                   <Input
                     value={userForm.name}
                     onChange={(e) => setUserForm(prev => ({ ...prev, name: e.target.value }))}
@@ -1818,7 +1818,7 @@ export default function CallDashboard() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Teléfono</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono</label>
                   <Input
                     value={userForm.phone}
                     onChange={(e) => setUserForm(prev => ({ ...prev, phone: e.target.value }))}
@@ -1827,7 +1827,7 @@ export default function CallDashboard() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Email</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
                   <Input
                     value={userForm.email}
                     onChange={(e) => setUserForm(prev => ({ ...prev, email: e.target.value }))}
@@ -1836,7 +1836,7 @@ export default function CallDashboard() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Categoría</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Categoría</label>
                   <Input
                     value={userForm.category}
                     onChange={(e) => setUserForm(prev => ({ ...prev, category: e.target.value }))}
@@ -1845,7 +1845,7 @@ export default function CallDashboard() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Dirección</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Dirección</label>
                   <Input
                     value={userForm.address}
                     onChange={(e) => setUserForm(prev => ({ ...prev, address: e.target.value }))}
@@ -1854,7 +1854,7 @@ export default function CallDashboard() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Sitio Web</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sitio Web</label>
                   <Input
                     value={userForm.website}
                     onChange={(e) => setUserForm(prev => ({ ...prev, website: e.target.value }))}
@@ -1865,7 +1865,7 @@ export default function CallDashboard() {
               </div>
               
               {/* Footer */}
-              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -1901,12 +1901,12 @@ export default function CallDashboard() {
             />
             
             {/* Modal Content */}
-            <div className="relative bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-md w-full mx-4 overflow-hidden">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Confirmar Eliminación</h2>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Confirmar Eliminación</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     ¿Estás seguro de que quieres eliminar al cliente "{deleteUserConfirmDialog.user?.name}"? Esta acción no se puede deshacer.
                   </p>
                 </div>
@@ -1914,14 +1914,14 @@ export default function CallDashboard() {
                   variant="ghost"
                   size="sm"
                   onClick={handleCloseDeleteUserModal}
-                  className="h-8 w-8 p-0 hover:bg-gray-100"
+                  className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
               
               {/* Footer */}
-              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   variant="outline"
                   onClick={handleCloseDeleteUserModal}
