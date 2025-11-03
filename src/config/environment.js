@@ -8,11 +8,11 @@ const config = {
   TWILIO_CALL_URL: process.env.REACT_APP_TWILIO_CALL_URL || 'https://twilio-call-754698887417.us-central1.run.app/outbound-call',
   
   // API Endpoints
-  CLIENTS_PENDING_API_URL: process.env.REACT_APP_CLIENTS_PENDING_API_URL || 'http://localhost:5000/clients/pending',
+  CLIENTS_PENDING_API_URL: process.env.REACT_APP_CLIENTS_PENDING_API_URL || 'http://localhost:5000/api/clients/pending',
   GROUPS_API_URL: process.env.REACT_APP_GROUPS_API_URL || 'http://localhost:5000/api/groups',
   AGENTS_API_URL: process.env.REACT_APP_AGENTS_API_URL || 'http://localhost:5000/api/agents',
-  EXTRACT_EXCEL_API_URL: process.env.REACT_APP_EXTRACT_EXCEL_API_URL || 'http://localhost:5000/clients/extract-excel',
-  OUTBOUND_CALL_PROXY_API_URL: process.env.REACT_APP_OUTBOUND_CALL_PROXY_API_URL || 'http://localhost:5000/calls/outbound',
+  EXTRACT_EXCEL_API_URL: process.env.REACT_APP_EXTRACT_EXCEL_API_URL || 'http://localhost:5000/api/clients/extract-excel',
+  OUTBOUND_CALL_PROXY_API_URL: process.env.REACT_APP_OUTBOUND_CALL_PROXY_API_URL || 'http://localhost:5000/api/calls/outbound',
   
   // Helper methods
   isDevelopment: () => config.ENV === 'development',

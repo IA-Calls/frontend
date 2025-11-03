@@ -9,7 +9,8 @@ import {
   ChevronLeft, 
   ChevronRight,
   Sun,
-  Moon
+  Moon,
+  FolderOpen
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import logoNegro from '../../images/logo-negro.png';
@@ -27,6 +28,7 @@ export const Sidebar = ({
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'groups', label: 'Grupos', icon: FolderOpen },
     { id: 'call-management', label: 'Gestión de Llamadas', icon: Phone },
     { id: 'user-management', label: 'Gestión de Usuarios', icon: Users },
     { id: 'group-documents', label: 'Documentos Grupos', icon: FileText },
@@ -34,11 +36,11 @@ export const Sidebar = ({
   ];
 
   return (
-    <div className={`bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ${
+    <div className={`h-screen flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ${
       collapsed ? 'w-16' : 'w-64'
     }`}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className="flex items-center justify-between">
           {!collapsed && (
             <div className="flex items-center space-x-2">
@@ -67,7 +69,7 @@ export const Sidebar = ({
       </div>
 
       {/* Navigation */}
-      <nav className="p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeSection === item.id;
@@ -90,9 +92,9 @@ export const Sidebar = ({
           );
         })}
       </nav>
-
+        
       {/* Dark Mode Toggle */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
         <button
           onClick={toggleDarkMode}
           className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -111,9 +113,9 @@ export const Sidebar = ({
       </div>
 
       {/* User Profile & Logout */}
-      <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className="flex items-center space-x-3 mb-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-white text-sm font-medium">
               {user?.name?.charAt(0) || 'U'}
             </span>

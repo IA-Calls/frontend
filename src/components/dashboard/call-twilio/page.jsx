@@ -1,19 +1,14 @@
 "use client"
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
-import { Phone, Users, Play, Square, RefreshCw, Zap, Target, Download, Search, Filter, Plus, Edit, Trash2, FolderOpen, UserPlus, FileText, CheckCircle, ArrowLeft, XCircle, X, Star} from "lucide-react"
+import { Phone, Users,RefreshCw, Zap, Target, Download, Search, Plus, Edit, Trash2, FolderOpen, CheckCircle, ArrowLeft, X, Star} from "lucide-react"
 import { Button } from "./components/ui/button.tsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.tsx"
-import { UserList } from "./components/user-list.jsx"
 import { CallMonitor } from "./components/call-monitor.jsx"
-import { Pagination } from "./components/pagination.jsx"
-import { StatsCards } from "./components/stats-cards.jsx"
-import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card.tsx"
+import { Card, CardContent } from "./components/ui/card.tsx"
 import { Input } from "./components/ui/input.tsx"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "./components/ui/dialog.tsx"
 import { GroupModal } from "./components/GroupModal.jsx"
 import { DeleteGroupModal } from "./components/DeleteGroupModal.jsx"
-import { GroupDocuments } from "./components/GroupDocuments.jsx"
 import { TestCallModal } from "./components/TestCallModal.jsx"
 import { Badge } from "./components/ui/badge.tsx"
 import { useToast } from "./use-toast.ts"
@@ -22,7 +17,6 @@ import config from "../../../config/environment.js"
 import { authService } from "../../../services/authService.js"
 
 // Usar configuración de entorno
-const EXTERNAL_OUTBOUND_CALL_API_URL = config.TWILIO_CALL_URL
 const CLIENTS_PENDING_API_URL = config.CLIENTS_PENDING_API_URL
 const GROUPS_API_URL = config.GROUPS_API_URL
 const OUTBOUND_CALL_PROXY_API_URL = config.OUTBOUND_CALL_PROXY_API_URL

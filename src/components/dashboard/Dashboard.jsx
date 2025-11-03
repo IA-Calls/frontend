@@ -15,6 +15,8 @@ export const Dashboard = ({ user, onLogout }) => {
     switch (activeSection) {
       case 'dashboard':
         return <DashboardContent user={user} />;
+      case 'groups':
+        return <CallDashboard user={user} />;
       case 'mass-uploads':
         return <ExcelMapper user={user} />;
       case 'user-management':
@@ -32,6 +34,8 @@ export const Dashboard = ({ user, onLogout }) => {
     switch (activeSection) {
       case 'dashboard':
         return 'Panel de Control';
+      case 'groups':
+        return 'Gestión de Grupos';
       case 'mass-uploads':
         return 'Cargas Masivas';
       case 'user-management':
@@ -58,9 +62,7 @@ export const Dashboard = ({ user, onLogout }) => {
       />
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
-        sidebarCollapsed ? 'ml-16' : 'ml-64'
-      }`}>
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between px-6 py-4">

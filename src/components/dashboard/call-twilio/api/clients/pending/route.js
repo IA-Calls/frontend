@@ -1,12 +1,8 @@
 // app/api/clients/pending/route.js
 import { NextResponse } from 'next/server'
 
-const EXTERNAL_CLIENTS_API_URL = 'https://calls-service-754698887417.us-central1.run.app'
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url)
-  const page = searchParams.get('page') || '1'
-  const limit = searchParams.get('limit') || '5'
 
   // Usar variable de entorno o fallback a localhost
   const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000'
