@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { Button } from "./ui/button.tsx"
 import { Input } from "./ui/input.tsx"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog.tsx"
-import { Star, Upload, X, FileSpreadsheet, Loader2, Plus, Trash2, Globe, Brain, Settings, Users, Search, CheckCircle, Phone } from "lucide-react"
+import { Upload, X, FileSpreadsheet, Loader2, Brain, Search, CheckCircle, Phone } from "lucide-react"
 import { useToast } from "../use-toast.ts"
 import { AuthService } from "../../../../services/authService.js"
 import { PhoneNumberUtil } from 'google-libphonenumber'
