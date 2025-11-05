@@ -5,7 +5,7 @@ export class AuthService {
   constructor() {
     this.tokenKey = 'auth_token';
     this.clientIdKey = 'client_id';
-    this.apiUrl = `${config.BACKEND_URL}/api/auth`;
+    this.apiUrl = config.AUTH_API_URL;
   }
 
   /**
