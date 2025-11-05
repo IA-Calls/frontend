@@ -10,7 +10,8 @@ import {
   ChevronRight,
   Sun,
   Moon,
-  FolderOpen
+  FolderOpen,
+  Brain
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import logoNegro from '../../images/logo-negro.png';
@@ -31,6 +32,7 @@ export const Sidebar = ({
     { id: 'groups', label: 'Grupos', icon: FolderOpen },
     { id: 'call-management', label: 'Gestión de Llamadas', icon: Phone },
     { id: 'user-management', label: 'Gestión de Usuarios', icon: Users },
+    { id: 'agentes', label: 'Agentes', icon: Brain },
     { id: 'group-documents', label: 'Documentos Grupos', icon: FileText },
     { id: 'settings', label: 'Configuración', icon: Settings },
   ];

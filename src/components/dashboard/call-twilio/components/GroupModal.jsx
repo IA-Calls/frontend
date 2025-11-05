@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "./ui/button.tsx"
 import { Input } from "./ui/input.tsx"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs.tsx"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog.tsx"
-import { Star, Upload, X, FileSpreadsheet, Loader2, Plus, Trash2, Globe, MessageSquare, Settings, Users, Search, CheckCircle, Phone } from "lucide-react"
+import { Star, Upload, X, FileSpreadsheet, Loader2, Plus, Trash2, Globe, Brain, Settings, Users, Search, CheckCircle, Phone } from "lucide-react"
 import { useToast } from "../use-toast.ts"
 import { AuthService } from "../../../../services/authService.js"
 import { PhoneNumberUtil } from 'google-libphonenumber'
@@ -24,10 +23,8 @@ export function GroupModal({
     prefix: '+57', // Default to Colombia
     selectedCountryCode: 'CO', // Default to Colombia
     color: '#3B82F6',
-    prompt: '',
-    firstMessage: '',
-    language: 'es',
-    phoneNumberId: 'phnum_4301k3d047vdfq682hvy29kr5r2g' // Default phone number
+    phoneNumberId: 'phnum_4301k3d047vdfq682hvy29kr5r2g', // Default phone number
+    agentId: '' // Nuevo campo requerido
   })
   
   const [selectedFile, setSelectedFile] = useState(null)
@@ -39,6 +36,8 @@ export function GroupModal({
   const [phoneNumbers, setPhoneNumbers] = useState([])
   const [isLoadingPhoneNumbers, setIsLoadingPhoneNumbers] = useState(false)
   const [selectedPhoneNumberId, setSelectedPhoneNumberId] = useState('')
+  const [agents, setAgents] = useState([])
+  const [isLoadingAgents, setIsLoadingAgents] = useState(false)
   const fileInputRef = useRef(null)
   const countryDropdownRef = useRef(null)
   const { toast } = useToast()
@@ -122,6 +121,49 @@ export function GroupModal({
     loadPhoneNumbers()
   }, [])
 
+  // Load agents on component mount
+  useEffect(() => {
+    const loadAgents = async () => {
+      setIsLoadingAgents(true)
+      try {
+        const response = await fetch(config.getApiUrl('/api/agents/list'), {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+
+        const data = await response.json()
+
+        if (data.success === false) {
+          console.error('Error loading agents:', data.message)
+          setAgents([])
+          return
+        }
+
+        if (!response.ok) {
+          console.error('Error loading agents:', data.message)
+          setAgents([])
+          return
+        }
+
+        // Acceder a data.data.raw_data.agents para obtener datos completos
+        const agentsList = data.data?.raw_data?.agents || data.data?.agents || data.agents || []
+        setAgents(agentsList)
+      } catch (error) {
+        console.error('Error fetching agents:', error)
+        setAgents([])
+      } finally {
+        setIsLoadingAgents(false)
+      }
+    }
+    
+    if (isOpen) {
+      loadAgents()
+    }
+  }, [isOpen])
+
   useEffect(() => {
     if (isOpen) {
       setLocalForm({
@@ -130,13 +172,12 @@ export function GroupModal({
         prefix: groupForm.prefix || '+57',
         selectedCountryCode: groupForm.selectedCountryCode || 'CO',
         color: groupForm.color || '#3B82F6',
-        prompt: groupForm.prompt || '',
-        firstMessage: groupForm.firstMessage || '',
-        language: groupForm.language || 'es',
-        phoneNumberId: groupForm.phoneNumberId || 'phnum_4301k3d047vdfq682hvy29kr5r2g'
+        phoneNumberId: groupForm.phoneNumberId || 'phnum_4301k3d047vdfq682hvy29kr5r2g',
+        agentId: groupForm.agentId || ''
       })
       // Reset file when opening modal
       setSelectedFile(null)
+      setSelectedPhoneNumberId(groupForm.phoneNumberId || '')
       setErrors({})
     }
   }, [isOpen, groupForm])
@@ -157,12 +198,8 @@ export function GroupModal({
       newErrors.prefix = 'El prefijo telefónico es requerido'
     }
 
-    if (!localForm.prompt.trim()) {
-      newErrors.prompt = 'El prompt del agente es requerido'
-    }
-
-    if (!localForm.language) {
-      newErrors.language = 'El lenguaje es requerido'
+    if (!localForm.agentId) {
+      newErrors.agentId = 'Debes seleccionar un agente'
     }
 
     if (!selectedPhoneNumberId && !localForm.phoneNumberId) {
@@ -196,10 +233,15 @@ export function GroupModal({
       return
     }
 
-    // Preparar los datos del grupo con clientID
+    // Preparar los datos del grupo con clientID y agentId
     const groupData = {
-      ...localForm,
+      name: localForm.name,
+      description: localForm.description,
+      prefix: localForm.prefix,
+      selectedCountryCode: localForm.selectedCountryCode,
+      color: localForm.color,
       phoneNumberId: selectedPhoneNumberId || localForm.phoneNumberId,
+      agentId: localForm.agentId, // ⭐ NUEVO: Campo requerido
       clientId: parseInt(clientId)
     }
 
@@ -388,20 +430,8 @@ export function GroupModal({
             </DialogDescription>
           </DialogHeader>
           
-          <Tabs defaultValue="group-config" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="group-config" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                Configuración del Grupo
-              </TabsTrigger>
-              <TabsTrigger value="agent-config" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Configuración Agente IA
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Tab 1: Configuración del Grupo */}
-            <TabsContent value="group-config" className="space-y-4">
+          {/* Configuración del Grupo - Ya no hay tabs, solo una vista */}
+          <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -567,6 +597,118 @@ export function GroupModal({
                 </div>
               </div>
 
+              {/* Selector de Agente - REQUERIDO */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Agente IA * <span className="text-red-500">(Requerido)</span>
+                </label>
+                {isLoadingAgents ? (
+                  <div className="flex items-center gap-2 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Cargando agentes...</span>
+                  </div>
+                ) : agents.length > 0 ? (
+                  <div className="relative">
+                    <select
+                      value={localForm.agentId}
+                      onChange={(e) => handleInputChange('agentId', e.target.value)}
+                      className={`block w-full pl-4 pr-10 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors appearance-none ${
+                        errors.agentId ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600'
+                      }`}
+                    >
+                      <option value="">Selecciona un agente...</option>
+                      {agents.map((agent) => (
+                        <option key={agent.agent_id} value={agent.agent_id}>
+                          {agent.name || agent.agent_id}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                      {localForm.agentId ? (
+                        <Brain className="h-5 w-5 text-blue-600" />
+                      ) : (
+                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                      No hay agentes disponibles. Por favor crea un agente primero.
+                    </p>
+                  </div>
+                )}
+                {errors.agentId && (
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.agentId}</p>
+                )}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Selecciona el agente de IA que se usará para las llamadas de este grupo
+                </p>
+              </div>
+
+              {/* Selector de Número Telefónico */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Número Telefónico a Usar *
+                </label>
+                {isLoadingPhoneNumbers ? (
+                  <div className="flex items-center gap-2 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Cargando números...</span>
+                  </div>
+                ) : phoneNumbers.length > 0 ? (
+                  <div className="relative">
+                    <select
+                      value={selectedPhoneNumberId || localForm.phoneNumberId}
+                      onChange={(e) => {
+                        setSelectedPhoneNumberId(e.target.value)
+                        handleInputChange('phoneNumberId', e.target.value)
+                      }}
+                      className={`block w-full pl-4 pr-10 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors appearance-none ${
+                        errors.phoneNumberId ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600'
+                      }`}
+                    >
+                      <option value="">Selecciona un número telefónico...</option>
+                      {phoneNumbers.map((phoneNumber) => (
+                        <option key={phoneNumber.phone_number_id} value={phoneNumber.phone_number_id}>
+                          {phoneNumber.phone_number} {phoneNumber.label ? `- ${phoneNumber.label}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                      {selectedPhoneNumberId || localForm.phoneNumberId ? (
+                        <Phone className="h-5 w-5 text-blue-600" />
+                      ) : (
+                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-center">
+                    <Phone className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No hay números telefónicos disponibles</p>
+                  </div>
+                )}
+                {selectedPhoneNumberId && phoneNumbers.find(p => p.phone_number_id === selectedPhoneNumberId) && (
+                  <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                    <p className="text-sm text-green-700 dark:text-green-400">
+                      Número seleccionado: <span className="font-medium">{phoneNumbers.find(p => p.phone_number_id === selectedPhoneNumberId)?.phone_number}</span>
+                    </p>
+                  </div>
+                )}
+                {errors.phoneNumberId && (
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.phoneNumberId}</p>
+                )}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Selecciona un número telefónico para este grupo
+                </p>
+              </div>
+
               {/* File Upload Section - Only show when creating new group */}
               {!editingGroup && (
                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
@@ -626,139 +768,7 @@ export function GroupModal({
                   </div>
                 </div>
               )}
-            </TabsContent>
-
-            {/* Tab 2: Configuración Agente IA */}
-            <TabsContent value="agent-config" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Lenguaje *
-                  </label>
-                  <select
-                    value={localForm.language}
-                    onChange={(e) => handleInputChange('language', e.target.value)}
-                    className={`block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.language ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                  >
-                    <option value="es">Español</option>
-                    <option value="en">English</option>
-                    <option value="pt">Português</option>
-                    <option value="fr">Français</option>
-                  </select>
-                  {errors.language && (
-                    <p className="text-sm text-red-600 mt-1">{errors.language}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Número Telefónico a Usar
-                  </label>
-                  <div className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
-                    {isLoadingPhoneNumbers ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                        <span className="text-sm text-gray-500">Cargando números...</span>
-                      </div>
-                    ) : phoneNumbers.length > 0 ? (
-                      <div className="space-y-2">
-                        {phoneNumbers.map((phoneNumber) => (
-                          <div 
-                            key={phoneNumber.phone_number_id} 
-                            className={`flex items-center justify-between p-2 rounded border cursor-pointer transition-colors ${
-                              selectedPhoneNumberId === phoneNumber.phone_number_id 
-                                ? 'bg-blue-50 border-blue-300' 
-                                : 'bg-white border-gray-200 hover:bg-gray-50'
-                            }`}
-                            onClick={() => setSelectedPhoneNumberId(phoneNumber.phone_number_id)}
-                          >
-                            <div className="flex items-center gap-2">
-                              <Phone className={`h-4 w-4 ${
-                                selectedPhoneNumberId === phoneNumber.phone_number_id 
-                                  ? 'text-blue-600' 
-                                  : 'text-gray-400'
-                              }`} />
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {phoneNumber.phone_number}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {phoneNumber.label}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="text-xs text-gray-400">
-                                {phoneNumber.phone_number_id}
-                              </div>
-                              {selectedPhoneNumberId === phoneNumber.phone_number_id && (
-                                <CheckCircle className="h-4 w-4 text-blue-600" />
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-4">
-                        <Phone className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">No hay números telefónicos disponibles</p>
-                      </div>
-                    )}
-                    <p className="text-xs text-gray-500 mt-2">
-                      Selecciona un número telefónico para este grupo
-                    </p>
-                    {selectedPhoneNumberId && (
-                      <p className="text-xs text-green-600 mt-1">
-                        ✅ Número seleccionado: {phoneNumbers.find(p => p.phone_number_id === selectedPhoneNumberId)?.phone_number}
-                      </p>
-                    )}
-                    {errors.phoneNumberId && (
-                      <p className="text-sm text-red-600 mt-1">{errors.phoneNumberId}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Primer Mensaje
-                </label>
-                <textarea
-                  value={localForm.firstMessage}
-                  onChange={(e) => handleInputChange('firstMessage', e.target.value)}
-                  placeholder="El primer mensaje que dirá el agente. Si está vacío, el agente esperará a que el usuario inicie la conversación."
-                  rows={3}
-                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Si está vacío, el agente esperará a que el usuario inicie la conversación.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Prompt *
-                </label>
-                <textarea
-                  value={localForm.prompt}
-                  onChange={(e) => handleInputChange('prompt', e.target.value)}
-                  placeholder="Explica que el prompt es para suministrar la personalidad del agente"
-                  rows={4}
-                  className={`block w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white ${
-                    errors.prompt ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600'
-                  }`}
-                />
-                {errors.prompt && (
-                  <p className="text-sm text-red-600 mt-1">{errors.prompt}</p>
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  El prompt es para suministrar la personalidad del agente
-                </p>
-              </div>
-            </TabsContent>
-          </Tabs>
+          </div>
           
           <DialogFooter className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 pt-4">
             <Button 
