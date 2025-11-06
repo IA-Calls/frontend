@@ -18,6 +18,8 @@ export const Dashboard = ({ user, onLogout }) => {
         return <DashboardContent user={user} />;
       case 'groups':
         return <CallDashboard user={user} />;
+      case 'interested-clients':
+        return <CallDashboard user={user} initialView="interested-clients" />;
       case 'mass-uploads':
         return <ExcelMapper user={user} />;
       case 'user-management':
@@ -39,6 +41,8 @@ export const Dashboard = ({ user, onLogout }) => {
         return 'Panel de Control';
       case 'groups':
         return 'Gestión de Grupos';
+      case 'interested-clients':
+        return 'Clientes Interesados';
       case 'mass-uploads':
         return 'Cargas Masivas';
       case 'user-management':

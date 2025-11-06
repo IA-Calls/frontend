@@ -1,7 +1,6 @@
 import React from 'react';
 import { 
   Home, 
-  Phone, 
   Users, 
   FileText, 
   Settings, 
@@ -11,7 +10,8 @@ import {
   Sun,
   Moon,
   FolderOpen,
-  Brain
+  Brain,
+  Heart
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import logoNegro from '../../images/logo-negro.png';
@@ -30,6 +30,7 @@ export const Sidebar = ({
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'groups', label: 'Grupos', icon: FolderOpen },
+    { id: 'interested-clients', label: 'Clientes Interesados', icon: Heart },
     { id: 'user-management', label: 'Gestión de Usuarios', icon: Users },
     { id: 'agentes', label: 'Agentes', icon: Brain },
     { id: 'group-documents', label: 'Documentos Grupos', icon: FileText },

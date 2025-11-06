@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
-import { Phone, Users,RefreshCw, Zap, Target, Download, Search, Plus, Edit, Trash2, FolderOpen, CheckCircle, ArrowLeft, X, Star} from "lucide-react"
+import { Phone, Users,RefreshCw, Zap, Target, Download, Search, Plus, Edit, Trash2, FolderOpen, CheckCircle, ArrowLeft, X, Star, Heart, Clock} from "lucide-react"
 import { Button } from "./components/ui/button.tsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.tsx"
 import { CallMonitor } from "./components/call-monitor.jsx"
@@ -20,8 +20,9 @@ import { authService } from "../../../services/authService.js"
 const CLIENTS_PENDING_API_URL = config.CLIENTS_PENDING_API_URL
 const GROUPS_API_URL = config.GROUPS_API_URL
 const OUTBOUND_CALL_PROXY_API_URL = config.OUTBOUND_CALL_PROXY_API_URL
+const CLIENTS_INTERESTED_API_URL = config.CLIENTS_INTERESTED_API_URL
 
-export default function CallDashboard() {
+export default function CallDashboard({ initialView = 'groups' }) {
   // Estados principales
   const [groups, setGroups] = useState([])
   const [selectedGroup, setSelectedGroup] = useState(null)
@@ -33,7 +34,24 @@ export default function CallDashboard() {
   const [error, setError] = useState(null)
 
   // Estado para navegación de vistas
-  const [currentView, setCurrentView] = useState('groups') // 'groups' | 'group-detail'
+  const [currentView, setCurrentView] = useState(initialView) // 'groups' | 'group-detail' | 'interested-clients'
+  
+  // Actualizar currentView cuando cambie initialView
+  useEffect(() => {
+    if (initialView) {
+      setCurrentView(initialView)
+    }
+  }, [initialView])
+  
+  // Estados para clientes interesados
+  const [interestedClients, setInterestedClients] = useState([])
+  const [isLoadingInterested, setIsLoadingInterested] = useState(false)
+  const [interestedPagination, setInterestedPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1
+  })
 
   // Estados para gestión de grupos
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false)
@@ -355,7 +373,54 @@ export default function CallDashboard() {
     fetchGroups()
   }, [fetchGroups])
 
+  // Obtener clientes interesados
+  const fetchInterestedClients = useCallback(async (page = 1, limit = 10) => {
+    setIsLoadingInterested(true)
+    try {
+      const url = `${CLIENTS_INTERESTED_API_URL}?page=${page}&limit=${limit}`
+      
+      console.log('Fetching interested clients from URL:', url)
 
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authService.getToken() && { 'Authorization': `Bearer ${authService.getToken()}` })
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+
+      if (result.success && result.data) {
+        setInterestedClients(result.data)
+        if (result.pagination) {
+          setInterestedPagination(result.pagination)
+        }
+      } else {
+        throw new Error(result.message || 'Error al obtener clientes interesados')
+      }
+    } catch (error) {
+      console.error("Error fetching interested clients:", error)
+      toast({
+        title: "❌ Error al cargar clientes interesados",
+        description: error.message || "Verifica la conexión con la API.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoadingInterested(false)
+    }
+  }, [toast])
+
+  // Cargar clientes interesados cuando se cambie a esa vista
+  useEffect(() => {
+    if (currentView === 'interested-clients') {
+      fetchInterestedClients()
+    }
+  }, [currentView, fetchInterestedClients])
 
   // Obtener todos los usuarios de todos los grupos
   const allUsers = useMemo(() => {
@@ -1215,6 +1280,15 @@ export default function CallDashboard() {
                     <div className="flex items-center gap-2 sm:gap-3">
                       <Button
                         variant="outline"
+                        onClick={() => setCurrentView('interested-clients')}
+                        className="border-pink-300 dark:border-pink-600 text-pink-700 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-900/20 px-3 sm:px-4 py-2 flex-1 sm:flex-initial text-sm sm:text-base"
+                      >
+                        <Heart className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Clientes Interesados</span>
+                        <span className="sm:hidden">Interesados</span>
+                      </Button>
+                      <Button
+                        variant="outline"
                         onClick={handleRefresh}
                         disabled={isLoading}
                         className="border-gray-300 dark:border-gray-600 px-3 sm:px-4 py-2 flex-1 sm:flex-initial text-sm sm:text-base"
@@ -1765,6 +1839,205 @@ export default function CallDashboard() {
                   />
                 </TabsContent>
               </Tabs>
+            </div>
+          </div>
+        )}
+
+        {/* Vista de Clientes Interesados */}
+        {currentView === 'interested-clients' && (
+          <div className="w-full flex-1 flex flex-col">
+            {/* Header de Clientes Interesados */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-shrink-0 mb-4">
+              <div className="p-4 sm:p-6 lg:p-8">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <Button
+                      variant="ghost"
+                      onClick={() => setCurrentView('groups')}
+                      className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 p-2"
+                    >
+                      <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </Button>
+                    <div>
+                      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2 flex items-center gap-2">
+                        <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-pink-500" />
+                        Clientes Interesados
+                      </h1>
+                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                        Clientes que han mostrado interés en tus servicios
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => fetchInterestedClients(interestedPagination.page, interestedPagination.limit)}
+                      disabled={isLoadingInterested}
+                      className="border-gray-300 dark:border-gray-600 px-3 sm:px-4 py-2 text-sm sm:text-base"
+                    >
+                      <RefreshCw className={`h-4 w-4 sm:mr-2 ${isLoadingInterested ? "animate-spin" : ""}`} />
+                      <span className="hidden sm:inline">Actualizar</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabla de Clientes Interesados */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg w-full flex-1 overflow-hidden">
+              <div className="p-4 sm:p-6 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
+                {isLoadingInterested ? (
+                  <div className="flex items-center justify-center py-12">
+                    <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+                    <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando clientes interesados...</span>
+                  </div>
+                ) : interestedClients.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <Heart className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400 font-medium text-lg">No hay clientes interesados</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Los clientes que muestren interés aparecerán aquí</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Vista Desktop - Tabla */}
+                    <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 dark:bg-gray-900/50">
+                          <tr className="border-b border-gray-200 dark:border-gray-700">
+                            <th className="text-left py-4 px-6 font-bold text-gray-900 dark:text-white text-sm uppercase tracking-wider">ID</th>
+                            <th className="text-left py-4 px-6 font-bold text-gray-900 dark:text-white text-sm uppercase tracking-wider">Nombre</th>
+                            <th className="text-left py-4 px-6 font-bold text-gray-900 dark:text-white text-sm uppercase tracking-wider">Teléfono</th>
+                            <th className="text-left py-4 px-6 font-bold text-gray-900 dark:text-white text-sm uppercase tracking-wider">Fecha de Creación</th>
+                            <th className="text-left py-4 px-6 font-bold text-gray-900 dark:text-white text-sm uppercase tracking-wider">Última Actualización</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {interestedClients.map((client) => {
+                            const createdAt = new Date(client.createdAt)
+                            const updatedAt = new Date(client.updatedAt)
+                            return (
+                              <tr key={client.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                <td className="py-4 px-6">
+                                  <span className="text-gray-900 dark:text-white text-sm font-mono">#{client.id}</span>
+                                </td>
+                                <td className="py-4 px-6">
+                                  <p className="font-semibold text-gray-900 dark:text-white text-sm">{client.name}</p>
+                                </td>
+                                <td className="py-4 px-6">
+                                  <p className="text-gray-900 dark:text-white text-sm font-mono">{client.phoneNumber}</p>
+                                </td>
+                                <td className="py-4 px-6">
+                                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 text-sm">
+                                    <Clock className="h-4 w-4" />
+                                    <span>{createdAt.toLocaleString('es-ES', { 
+                                      year: 'numeric', 
+                                      month: '2-digit', 
+                                      day: '2-digit', 
+                                      hour: '2-digit', 
+                                      minute: '2-digit' 
+                                    })}</span>
+                                  </div>
+                                </td>
+                                <td className="py-4 px-6">
+                                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 text-sm">
+                                    <Clock className="h-4 w-4" />
+                                    <span>{updatedAt.toLocaleString('es-ES', { 
+                                      year: 'numeric', 
+                                      month: '2-digit', 
+                                      day: '2-digit', 
+                                      hour: '2-digit', 
+                                      minute: '2-digit' 
+                                    })}</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Vista Mobile - Cards */}
+                    <div className="md:hidden space-y-3">
+                      {interestedClients.map((client) => {
+                        const createdAt = new Date(client.createdAt)
+                        const updatedAt = new Date(client.updatedAt)
+                        return (
+                          <Card key={client.id} className="border border-gray-200 dark:border-gray-700">
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-xs font-mono text-gray-500 dark:text-gray-400">#{client.id}</span>
+                                  </div>
+                                  <p className="font-semibold text-gray-900 dark:text-white text-base mb-2">{client.name}</p>
+                                  <p className="text-sm text-gray-900 dark:text-white font-mono mb-3">{client.phoneNumber}</p>
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                      <Clock className="h-3 w-3" />
+                                      <span className="font-medium">Creado:</span>
+                                      <span>{createdAt.toLocaleString('es-ES', { 
+                                        year: 'numeric', 
+                                        month: '2-digit', 
+                                        day: '2-digit', 
+                                        hour: '2-digit', 
+                                        minute: '2-digit' 
+                                      })}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                      <Clock className="h-3 w-3" />
+                                      <span className="font-medium">Actualizado:</span>
+                                      <span>{updatedAt.toLocaleString('es-ES', { 
+                                        year: 'numeric', 
+                                        month: '2-digit', 
+                                        day: '2-digit', 
+                                        hour: '2-digit', 
+                                        minute: '2-digit' 
+                                      })}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
+                    </div>
+
+                    {/* Paginación */}
+                    {interestedPagination.totalPages > 1 && (
+                      <div className="mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          Mostrando {((interestedPagination.page - 1) * interestedPagination.limit) + 1} - {Math.min(interestedPagination.page * interestedPagination.limit, interestedPagination.total)} de {interestedPagination.total} clientes
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fetchInterestedClients(interestedPagination.page - 1, interestedPagination.limit)}
+                            disabled={interestedPagination.page === 1 || isLoadingInterested}
+                            className="text-sm"
+                          >
+                            Anterior
+                          </Button>
+                          <span className="text-sm text-gray-600 dark:text-gray-400 px-3">
+                            Página {interestedPagination.page} de {interestedPagination.totalPages}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fetchInterestedClients(interestedPagination.page + 1, interestedPagination.limit)}
+                            disabled={interestedPagination.page >= interestedPagination.totalPages || isLoadingInterested}
+                            className="text-sm"
+                          >
+                            Siguiente
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}

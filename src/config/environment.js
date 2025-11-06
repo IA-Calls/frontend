@@ -38,6 +38,12 @@ const config = {
     return `${baseUrl}/api/auth`;
   })(),
   
+  // Clients Interested API
+  CLIENTS_INTERESTED_API_URL: process.env.REACT_APP_CLIENTS_INTERESTED_API_URL || (() => {
+    const baseUrl = process.env.REACT_APP_BACKEND_URL || 'https://api.nextvoiceia.com';
+    return `${baseUrl}/api/clients/interested`;
+  })(),
+  
   // Helper methods
   isDevelopment: () => config.ENV === 'development',
   isProduction: () => config.ENV === 'production',
