@@ -1177,54 +1177,52 @@ export default function CallDashboard() {
         {/* Vista de Grupos */}
         {currentView === 'groups' && (
           <div className="w-full flex-1 flex flex-col">
-            {/* Header de Grupos - Estático */}
+            {/* Header de Grupos - Responsive */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-shrink-0">
-              <div className="p-8 w-full">
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Grupos de Clientes</h1>
-                    <p className="text-gray-600 dark:text-gray-400">Gestiona y organiza tus campañas de llamadas</p>
+              <div className="p-4 sm:p-6 lg:p-8 w-full">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 lg:mb-8">
+                  <div className="flex-shrink-0">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">Grupos de Clientes</h1>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Gestiona y organiza tus campañas de llamadas</p>
                   </div>
-                    <div className="flex items-center gap-3">
-                      {/* Buscador */}
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-full flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
-                        <Input
-                          type="text"
-                          placeholder="Buscar grupos..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 pr-4 py-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        {searchTerm && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSearchTerm("")}
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                    {/* Buscador */}
+                    <div className="relative flex-1 sm:flex-initial sm:min-w-[200px] lg:min-w-[250px]">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                      <Input
+                        type="text"
+                        placeholder="Buscar grupos..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 pr-4 py-2 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+                      />
                       {searchTerm && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                          {filteredGroups.length} grupo{filteredGroups.length !== 1 ? 's' : ''} encontrado{filteredGroups.length !== 1 ? 's' : ''}
-                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSearchTerm("")}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
-
-                    <Button
-                      variant="outline"
-                      onClick={handleRefresh}
-                      disabled={isLoading}
-                      className="border-gray-300 dark:border-gray-600 px-4 py-2"
-                    >
-                      <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-                      Actualizar
-                    </Button>
-                                          <Button 
+                    {searchTerm && (
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                        {filteredGroups.length} grupo{filteredGroups.length !== 1 ? 's' : ''} encontrado{filteredGroups.length !== 1 ? 's' : ''}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={handleRefresh}
+                        disabled={isLoading}
+                        className="border-gray-300 dark:border-gray-600 px-3 sm:px-4 py-2 flex-1 sm:flex-initial text-sm sm:text-base"
+                      >
+                        <RefreshCw className={`h-4 w-4 sm:mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                        <span className="hidden sm:inline">Actualizar</span>
+                      </Button>
+                      <Button 
                         onClick={() => {
                           setEditingGroup(null)
                           setGroupForm({ 
@@ -1240,36 +1238,38 @@ export default function CallDashboard() {
                           })
                           setIsGroupDialogOpen(true)
                         }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-sm"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg shadow-sm flex-1 sm:flex-initial text-sm sm:text-base whitespace-nowrap"
                       >
-                      <Plus className="h-5 w-5 mr-2" />
-                      Crear Grupo
-                    </Button>
+                        <Plus className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2 inline" />
+                        <span className="hidden sm:inline">Crear Grupo</span>
+                        <span className="sm:hidden">Crear</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
 
                 {/* Contenedor con Scroll Interno */}
                 <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 300px)' }}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-4 sm:p-6">
                     {/* Opción "Todos los grupos" */}
                     <Card
                       className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-400"
                       onClick={() => handleGroupSelect(null)}
                     >
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-4 mb-4">
-                          <div className="w-12 h-12 bg-gradient-to-br from-gray-400 to-gray-500 rounded-xl flex items-center justify-center">
-                            <Users className="h-6 w-6 text-white" />
+                      <CardContent className="p-4 sm:p-6">
+                        <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-gray-400 to-gray-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                           </div>
-                          <div>
-                            <h3 className="font-bold text-lg text-gray-900 dark:text-white">Todos los Grupos</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Vista general</p>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white truncate">Todos los Grupos</h3>
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Vista general</p>
                           </div>
                         </div>
-                        <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">Ver todos los clientes de todos los grupos en una vista unificada</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex gap-2">
+                        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 line-clamp-2">Ver todos los clientes de todos los grupos en una vista unificada</p>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0">
+                          <div className="flex gap-2 w-full sm:w-auto">
                             <Button
                               size="sm"
                               variant="outline"
@@ -1277,19 +1277,13 @@ export default function CallDashboard() {
                                 e.stopPropagation()
                                 handleExportReport()
                               }}
-                              className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-3 py-1 text-xs font-medium"
+                              className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-2 sm:px-3 py-1.5 sm:py-1 text-xs font-medium flex-1 sm:flex-initial"
                             >
-                              <Download className="h-3 w-3 mr-1" />
-                              Exportar
+                              <Download className="h-3 w-3 sm:mr-1" />
+                              <span className="hidden sm:inline">Exportar</span>
                             </Button>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-blue-600 hover:text-blue-700"
-                          >
-                            Ver detalles →
-                          </Button>
+                        
                         </div>
                       </CardContent>
                     </Card>
@@ -1301,26 +1295,26 @@ export default function CallDashboard() {
                         className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-400"
                         onClick={() => handleGroupSelect(group)}
                       >
-                        <CardContent className="p-6">
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-4">
+                        <CardContent className="p-4 sm:p-6">
+                          <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
+                            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                               <div
-                                className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0"
                                 style={{ backgroundColor: group.color }}
                               >
-                                <FolderOpen className="h-6 w-6 text-white" />
+                                <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                               </div>
-                              <div>
+                              <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <h3 className="font-bold text-lg text-gray-900 dark:text-white">{group.name}</h3>
+                                  <h3 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white truncate">{group.name}</h3>
                                   {group.favorite && (
-                                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                    <Star className="h-4 w-4 text-yellow-500 fill-current flex-shrink-0" />
                                   )}
                                 </div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">{group.clients ? group.clients.length : 0} clientes</p>
+                                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{group.clients ? group.clients.length : 0} clientes</p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-shrink-0">
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -1336,9 +1330,9 @@ export default function CallDashboard() {
                                   })
                                   setIsGroupDialogOpen(true)
                                 }}
-                                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 p-1.5 sm:p-2"
                               >
-                                <Edit className="h-4 w-4" />
+                                <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                               </Button>
                               <Button
                                 size="sm"
@@ -1351,15 +1345,15 @@ export default function CallDashboard() {
                                     groupName: group.name
                                   })
                                 }}
-                                className="text-gray-400 hover:text-red-600"
+                                className="text-gray-400 hover:text-red-600 p-1.5 sm:p-2"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                               </Button>
                             </div>
                           </div>
-                          <p className="text-gray-600 mb-4 line-clamp-2">{group.description}</p>
-                          <div className="flex items-center justify-between">
-                            <div className="flex gap-2">
+                          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 line-clamp-2">{group.description || 'Sin descripción'}</p>
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0">
+                            <div className="flex gap-2 w-full sm:w-auto">
                               <Button
                                 size="sm"
                                 onClick={(e) => {
@@ -1367,10 +1361,10 @@ export default function CallDashboard() {
                                   handleCallGroup(group)
                                 }}
                                 disabled={isCallingState || !group.clients || group.clients.length === 0 || !group.agentId}
-                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-1 text-xs font-medium"
+                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-2 sm:px-3 py-1.5 sm:py-1 text-xs font-medium flex-1 sm:flex-initial"
                               >
-                                <Phone className="h-3 w-3 mr-1" />
-                                Llamar
+                                <Phone className="h-3 w-3 sm:mr-1" />
+                                <span className="hidden sm:inline">Llamar</span>
                               </Button>
                               <Button
                                 size="sm"
@@ -1379,19 +1373,13 @@ export default function CallDashboard() {
                                   e.stopPropagation()
                                   handleExportGroupReport(group)
                                 }}
-                                className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg px-3 py-1 text-xs font-medium"
+                                className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-2 sm:px-3 py-1.5 sm:py-1 text-xs font-medium flex-1 sm:flex-initial"
                               >
-                                <Download className="h-3 w-3 mr-1" />
-                                Exportar
+                                <Download className="h-3 w-3 sm:mr-1" />
+                                <span className="hidden sm:inline">Exportar</span>
                               </Button>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-blue-600 hover:text-blue-700"
-                            >
-                              Ver detalles →
-                            </Button>
+
                           </div>
                         </CardContent>
                       </Card>
@@ -1430,75 +1418,75 @@ export default function CallDashboard() {
         {/* Vista de Detalle del Grupo */}
         {currentView === 'group-detail' && selectedGroup && (
           <div className="w-full flex-1 flex flex-col overflow-hidden">
-            {/* Header del Grupo - Mejorado y más visual */}
+            {/* Header del Grupo - Responsive */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg w-full flex-shrink-0 mb-4">
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-4 flex-1">
+              <div className="p-4 sm:p-6">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+                  <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
                     <Button
                       variant="ghost"
                       onClick={handleBackToGroups}
-                      className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 p-2 mt-1"
+                      className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 p-2 mt-1 flex-shrink-0"
                     >
-                      <ArrowLeft className="h-5 w-5" />
+                      <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                     </Button>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
                         <div
-                          className="w-14 h-14 rounded-xl flex items-center justify-center shadow-md"
+                          className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center shadow-md flex-shrink-0"
                           style={{ backgroundColor: selectedGroup.color || '#3B82F6' }}
                         >
-                          <FolderOpen className="h-7 w-7 text-white" />
+                          <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-white" />
                         </div>
-                        <div>
-                          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedGroup.name}</h2>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 line-clamp-2 max-w-2xl">
+                        <div className="flex-1 min-w-0">
+                          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{selectedGroup.name}</h2>
+                          <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mt-1 line-clamp-2">
                             {selectedGroup.description || 'Sin descripción'}
                           </p>
                         </div>
                       </div>
                       
                       {/* Estadísticas del grupo */}
-                      <div className="flex items-center gap-6 mt-4">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Users className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                          <span className="text-gray-700 dark:text-gray-300 font-medium">
+                      <div className="flex flex-wrap items-center gap-3 sm:gap-6 mt-3 sm:mt-4">
+                        <div className="flex items-center gap-2 text-xs sm:text-sm">
+                          <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                          <span className="text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">
                             {selectedGroup.clients?.length || 0} clientes
                           </span>
                         </div>
                         {selectedGroup.agentId ? (
-                          <div className="flex items-center gap-2 text-sm">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span className="text-gray-700 dark:text-gray-300">Agente asignado</span>
+                          <div className="flex items-center gap-2 text-xs sm:text-sm">
+                            <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
+                            <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">Agente asignado</span>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 text-sm">
-                            <X className="h-4 w-4 text-red-500" />
-                            <span className="text-red-600 dark:text-red-400 font-medium">Sin agente asignado</span>
+                          <div className="flex items-center gap-2 text-xs sm:text-sm">
+                            <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500 flex-shrink-0" />
+                            <span className="text-red-600 dark:text-red-400 font-medium whitespace-nowrap">Sin agente asignado</span>
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Botones de Acción - Más prominentes */}
-                  <div className="flex items-center gap-3 ml-4">
+                  {/* Botones de Acción - Responsive */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 lg:ml-4 w-full sm:w-auto">
                     <Button
                       onClick={() => startGroupCall(selectedGroup.id)}
                       disabled={isLoading || isCallingState}
                       size="lg"
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                     >
-                      <Phone className="h-5 w-5 mr-2" />
+                      <Phone className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
                       {isLoading ? 'Iniciando...' : 'Iniciar Llamadas'}
                     </Button>
                     <Button
                       onClick={() => setIsTestCallModalOpen(true)}
                       variant="outline"
                       size="lg"
-                      className="border-2 border-green-300 dark:border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 px-5 py-3 font-semibold"
+                      className="border-2 border-green-300 dark:border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 px-4 sm:px-5 py-2.5 sm:py-3 font-semibold text-sm sm:text-base w-full sm:w-auto"
                     >
-                      <Phone className="h-4 w-4 mr-2" />
+                      <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2" />
                       Probar
                     </Button>
                   </div>
@@ -1526,20 +1514,20 @@ export default function CallDashboard() {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="users" className="flex-1 p-6 overflow-y-auto">
-                  <div className="flex items-center justify-between mb-6">
+                <TabsContent value="users" className="flex-1 p-4 sm:p-6 overflow-y-auto">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Clientes del Grupo</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-1">Clientes del Grupo</h3>
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         {filteredUsers.length} cliente{filteredUsers.length !== 1 ? 's' : ''} en este grupo
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         onClick={handleSelectAll}
                         variant="outline"
                         size="sm"
-                        className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs sm:text-sm flex-1 sm:flex-initial"
                       >
                         Seleccionar Todos
                       </Button>
@@ -1547,7 +1535,7 @@ export default function CallDashboard() {
                         onClick={handleDeselectAll}
                         variant="outline"
                         size="sm"
-                        className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs sm:text-sm flex-1 sm:flex-initial"
                       >
                         Deseleccionar
                       </Button>
@@ -1556,16 +1544,18 @@ export default function CallDashboard() {
                           onClick={handleCallSelected}
                           disabled={isCallingState}
                           size="sm"
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm w-full sm:w-auto"
                         >
-                          <Phone className="h-4 w-4 mr-2" />
-                          Llamar Seleccionados ({selectedUsers.size})
+                          <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Llamar Seleccionados ({selectedUsers.size})</span>
+                          <span className="sm:hidden">Llamar ({selectedUsers.size})</span>
                         </Button>
                       )}
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                  {/* Vista Desktop - Tabla */}
+                  <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
                     <table className="w-full">
                       <thead className="bg-gray-50 dark:bg-gray-900/50">
                         <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -1671,6 +1661,97 @@ export default function CallDashboard() {
                         )}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* Vista Mobile - Cards */}
+                  <div className="md:hidden space-y-3">
+                    {filteredUsers.length === 0 ? (
+                      <div className="py-12 text-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                        <div className="flex flex-col items-center justify-center">
+                          <Users className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-3" />
+                          <p className="text-gray-500 dark:text-gray-400 font-medium">No hay clientes en este grupo</p>
+                          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Agrega clientes al grupo para comenzar</p>
+                        </div>
+                      </div>
+                    ) : (
+                      filteredUsers.map((user) => {
+                        const status = callStatuses.get(user.id)
+                        return (
+                          <Card key={user.id} className="border border-gray-200 dark:border-gray-700">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3 mb-3">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedUsers.has(user.id)}
+                                  onChange={(e) => handleUserSelection(user.id, e.target.checked)}
+                                  className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500 w-4 h-4 cursor-pointer mt-1 flex-shrink-0"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-gray-900 dark:text-white text-sm mb-1">{user.name}</p>
+                                  {user.email && (
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{user.email}</p>
+                                  )}
+                                  <p className="text-sm text-gray-900 dark:text-white font-mono mb-2">{user.phone}</p>
+                                  <div className="mb-3">
+                                    {status ? (
+                                      <Badge
+                                        variant="secondary"
+                                        className={
+                                          status.status === 'completed'
+                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 border border-green-200 dark:border-green-800 text-xs'
+                                            : status.status === 'failed'
+                                              ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-800 text-xs'
+                                              : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800 text-xs'
+                                        }
+                                      >
+                                        {status.status === 'completed' ? '✅ Completado' :
+                                          status.status === 'failed' ? '❌ Fallido' :
+                                            status.status === 'pending' ? '⏳ Pendiente' :
+                                              status.status === 'initiated' ? '📞 Iniciada' :
+                                                status.status}
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 text-xs">
+                                        No Llamado
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleEditUser(user)}
+                                      className="border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 text-xs flex-1 sm:flex-initial"
+                                    >
+                                      <Edit className="h-3 w-3 mr-1" />
+                                      Editar
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleDeleteUserClick(user)}
+                                      className="border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs flex-1 sm:flex-initial"
+                                    >
+                                      <Trash2 className="h-3 w-3 mr-1" />
+                                      Eliminar
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => makeCall(user)}
+                                      disabled={isCallingState}
+                                      className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow text-xs flex-1 sm:flex-initial"
+                                    >
+                                      <Phone className="h-3 w-3 mr-1" />
+                                      Llamar
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      })
+                    )}
                   </div>
                 </TabsContent>
 

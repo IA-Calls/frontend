@@ -30,7 +30,6 @@ export const Sidebar = ({
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'groups', label: 'Grupos', icon: FolderOpen },
-    { id: 'call-management', label: 'Gestión de Llamadas', icon: Phone },
     { id: 'user-management', label: 'Gestión de Usuarios', icon: Users },
     { id: 'agentes', label: 'Agentes', icon: Brain },
     { id: 'group-documents', label: 'Documentos Grupos', icon: FileText },
