@@ -1226,7 +1226,7 @@ export default function CallDashboard({ initialView = 'groups' }) {
 
   return (
     <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 h-screen w-full overflow-hidden">
-      <div className="p-6 w-full h-full flex flex-col">
+      <div className="p-3 sm:p-4 md:p-6 w-full h-full flex flex-col">
 
         <style jsx>{`
           .line-clamp-2 {
@@ -1244,57 +1244,48 @@ export default function CallDashboard({ initialView = 'groups' }) {
           <div className="w-full flex-1 flex flex-col">
             {/* Header de Grupos - Responsive */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-shrink-0">
-              <div className="p-4 sm:p-6 lg:p-8 w-full">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 lg:mb-8">
-                  <div className="flex-shrink-0">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">Grupos de Clientes</h1>
-                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Gestiona y organiza tus campañas de llamadas</p>
+              <div className="p-4 sm:p-5 md:p-6 lg:p-8 w-full">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-5 mb-6 lg:mb-8">
+                  <div className="flex-shrink-0 min-w-0 overflow-hidden">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2 truncate">Grupos de Clientes</h1>
+                    <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-400 truncate">Gestiona y organiza tus campañas de llamadas</p>
                   </div>
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto min-w-0">
                     {/* Buscador */}
-                    <div className="relative flex-1 sm:flex-initial sm:min-w-[200px] lg:min-w-[250px]">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <div className="relative flex-1 sm:flex-initial sm:min-w-[200px] md:min-w-[250px] lg:min-w-[280px] max-w-full overflow-hidden">
+                      <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
                       <Input
                         type="text"
                         placeholder="Buscar grupos..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+                        className="pl-10 sm:pl-12 pr-4 py-2 sm:py-2.5 sm:py-3 w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm md:text-base min-h-[40px] sm:min-h-[44px] max-w-full"
                       />
                       {searchTerm && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setSearchTerm("")}
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                          className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 p-0 text-gray-400 hover:text-gray-600 rounded-full flex-shrink-0"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                         </Button>
                       )}
                     </div>
                     {searchTerm && (
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                      <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-400 whitespace-nowrap self-center flex-shrink-0 truncate max-w-[150px] sm:max-w-none">
                         {filteredGroups.length} grupo{filteredGroups.length !== 1 ? 's' : ''} encontrado{filteredGroups.length !== 1 ? 's' : ''}
                       </p>
                     )}
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentView('interested-clients')}
-                        className="border-pink-300 dark:border-pink-600 text-pink-700 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-900/20 px-3 sm:px-4 py-2 flex-1 sm:flex-initial text-sm sm:text-base"
-                      >
-                        <Heart className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Clientes Interesados</span>
-                        <span className="sm:hidden">Interesados</span>
-                      </Button>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto min-w-0">
                       <Button
                         variant="outline"
                         onClick={handleRefresh}
                         disabled={isLoading}
-                        className="border-gray-300 dark:border-gray-600 px-3 sm:px-4 py-2 flex-1 sm:flex-initial text-sm sm:text-base"
+                        className="border-gray-300 dark:border-gray-600 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base w-full sm:w-auto min-h-[40px] sm:min-h-[44px] font-medium max-w-full overflow-hidden"
                       >
-                        <RefreshCw className={`h-4 w-4 sm:mr-2 ${isLoading ? "animate-spin" : ""}`} />
-                        <span className="hidden sm:inline">Actualizar</span>
+                        <RefreshCw className={`h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 sm:mr-1.5 md:mr-2 flex-shrink-0 ${isLoading ? "animate-spin" : ""}`} />
+                        <span className="truncate">Actualizar</span>
                       </Button>
                       <Button 
                         onClick={() => {
@@ -1312,11 +1303,10 @@ export default function CallDashboard({ initialView = 'groups' }) {
                           })
                           setIsGroupDialogOpen(true)
                         }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg shadow-sm flex-1 sm:flex-initial text-sm sm:text-base whitespace-nowrap"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-5 md:px-6 lg:px-7 py-2 sm:py-2.5 md:py-3 rounded-lg shadow-sm text-xs sm:text-sm md:text-base font-semibold whitespace-nowrap w-full sm:w-auto min-h-[40px] sm:min-h-[44px] transition-all max-w-full overflow-hidden"
                       >
-                        <Plus className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2 inline" />
-                        <span className="hidden sm:inline">Crear Grupo</span>
-                        <span className="sm:hidden">Crear</span>
+                        <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 sm:mr-1.5 md:mr-2 inline flex-shrink-0" />
+                        <span className="truncate">Crear Grupo</span>
                       </Button>
                     </div>
                   </div>
@@ -1324,26 +1314,26 @@ export default function CallDashboard({ initialView = 'groups' }) {
 
 
                 {/* Contenedor con Scroll Interno */}
-                <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 300px)' }}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 p-4 sm:p-6">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6 p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8 min-w-0">
                     {/* Opción "Todos los grupos" */}
                     <Card
-                      className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-400"
+                      className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-400 overflow-hidden"
                       onClick={() => handleGroupSelect(null)}
                     >
-                      <CardContent className="p-4 sm:p-6">
-                        <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-gray-400 to-gray-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                      <CardContent className="p-4 sm:p-5 md:p-6 overflow-hidden">
+                        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-5 min-w-0">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-gradient-to-br from-gray-400 to-gray-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <Users className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-white" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white truncate">Todos los Grupos</h3>
-                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Vista general</p>
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <h3 className="font-bold text-base sm:text-lg md:text-xl text-gray-900 dark:text-white line-clamp-1 truncate">Todos los Grupos</h3>
+                            <p className="text-xs sm:text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1 truncate">Vista general</p>
                           </div>
                         </div>
-                        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 line-clamp-2">Ver todos los clientes de todos los grupos en una vista unificada</p>
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0">
-                          <div className="flex gap-2 w-full sm:w-auto">
+                        <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 md:mb-5 line-clamp-2 break-words">Ver todos los clientes de todos los grupos en una vista unificada</p>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 min-w-0">
+                          <div className="flex gap-2 w-full sm:w-auto min-w-0">
                             <Button
                               size="sm"
                               variant="outline"
@@ -1351,10 +1341,10 @@ export default function CallDashboard({ initialView = 'groups' }) {
                                 e.stopPropagation()
                                 handleExportReport()
                               }}
-                              className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-2 sm:px-3 py-1.5 sm:py-1 text-xs font-medium flex-1 sm:flex-initial"
+                              className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium flex-1 sm:flex-initial min-h-[40px] sm:min-h-[44px] max-w-full overflow-hidden"
                             >
-                              <Download className="h-3 w-3 sm:mr-1" />
-                              <span className="hidden sm:inline">Exportar</span>
+                              <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1.5 md:mr-2 flex-shrink-0" />
+                              <span className="truncate">Exportar</span>
                             </Button>
                           </div>
                         
@@ -1366,29 +1356,29 @@ export default function CallDashboard({ initialView = 'groups' }) {
                     {filteredGroups.map((group) => (
                       <Card
                         key={group.id}
-                        className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-400"
+                        className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-400 overflow-hidden"
                         onClick={() => handleGroupSelect(group)}
                       >
-                        <CardContent className="p-4 sm:p-6">
-                          <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
-                            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        <CardContent className="p-4 sm:p-5 md:p-6 overflow-hidden">
+                          <div className="flex items-start justify-between mb-3 sm:mb-4 md:mb-5 gap-2 sm:gap-3 min-w-0">
+                            <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0 overflow-hidden">
                               <div
-                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0"
+                                className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0"
                                 style={{ backgroundColor: group.color }}
                               >
-                                <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                                <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-white" />
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <h3 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white truncate">{group.name}</h3>
+                              <div className="flex-1 min-w-0 overflow-hidden">
+                                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 min-w-0">
+                                  <h3 className="font-bold text-base sm:text-lg md:text-xl text-gray-900 dark:text-white line-clamp-2 leading-tight break-words flex-1 min-w-0">{group.name}</h3>
                                   {group.favorite && (
-                                    <Star className="h-4 w-4 text-yellow-500 fill-current flex-shrink-0" />
+                                    <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 fill-current flex-shrink-0" />
                                   )}
                                 </div>
-                                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{group.clients ? group.clients.length : 0} clientes</p>
+                                <p className="text-xs sm:text-sm md:text-base text-gray-500 dark:text-gray-400 font-medium truncate">{group.clients ? group.clients.length : 0} {group.clients?.length === 1 ? 'cliente' : 'clientes'}</p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-1 flex-shrink-0">
+                            <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -1404,9 +1394,9 @@ export default function CallDashboard({ initialView = 'groups' }) {
                                   })
                                   setIsGroupDialogOpen(true)
                                 }}
-                                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 p-1.5 sm:p-2"
+                                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-1.5 sm:p-2 md:p-2.5 rounded-lg transition-colors flex-shrink-0"
                               >
-                                <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                               </Button>
                               <Button
                                 size="sm"
@@ -1419,15 +1409,15 @@ export default function CallDashboard({ initialView = 'groups' }) {
                                     groupName: group.name
                                   })
                                 }}
-                                className="text-gray-400 hover:text-red-600 p-1.5 sm:p-2"
+                                className="text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 sm:p-2 md:p-2.5 rounded-lg transition-colors flex-shrink-0"
                               >
-                                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                               </Button>
                             </div>
                           </div>
-                          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 line-clamp-2">{group.description || 'Sin descripción'}</p>
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0">
-                            <div className="flex gap-2 w-full sm:w-auto">
+                          <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 md:mb-5 line-clamp-2 break-words">{group.description || 'Sin descripción'}</p>
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 min-w-0">
+                            <div className="flex gap-2 sm:gap-2.5 w-full sm:w-auto min-w-0">
                               <Button
                                 size="sm"
                                 onClick={(e) => {
@@ -1435,10 +1425,10 @@ export default function CallDashboard({ initialView = 'groups' }) {
                                   handleCallGroup(group)
                                 }}
                                 disabled={isCallingState || !group.clients || group.clients.length === 0 || !group.agentId}
-                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-2 sm:px-3 py-1.5 sm:py-1 text-xs font-medium flex-1 sm:flex-initial"
+                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium flex-1 sm:flex-initial min-h-[40px] sm:min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed transition-all max-w-full overflow-hidden"
                               >
-                                <Phone className="h-3 w-3 sm:mr-1" />
-                                <span className="hidden sm:inline">Llamar</span>
+                                <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1.5 md:mr-2 flex-shrink-0" />
+                                <span className="truncate">Llamar</span>
                               </Button>
                               <Button
                                 size="sm"
@@ -1447,10 +1437,10 @@ export default function CallDashboard({ initialView = 'groups' }) {
                                   e.stopPropagation()
                                   handleExportGroupReport(group)
                                 }}
-                                className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-2 sm:px-3 py-1.5 sm:py-1 text-xs font-medium flex-1 sm:flex-initial"
+                                className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium flex-1 sm:flex-initial min-h-[40px] sm:min-h-[44px] transition-all max-w-full overflow-hidden"
                               >
-                                <Download className="h-3 w-3 sm:mr-1" />
-                                <span className="hidden sm:inline">Exportar</span>
+                                <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1.5 md:mr-2 flex-shrink-0" />
+                                <span className="truncate">Exportar</span>
                               </Button>
                             </div>
 
@@ -1493,8 +1483,8 @@ export default function CallDashboard({ initialView = 'groups' }) {
         {currentView === 'group-detail' && selectedGroup && (
           <div className="w-full flex-1 flex flex-col overflow-hidden">
             {/* Header del Grupo - Responsive */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg w-full flex-shrink-0 mb-4">
-              <div className="p-4 sm:p-6">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg w-full flex-shrink-0 mb-3 sm:mb-4">
+              <div className="p-3 sm:p-4 md:p-6">
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
                   <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
                     <Button
@@ -1571,24 +1561,26 @@ export default function CallDashboard({ initialView = 'groups' }) {
             {/* Contenido Principal */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg w-full flex-1 overflow-hidden">
               <Tabs defaultValue="users" className="w-full h-full flex flex-col">
-                <TabsList className="w-full justify-start border-b border-gray-200 dark:border-gray-700 rounded-none p-0 h-12 bg-gray-50 dark:bg-gray-900/50">
+                <TabsList className="w-full justify-start border-b border-gray-200 dark:border-gray-700 rounded-none p-0 h-auto sm:h-12 bg-gray-50 dark:bg-gray-900/50 flex-wrap">
                   <TabsTrigger 
                     value="users" 
-                    className="flex items-center gap-2 px-6 py-3 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 transition-colors"
+                    className="flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 transition-colors"
                   >
-                    <Users className="h-4 w-4" />
-                    Clientes del Grupo
+                    <Users className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">Clientes del Grupo</span>
+                    <span className="sm:hidden">Clientes</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="monitor" 
-                    className="flex items-center gap-2 px-6 py-3 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 transition-colors"
+                    className="flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 transition-colors"
                   >
-                    <Phone className="h-4 w-4" />
-                    Monitor de Llamadas
+                    <Phone className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">Monitor de Llamadas</span>
+                    <span className="sm:hidden">Monitor</span>
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="users" className="flex-1 p-4 sm:p-6 overflow-y-auto">
+                <TabsContent value="users" className="flex-1 p-2 sm:p-4 md:p-6 overflow-y-auto">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
                     <div>
                       <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-1">Clientes del Grupo</h3>
@@ -1847,8 +1839,8 @@ export default function CallDashboard({ initialView = 'groups' }) {
         {currentView === 'interested-clients' && (
           <div className="w-full flex-1 flex flex-col">
             {/* Header de Clientes Interesados */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-shrink-0 mb-4">
-              <div className="p-4 sm:p-6 lg:p-8">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-shrink-0 mb-3 sm:mb-4">
+              <div className="p-3 sm:p-4 md:p-6 lg:p-8">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
                   <div className="flex items-center gap-3 sm:gap-4">
                     <Button
@@ -1885,7 +1877,7 @@ export default function CallDashboard({ initialView = 'groups' }) {
 
             {/* Tabla de Clientes Interesados */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg w-full flex-1 overflow-hidden">
-              <div className="p-4 sm:p-6 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
+              <div className="p-2 sm:p-4 md:p-6 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
                 {isLoadingInterested ? (
                   <div className="flex items-center justify-center py-12">
                     <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
@@ -1901,14 +1893,14 @@ export default function CallDashboard({ initialView = 'groups' }) {
                   <>
                     {/* Vista Desktop - Tabla */}
                     <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                      <table className="w-full">
+                      <table className="w-full min-w-[600px]">
                         <thead className="bg-gray-50 dark:bg-gray-900/50">
                           <tr className="border-b border-gray-200 dark:border-gray-700">
-                            <th className="text-left py-4 px-6 font-bold text-gray-900 dark:text-white text-sm uppercase tracking-wider">ID</th>
-                            <th className="text-left py-4 px-6 font-bold text-gray-900 dark:text-white text-sm uppercase tracking-wider">Nombre</th>
-                            <th className="text-left py-4 px-6 font-bold text-gray-900 dark:text-white text-sm uppercase tracking-wider">Teléfono</th>
-                            <th className="text-left py-4 px-6 font-bold text-gray-900 dark:text-white text-sm uppercase tracking-wider">Fecha de Creación</th>
-                            <th className="text-left py-4 px-6 font-bold text-gray-900 dark:text-white text-sm uppercase tracking-wider">Última Actualización</th>
+                            <th className="text-left py-3 sm:py-4 px-3 sm:px-6 font-bold text-gray-900 dark:text-white text-xs sm:text-sm uppercase tracking-wider">ID</th>
+                            <th className="text-left py-3 sm:py-4 px-3 sm:px-6 font-bold text-gray-900 dark:text-white text-xs sm:text-sm uppercase tracking-wider">Nombre</th>
+                            <th className="text-left py-3 sm:py-4 px-3 sm:px-6 font-bold text-gray-900 dark:text-white text-xs sm:text-sm uppercase tracking-wider">Teléfono</th>
+                            <th className="text-left py-3 sm:py-4 px-3 sm:px-6 font-bold text-gray-900 dark:text-white text-xs sm:text-sm uppercase tracking-wider">Fecha de Creación</th>
+                            <th className="text-left py-3 sm:py-4 px-3 sm:px-6 font-bold text-gray-900 dark:text-white text-xs sm:text-sm uppercase tracking-wider">Última Actualización</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1917,19 +1909,19 @@ export default function CallDashboard({ initialView = 'groups' }) {
                             const updatedAt = new Date(client.updatedAt)
                             return (
                               <tr key={client.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                <td className="py-4 px-6">
-                                  <span className="text-gray-900 dark:text-white text-sm font-mono">#{client.id}</span>
+                                <td className="py-3 sm:py-4 px-3 sm:px-6">
+                                  <span className="text-gray-900 dark:text-white text-xs sm:text-sm font-mono">#{client.id}</span>
                                 </td>
-                                <td className="py-4 px-6">
-                                  <p className="font-semibold text-gray-900 dark:text-white text-sm">{client.name}</p>
+                                <td className="py-3 sm:py-4 px-3 sm:px-6">
+                                  <p className="font-semibold text-gray-900 dark:text-white text-xs sm:text-sm truncate max-w-[200px]">{client.name}</p>
                                 </td>
-                                <td className="py-4 px-6">
-                                  <p className="text-gray-900 dark:text-white text-sm font-mono">{client.phoneNumber}</p>
+                                <td className="py-3 sm:py-4 px-3 sm:px-6">
+                                  <p className="text-gray-900 dark:text-white text-xs sm:text-sm font-mono">{client.phoneNumber}</p>
                                 </td>
-                                <td className="py-4 px-6">
-                                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 text-sm">
-                                    <Clock className="h-4 w-4" />
-                                    <span>{createdAt.toLocaleString('es-ES', { 
+                                <td className="py-3 sm:py-4 px-3 sm:px-6">
+                                  <div className="flex items-center gap-1 sm:gap-2 text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
+                                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                                    <span className="whitespace-nowrap">{createdAt.toLocaleString('es-ES', { 
                                       year: 'numeric', 
                                       month: '2-digit', 
                                       day: '2-digit', 
@@ -1938,10 +1930,10 @@ export default function CallDashboard({ initialView = 'groups' }) {
                                     })}</span>
                                   </div>
                                 </td>
-                                <td className="py-4 px-6">
-                                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 text-sm">
-                                    <Clock className="h-4 w-4" />
-                                    <span>{updatedAt.toLocaleString('es-ES', { 
+                                <td className="py-3 sm:py-4 px-3 sm:px-6">
+                                  <div className="flex items-center gap-1 sm:gap-2 text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
+                                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                                    <span className="whitespace-nowrap">{updatedAt.toLocaleString('es-ES', { 
                                       year: 'numeric', 
                                       month: '2-digit', 
                                       day: '2-digit', 
@@ -1958,42 +1950,46 @@ export default function CallDashboard({ initialView = 'groups' }) {
                     </div>
 
                     {/* Vista Mobile - Cards */}
-                    <div className="md:hidden space-y-3">
+                    <div className="md:hidden space-y-2 sm:space-y-3">
                       {interestedClients.map((client) => {
                         const createdAt = new Date(client.createdAt)
                         const updatedAt = new Date(client.updatedAt)
                         return (
                           <Card key={client.id} className="border border-gray-200 dark:border-gray-700">
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between mb-3">
-                                <div className="flex-1">
+                            <CardContent className="p-3 sm:p-4">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-2">
                                     <span className="text-xs font-mono text-gray-500 dark:text-gray-400">#{client.id}</span>
                                   </div>
-                                  <p className="font-semibold text-gray-900 dark:text-white text-base mb-2">{client.name}</p>
-                                  <p className="text-sm text-gray-900 dark:text-white font-mono mb-3">{client.phoneNumber}</p>
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                                      <Clock className="h-3 w-3" />
-                                      <span className="font-medium">Creado:</span>
-                                      <span>{createdAt.toLocaleString('es-ES', { 
-                                        year: 'numeric', 
-                                        month: '2-digit', 
-                                        day: '2-digit', 
-                                        hour: '2-digit', 
-                                        minute: '2-digit' 
-                                      })}</span>
+                                  <p className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base mb-1 sm:mb-2 truncate">{client.name}</p>
+                                  <p className="text-xs sm:text-sm text-gray-900 dark:text-white font-mono mb-2 sm:mb-3 break-all">{client.phoneNumber}</p>
+                                  <div className="space-y-1.5 sm:space-y-2">
+                                    <div className="flex items-start gap-1.5 sm:gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                      <Clock className="h-3 w-3 flex-shrink-0 mt-0.5" />
+                                      <div className="flex-1 min-w-0">
+                                        <span className="font-medium">Creado: </span>
+                                        <span className="break-words">{createdAt.toLocaleString('es-ES', { 
+                                          year: 'numeric', 
+                                          month: '2-digit', 
+                                          day: '2-digit', 
+                                          hour: '2-digit', 
+                                          minute: '2-digit' 
+                                        })}</span>
+                                      </div>
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                                      <Clock className="h-3 w-3" />
-                                      <span className="font-medium">Actualizado:</span>
-                                      <span>{updatedAt.toLocaleString('es-ES', { 
-                                        year: 'numeric', 
-                                        month: '2-digit', 
-                                        day: '2-digit', 
-                                        hour: '2-digit', 
-                                        minute: '2-digit' 
-                                      })}</span>
+                                    <div className="flex items-start gap-1.5 sm:gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                      <Clock className="h-3 w-3 flex-shrink-0 mt-0.5" />
+                                      <div className="flex-1 min-w-0">
+                                        <span className="font-medium">Actualizado: </span>
+                                        <span className="break-words">{updatedAt.toLocaleString('es-ES', { 
+                                          year: 'numeric', 
+                                          month: '2-digit', 
+                                          day: '2-digit', 
+                                          hour: '2-digit', 
+                                          minute: '2-digit' 
+                                        })}</span>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -2006,9 +2002,10 @@ export default function CallDashboard({ initialView = 'groups' }) {
 
                     {/* Paginación */}
                     {interestedPagination.totalPages > 1 && (
-                      <div className="mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          Mostrando {((interestedPagination.page - 1) * interestedPagination.limit) + 1} - {Math.min(interestedPagination.page * interestedPagination.limit, interestedPagination.total)} de {interestedPagination.total} clientes
+                      <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0 border-t border-gray-200 dark:border-gray-700 pt-3 sm:pt-4">
+                        <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center sm:text-left">
+                          <span className="hidden sm:inline">Mostrando {((interestedPagination.page - 1) * interestedPagination.limit) + 1} - {Math.min(interestedPagination.page * interestedPagination.limit, interestedPagination.total)} de {interestedPagination.total} clientes</span>
+                          <span className="sm:hidden">{interestedPagination.page} / {interestedPagination.totalPages}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
@@ -2016,21 +2013,23 @@ export default function CallDashboard({ initialView = 'groups' }) {
                             size="sm"
                             onClick={() => fetchInterestedClients(interestedPagination.page - 1, interestedPagination.limit)}
                             disabled={interestedPagination.page === 1 || isLoadingInterested}
-                            className="text-sm"
+                            className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"
                           >
-                            Anterior
+                            <span className="hidden sm:inline">Anterior</span>
+                            <span className="sm:hidden">Ant</span>
                           </Button>
-                          <span className="text-sm text-gray-600 dark:text-gray-400 px-3">
-                            Página {interestedPagination.page} de {interestedPagination.totalPages}
+                          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 px-2 sm:px-3">
+                            {interestedPagination.page} / {interestedPagination.totalPages}
                           </span>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => fetchInterestedClients(interestedPagination.page + 1, interestedPagination.limit)}
                             disabled={interestedPagination.page >= interestedPagination.totalPages || isLoadingInterested}
-                            className="text-sm"
+                            className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"
                           >
-                            Siguiente
+                            <span className="hidden sm:inline">Siguiente</span>
+                            <span className="sm:hidden">Sig</span>
                           </Button>
                         </div>
                       </div>
