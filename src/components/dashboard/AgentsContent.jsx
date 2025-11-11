@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import config from '../../config/environment';
@@ -13,7 +13,8 @@ import {
   Mic, 
   Brain,
   Loader2,
-  Trash2
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 
 export const AgentsContent = ({ user }) => {
@@ -50,11 +51,49 @@ export const AgentsContent = ({ user }) => {
 
   const [knowledgeBaseFiles, setKnowledgeBaseFiles] = useState([]);
   const [dragActive, setDragActive] = useState(false);
+  const [voices, setVoices] = useState([]);
+  const [loadingVoices, setLoadingVoices] = useState(false);
+
+  // Load voices function
+  const loadVoices = useCallback(async () => {
+    setLoadingVoices(true);
+    try {
+      const response = await fetch(config.getApiUrl('/api/agents/voices'), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success === false || !response.ok) {
+        throw new Error(data.message || 'Error al cargar voces');
+      }
+
+      const voicesList = data.data?.voices || [];
+      setVoices(voicesList);
+    } catch (err) {
+      console.error('Error loading voices:', err);
+      setError(err.message || 'Error al cargar voces disponibles');
+      setVoices([]);
+    } finally {
+      setLoadingVoices(false);
+    }
+  }, []);
 
   // Fetch agents
   useEffect(() => {
     loadAgents();
   }, []);
+
+  // Load voices when form is opened
+  useEffect(() => {
+    if (showCreateForm) {
+      loadVoices();
+    }
+  }, [showCreateForm, loadVoices]);
 
   const loadAgents = async () => {
     setLoading(true);
@@ -384,6 +423,7 @@ export const AgentsContent = ({ user }) => {
 
   if (showCreateForm) {
     const isEditMode = selectedAgentId !== null;
+    
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -447,6 +487,9 @@ export const AgentsContent = ({ user }) => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Nombre del Agente *
                     </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+                      Asigna un nombre descriptivo que identifique fácilmente a este agente. Este nombre aparecerá en las llamadas y en la lista de agentes.
+                    </p>
                     <Input
                       value={formData.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
@@ -459,6 +502,9 @@ export const AgentsContent = ({ user }) => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Prompt del Agente *
                     </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+                      Define la personalidad, comportamiento y contexto del agente. Describe cómo debe hablar, qué tono usar, qué información debe compartir y cómo debe interactuar con los clientes.
+                    </p>
                     <textarea
                       value={formData.prompt_text}
                       onChange={(e) => handleInputChange('prompt_text', e.target.value)}
@@ -473,6 +519,9 @@ export const AgentsContent = ({ user }) => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Primer Mensaje del Agente *
                     </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+                      El saludo inicial que el agente dirá cuando responda una llamada. Debe ser claro, amigable y profesional.
+                    </p>
                     <Input
                       value={formData.agent_first_message}
                       onChange={(e) => handleInputChange('agent_first_message', e.target.value)}
@@ -485,6 +534,9 @@ export const AgentsContent = ({ user }) => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Idioma del Agente *
                     </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+                      Selecciona el idioma principal en el que el agente se comunicará con los clientes. Esto afecta tanto el habla como la comprensión del agente.
+                    </p>
                     <select
                       value={formData.agent_language}
                       onChange={(e) => handleInputChange('agent_language', e.target.value)}
@@ -501,6 +553,9 @@ export const AgentsContent = ({ user }) => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Temperatura del Prompt: {formData.prompt_temperature.toFixed(1)}
                     </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+                      Controla la creatividad y variabilidad de las respuestas del agente. Valores bajos generan respuestas más deterministas y consistentes, mientras que valores altos permiten más creatividad y variación.
+                    </p>
                     <Slider
                       value={[formData.prompt_temperature]}
                       onValueChange={(value) => handleSliderChange('prompt_temperature', value)}
@@ -509,23 +564,28 @@ export const AgentsContent = ({ user }) => {
                       step={0.1}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      <span>0.0</span>
-                      <span>1.0</span>
+                    <div className="flex justify-between text-xs font-medium text-gray-600 dark:text-gray-400 mt-1">
+                      <span>Más determinista</span>
+                      <span>Más creativo</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      id="prompt_ignore_default_personality"
-                      checked={formData.prompt_ignore_default_personality}
-                      onChange={(e) => handleInputChange('prompt_ignore_default_personality', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="prompt_ignore_default_personality" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Ignorar personalidad por defecto
-                    </label>
+                  <div>
+                    <div className="flex items-center space-x-3 mb-2">
+                      <input
+                        type="checkbox"
+                        id="prompt_ignore_default_personality"
+                        checked={formData.prompt_ignore_default_personality}
+                        onChange={(e) => handleInputChange('prompt_ignore_default_personality', e.target.checked)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="prompt_ignore_default_personality" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Ignorar personalidad por defecto
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-7 leading-relaxed">
+                      Si está activado, el agente ignorará la personalidad predeterminada del sistema y usará únicamente la personalidad definida en el prompt.
+                    </p>
                   </div>
                 </div>
               </TabsContent>
@@ -535,8 +595,95 @@ export const AgentsContent = ({ user }) => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Estabilidad: {formData.tts_stability.toFixed(1)}
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+                      Controla qué tan variada es la entonación de la voz. Valores bajos hacen la voz más expresiva y natural, mientras que valores altos la hacen más consistente y predecible.
+                    </p>
+                    <Slider
+                      value={[formData.tts_stability]}
+                      onValueChange={(value) => handleSliderChange('tts_stability', value)}
+                      min={0}
+                      max={1}
+                      step={0.1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs font-medium text-gray-600 dark:text-gray-400 mt-1">
+                      <span>Más expresivo</span>
+                      <span>Más consistente</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Velocidad: {formData.tts_speed.toFixed(1)}
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+                      Ajusta la velocidad de habla del agente. Valores más bajos hacen que hable más despacio (útil para información importante), mientras que valores más altos aceleran el habla.
+                    </p>
+                    <Slider
+                      value={[formData.tts_speed]}
+                      onValueChange={(value) => handleSliderChange('tts_speed', value)}
+                      min={0.5}
+                      max={2.0}
+                      step={0.1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs font-medium text-gray-600 dark:text-gray-400 mt-1">
+                      <span>Más lento</span>
+                      <span>Más rápido</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Similitud: {formData.tts_similarity_boost.toFixed(2)}
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+                      Controla qué tan similar suena la voz generada a la voz original del modelo. Valores altos hacen que la voz sea más fiel al modelo original, mientras que valores bajos permiten más variación.
+                    </p>
+                    <Slider
+                      value={[formData.tts_similarity_boost]}
+                      onValueChange={(value) => handleSliderChange('tts_similarity_boost', value)}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs font-medium text-gray-600 dark:text-gray-400 mt-1">
+                      <span>Bajo</span>
+                      <span>Alto</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Optimizar Latencia de Streaming: {formData.tts_optimize_streaming_latency}
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+                      Optimiza el tiempo de respuesta del audio en tiempo real. Valores más altos reducen la latencia pero pueden afectar ligeramente la calidad del audio. Ideal para conversaciones en tiempo real.
+                    </p>
+                    <Slider
+                      value={[formData.tts_optimize_streaming_latency]}
+                      onValueChange={(value) => handleSliderChange('tts_optimize_streaming_latency', value)}
+                      min={0}
+                      max={5}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs font-medium text-gray-600 dark:text-gray-400 mt-1">
+                      <span>Menos optimizado</span>
+                      <span>Más optimizado</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Calidad ASR *
                     </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+                      Define la calidad del reconocimiento de voz (ASR - Automatic Speech Recognition). Calidad alta mejora la precisión pero puede aumentar el tiempo de procesamiento. Calidad baja es más rápida pero menos precisa.
+                    </p>
                     <select
                       value={formData.asr_quality}
                       onChange={(e) => handleInputChange('asr_quality', e.target.value)}
@@ -551,86 +698,47 @@ export const AgentsContent = ({ user }) => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Estabilidad TTS: {formData.tts_stability.toFixed(1)}
+                      Voz *
                     </label>
-                    <Slider
-                      value={[formData.tts_stability]}
-                      onValueChange={(value) => handleSliderChange('tts_stability', value)}
-                      min={0}
-                      max={1}
-                      step={0.1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      <span>0.0</span>
-                      <span>1.0</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Velocidad TTS: {formData.tts_speed.toFixed(1)}
-                    </label>
-                    <Slider
-                      value={[formData.tts_speed]}
-                      onValueChange={(value) => handleSliderChange('tts_speed', value)}
-                      min={0.5}
-                      max={2.0}
-                      step={0.1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      <span>0.5</span>
-                      <span>2.0</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Similarity Boost TTS: {formData.tts_similarity_boost.toFixed(2)}
-                    </label>
-                    <Slider
-                      value={[formData.tts_similarity_boost]}
-                      onValueChange={(value) => handleSliderChange('tts_similarity_boost', value)}
-                      min={0}
-                      max={1}
-                      step={0.05}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      <span>0.0</span>
-                      <span>1.0</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Voice ID *
-                    </label>
-                    <Input
-                      value={formData.tts_voice_id}
-                      onChange={(e) => handleInputChange('tts_voice_id', e.target.value)}
-                      placeholder="WOSzFvlJRm2hkYb3KA5w"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Optimizar Latencia de Streaming: {formData.tts_optimize_streaming_latency}
-                    </label>
-                    <Slider
-                      value={[formData.tts_optimize_streaming_latency]}
-                      onValueChange={(value) => handleSliderChange('tts_optimize_streaming_latency', value)}
-                      min={0}
-                      max={5}
-                      step={1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      <span>0</span>
-                      <span>5</span>
-                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+                      Selecciona la voz que utilizará el agente para comunicarse. Cada voz tiene características únicas de tono, acento y estilo. Las voces muestran los idiomas que soportan.
+                    </p>
+                    {loadingVoices ? (
+                      <div className="flex items-center gap-2 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                        <span className="text-sm text-gray-500 dark:text-gray-400">Cargando voces...</span>
+                      </div>
+                    ) : voices.length > 0 ? (
+                      <select
+                        value={formData.tts_voice_id}
+                        onChange={(e) => handleInputChange('tts_voice_id', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      >
+                        <option value="">Selecciona una voz...</option>
+                        {voices.map((voice) => (
+                          <option key={voice.voice_id} value={voice.voice_id}>
+                            {voice.name} {voice.verified_languages && voice.verified_languages.length > 0 && `(${voice.verified_languages.map(l => l.language).join(', ')})`}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                          No hay voces disponibles. Por favor, intenta recargar.
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={loadVoices}
+                          className="mt-2 w-full"
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Recargar Voces
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </TabsContent>
