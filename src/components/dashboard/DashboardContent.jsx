@@ -125,9 +125,6 @@ export const DashboardContent = ({ user }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activity */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Actividad Reciente</h3>
-          </div>
           <div className="p-6">
             <div className="space-y-4">
               {recentActivities.map((activity) => (

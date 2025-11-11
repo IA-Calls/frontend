@@ -1225,7 +1225,7 @@ export default function CallDashboard({ initialView = 'groups' }) {
   }, [])
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 h-screen w-full overflow-hidden">
+    <div className="bg-gray-50 dark:bg-gray-900 h-screen w-full overflow-hidden">
       <div className="p-3 sm:p-4 md:p-6 w-full h-full flex flex-col">
 
         <style jsx>{`
@@ -1241,14 +1241,14 @@ export default function CallDashboard({ initialView = 'groups' }) {
 
         {/* Vista de Grupos */}
         {currentView === 'groups' && (
-          <div className="w-full flex-1 flex flex-col">
+          <div className="w-full flex-1 flex flex-col space-y-4">
             {/* Header de Grupos - Responsive */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-shrink-0">
-              <div className="p-4 sm:p-5 md:p-6 lg:p-8 w-full">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-5 mb-6 lg:mb-8">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-shrink-0">
+              <div className="p-4 sm:p-5 md:p-6 w-full">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-5 mb-4 sm:mb-6">
                   <div className="flex-shrink-0 min-w-0 overflow-hidden">
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2 truncate">Grupos de Clientes</h1>
-                    <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-400 truncate">Gestiona y organiza tus campañas de llamadas</p>
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white mb-1 sm:mb-2 truncate">Grupos de Clientes</h1>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">Gestiona y organiza tus campañas de llamadas</p>
                   </div>
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto min-w-0">
                     {/* Buscador */}
@@ -1315,23 +1315,23 @@ export default function CallDashboard({ initialView = 'groups' }) {
 
                 {/* Contenedor con Scroll Interno */}
                 <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(100vh - 280px)' }}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6 p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8 min-w-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6 min-w-0">
                     {/* Opción "Todos los grupos" */}
                     <Card
-                      className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-400 overflow-hidden"
+                      className="cursor-pointer transition-all duration-200 hover:shadow-md border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 overflow-hidden bg-white dark:bg-gray-800"
                       onClick={() => handleGroupSelect(null)}
                     >
-                      <CardContent className="p-4 sm:p-5 md:p-6 overflow-hidden">
-                        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-5 min-w-0">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-gradient-to-br from-gray-400 to-gray-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <Users className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-white" />
+                      <CardContent className="p-4 sm:p-5 overflow-hidden">
+                        <div className="flex items-center gap-3 mb-3 min-w-0">
+                          <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Users className="h-6 w-6 text-gray-600 dark:text-gray-300" />
                           </div>
                           <div className="flex-1 min-w-0 overflow-hidden">
-                            <h3 className="font-bold text-base sm:text-lg md:text-xl text-gray-900 dark:text-white line-clamp-1 truncate">Todos los Grupos</h3>
-                            <p className="text-xs sm:text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1 truncate">Vista general</p>
+                            <h3 className="font-semibold text-lg text-gray-900 dark:text-white line-clamp-1 truncate">Todos los Grupos</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">Vista general</p>
                           </div>
                         </div>
-                        <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 md:mb-5 line-clamp-2 break-words">Ver todos los clientes de todos los grupos en una vista unificada</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2 break-words">Ver todos los clientes de todos los grupos en una vista unificada</p>
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 min-w-0">
                           <div className="flex gap-2 w-full sm:w-auto min-w-0">
                             <Button
@@ -1356,26 +1356,26 @@ export default function CallDashboard({ initialView = 'groups' }) {
                     {filteredGroups.map((group) => (
                       <Card
                         key={group.id}
-                        className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-2 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-400 overflow-hidden"
+                        className="cursor-pointer transition-all duration-200 hover:shadow-md border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 overflow-hidden bg-white dark:bg-gray-800"
                         onClick={() => handleGroupSelect(group)}
                       >
-                        <CardContent className="p-4 sm:p-5 md:p-6 overflow-hidden">
-                          <div className="flex items-start justify-between mb-3 sm:mb-4 md:mb-5 gap-2 sm:gap-3 min-w-0">
-                            <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0 overflow-hidden">
+                        <CardContent className="p-4 sm:p-5 overflow-hidden">
+                          <div className="flex items-start justify-between mb-3 gap-2 min-w-0">
+                            <div className="flex items-center gap-3 flex-1 min-w-0 overflow-hidden">
                               <div
-                                className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0"
+                                className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
                                 style={{ backgroundColor: group.color }}
                               >
-                                <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-white" />
+                                <FolderOpen className="h-6 w-6 text-white" />
                               </div>
                               <div className="flex-1 min-w-0 overflow-hidden">
-                                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 min-w-0">
-                                  <h3 className="font-bold text-base sm:text-lg md:text-xl text-gray-900 dark:text-white line-clamp-2 leading-tight break-words flex-1 min-w-0">{group.name}</h3>
+                                <div className="flex items-center gap-2 mb-1 min-w-0">
+                                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white line-clamp-2 leading-tight break-words flex-1 min-w-0">{group.name}</h3>
                                   {group.favorite && (
-                                    <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 fill-current flex-shrink-0" />
+                                    <Star className="h-4 w-4 text-yellow-500 fill-current flex-shrink-0" />
                                   )}
                                 </div>
-                                <p className="text-xs sm:text-sm md:text-base text-gray-500 dark:text-gray-400 font-medium truncate">{group.clients ? group.clients.length : 0} {group.clients?.length === 1 ? 'cliente' : 'clientes'}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium truncate">{group.clients ? group.clients.length : 0} {group.clients?.length === 1 ? 'cliente' : 'clientes'}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
@@ -1415,8 +1415,8 @@ export default function CallDashboard({ initialView = 'groups' }) {
                               </Button>
                             </div>
                           </div>
-                          <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 md:mb-5 line-clamp-2 break-words">{group.description || 'Sin descripción'}</p>
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 min-w-0">
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2 break-words">{group.description || 'Sin descripción'}</p>
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
                             <div className="flex gap-2 sm:gap-2.5 w-full sm:w-auto min-w-0">
                               <Button
                                 size="sm"
@@ -1481,76 +1481,49 @@ export default function CallDashboard({ initialView = 'groups' }) {
 
         {/* Vista de Detalle del Grupo */}
         {currentView === 'group-detail' && selectedGroup && (
-          <div className="w-full flex-1 flex flex-col overflow-hidden">
+          <div className="w-full flex-1 flex flex-col overflow-hidden space-y-4">
             {/* Header del Grupo - Responsive */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg w-full flex-shrink-0 mb-3 sm:mb-4">
-              <div className="p-3 sm:p-4 md:p-6">
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
-                  <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-shrink-0">
+              <div className="p-4 sm:p-5 md:p-6">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                     <Button
                       variant="ghost"
                       onClick={handleBackToGroups}
-                      className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 p-2 mt-1 flex-shrink-0"
+                      className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 p-2 flex-shrink-0"
                     >
                       <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                     </Button>
+                    <div
+                      className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: selectedGroup.color || '#3B82F6' }}
+                    >
+                      <FolderOpen className="h-6 w-6 text-white" />
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                        <div
-                          className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center shadow-md flex-shrink-0"
-                          style={{ backgroundColor: selectedGroup.color || '#3B82F6' }}
-                        >
-                          <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{selectedGroup.name}</h2>
-                          <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mt-1 line-clamp-2">
-                            {selectedGroup.description || 'Sin descripción'}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {/* Estadísticas del grupo */}
-                      <div className="flex flex-wrap items-center gap-3 sm:gap-6 mt-3 sm:mt-4">
-                        <div className="flex items-center gap-2 text-xs sm:text-sm">
-                          <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                          <span className="text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">
-                            {selectedGroup.clients?.length || 0} clientes
-                          </span>
-                        </div>
-                        {selectedGroup.agentId ? (
-                          <div className="flex items-center gap-2 text-xs sm:text-sm">
-                            <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
-                            <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">Agente asignado</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 text-xs sm:text-sm">
-                            <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500 flex-shrink-0" />
-                            <span className="text-red-600 dark:text-red-400 font-medium whitespace-nowrap">Sin agente asignado</span>
-                          </div>
-                        )}
-                      </div>
+                      <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white truncate">{selectedGroup.name}</h2>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm mt-0.5 line-clamp-1">
+                        {selectedGroup.description || 'Sin descripción'}
+                      </p>
                     </div>
                   </div>
 
                   {/* Botones de Acción - Responsive */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 lg:ml-4 w-full sm:w-auto">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
                     <Button
                       onClick={() => startGroupCall(selectedGroup.id)}
                       disabled={isLoading || isCallingState}
-                      size="lg"
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+                      className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow transition-all duration-200 px-4 sm:px-5 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto h-9 sm:h-10"
                     >
-                      <Phone className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                      <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
                       {isLoading ? 'Iniciando...' : 'Iniciar Llamadas'}
                     </Button>
                     <Button
                       onClick={() => setIsTestCallModalOpen(true)}
                       variant="outline"
-                      size="lg"
-                      className="border-2 border-green-300 dark:border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 px-4 sm:px-5 py-2.5 sm:py-3 font-semibold text-sm sm:text-base w-full sm:w-auto"
+                      className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 sm:px-5 py-2 font-medium text-sm w-full sm:w-auto h-9 sm:h-10"
                     >
-                      <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2" />
+                      <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
                       Probar
                     </Button>
                   </div>
@@ -1559,7 +1532,7 @@ export default function CallDashboard({ initialView = 'groups' }) {
             </div>
 
             {/* Contenido Principal */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg w-full flex-1 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-1 overflow-hidden">
               <Tabs defaultValue="users" className="w-full h-full flex flex-col">
                 <TabsList className="w-full justify-start border-b border-gray-200 dark:border-gray-700 rounded-none p-0 h-auto sm:h-12 bg-gray-50 dark:bg-gray-900/50 flex-wrap">
                   <TabsTrigger 
@@ -1580,20 +1553,20 @@ export default function CallDashboard({ initialView = 'groups' }) {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="users" className="flex-1 p-2 sm:p-4 md:p-6 overflow-y-auto">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+                <TabsContent value="users" className="flex-1 p-4 sm:p-5 md:p-6 overflow-y-auto">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-5">
                     <div>
-                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-1">Clientes del Grupo</h3>
-                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">Clientes del Grupo</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {filteredUsers.length} cliente{filteredUsers.length !== 1 ? 's' : ''} en este grupo
                       </p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Button
                         onClick={handleSelectAll}
                         variant="outline"
                         size="sm"
-                        className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs sm:text-sm flex-1 sm:flex-initial"
+                        className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm h-8 sm:h-9"
                       >
                         Seleccionar Todos
                       </Button>
@@ -1601,7 +1574,7 @@ export default function CallDashboard({ initialView = 'groups' }) {
                         onClick={handleDeselectAll}
                         variant="outline"
                         size="sm"
-                        className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs sm:text-sm flex-1 sm:flex-initial"
+                        className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm h-8 sm:h-9"
                       >
                         Deseleccionar
                       </Button>
@@ -1610,11 +1583,10 @@ export default function CallDashboard({ initialView = 'groups' }) {
                           onClick={handleCallSelected}
                           disabled={isCallingState}
                           size="sm"
-                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm w-full sm:w-auto"
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-sm h-8 sm:h-9"
                         >
-                          <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">Llamar Seleccionados ({selectedUsers.size})</span>
-                          <span className="sm:hidden">Llamar ({selectedUsers.size})</span>
+                          <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5" />
+                          Llamar ({selectedUsers.size})
                         </Button>
                       )}
                     </div>
@@ -1647,35 +1619,35 @@ export default function CallDashboard({ initialView = 'groups' }) {
                             const status = callStatuses.get(user.id)
                             return (
                               <tr key={user.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                <td className="py-4 px-6">
+                                <td className="py-3 px-4 sm:px-6">
                                   <div className="flex items-center gap-3">
                                     <input
                                       type="checkbox"
                                       checked={selectedUsers.has(user.id)}
                                       onChange={(e) => handleUserSelection(user.id, e.target.checked)}
-                                      className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                                      className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500 w-4 h-4 cursor-pointer flex-shrink-0"
                                     />
-                                    <div>
-                                      <p className="font-semibold text-gray-900 dark:text-white text-sm">{user.name}</p>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{user.name}</p>
                                       {user.email && (
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{user.email}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{user.email}</p>
                                       )}
                                     </div>
                                   </div>
                                 </td>
-                                <td className="py-4 px-6">
+                                <td className="py-3 px-4 sm:px-6">
                                   <p className="text-gray-900 dark:text-white text-sm font-mono">{user.phone}</p>
                                 </td>
-                                <td className="py-4 px-6">
+                                <td className="py-3 px-4 sm:px-6">
                                   {status ? (
                                     <Badge
                                       variant="secondary"
                                       className={
                                         status.status === 'completed'
-                                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 border border-green-200 dark:border-green-800'
+                                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 border border-green-200 dark:border-green-800 text-xs'
                                           : status.status === 'failed'
-                                            ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-800'
-                                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800'
+                                            ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-800 text-xs'
+                                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800 text-xs'
                                       }
                                     >
                                       {status.status === 'completed' ? '✅ Completado' :
@@ -1685,39 +1657,39 @@ export default function CallDashboard({ initialView = 'groups' }) {
                                               status.status}
                                     </Badge>
                                   ) : (
-                                    <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                                    <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-600 text-xs">
                                       No Llamado
                                     </Badge>
                                   )}
                                 </td>
-                                <td className="py-4 px-6">
-                                  <div className="flex items-center gap-2">
+                                <td className="py-3 px-4 sm:px-6">
+                                  <div className="flex items-center gap-1.5 sm:gap-2">
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => handleEditUser(user)}
-                                      className="border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+                                      className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 h-7 sm:h-8 px-2 sm:px-3 text-xs"
                                     >
-                                      <Edit className="h-3 w-3 mr-1" />
-                                      Editar
+                                      <Edit className="h-3 w-3 sm:mr-1" />
+                                      <span className="hidden sm:inline">Editar</span>
                                     </Button>
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => handleDeleteUserClick(user)}
-                                      className="border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                      className="border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 h-7 sm:h-8 px-2 sm:px-3 text-xs"
                                     >
-                                      <Trash2 className="h-3 w-3 mr-1" />
-                                      Eliminar
+                                      <Trash2 className="h-3 w-3 sm:mr-1" />
+                                      <span className="hidden sm:inline">Eliminar</span>
                                     </Button>
                                     <Button
                                       size="sm"
                                       onClick={() => makeCall(user)}
                                       disabled={isCallingState}
-                                      className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow"
+                                      className="bg-blue-600 hover:bg-blue-700 text-white h-7 sm:h-8 px-2 sm:px-3 text-xs"
                                     >
-                                      <Phone className="h-3 w-3 mr-1" />
-                                      Llamar
+                                      <Phone className="h-3 w-3 sm:mr-1" />
+                                      <span className="hidden sm:inline">Llamar</span>
                                     </Button>
                                   </div>
                                 </td>
@@ -1837,10 +1809,10 @@ export default function CallDashboard({ initialView = 'groups' }) {
 
         {/* Vista de Clientes Interesados */}
         {currentView === 'interested-clients' && (
-          <div className="w-full flex-1 flex flex-col">
+          <div className="w-full flex-1 flex flex-col space-y-4">
             {/* Header de Clientes Interesados */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-shrink-0 mb-3 sm:mb-4">
-              <div className="p-3 sm:p-4 md:p-6 lg:p-8">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-shrink-0">
+              <div className="p-4 sm:p-5 md:p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
                   <div className="flex items-center gap-3 sm:gap-4">
                     <Button
@@ -1876,7 +1848,7 @@ export default function CallDashboard({ initialView = 'groups' }) {
             </div>
 
             {/* Tabla de Clientes Interesados */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg w-full flex-1 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-1 overflow-hidden">
               <div className="p-2 sm:p-4 md:p-6 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
                 {isLoadingInterested ? (
                   <div className="flex items-center justify-center py-12">

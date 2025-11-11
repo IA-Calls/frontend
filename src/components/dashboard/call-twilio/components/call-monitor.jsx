@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, useEffect, useRef, useCallback } from "react"
-import { Phone, Clock, CheckCircle, XCircle, AlertCircle, Users, Wifi, WifiOff, RefreshCw, X } from "lucide-react"
+import { Phone, Clock, CheckCircle, XCircle, AlertCircle, Users, Wifi, WifiOff, RefreshCw, X, ChevronLeft, ChevronRight, Download } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card.tsx"
 import { Progress } from "./ui/progress.tsx"
 import { Badge } from "./ui/badge.tsx"
@@ -10,6 +10,8 @@ import { Button } from "./ui/button.tsx"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog.tsx"
 import { authService } from "../../../../services/authService.js"
 import config from "../../../../config/environment.js"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select.tsx"
+import * as XLSX from "xlsx"
 
 const GROUPS_API_URL = config.GROUPS_API_URL
 
@@ -17,9 +19,44 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
   const [lastUpdate, setLastUpdate] = useState(null);
   const [selectedCall, setSelectedCall] = useState(null);
   const [isCallDetailsOpen, setIsCallDetailsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Construir URL del endpoint de estado del batch
-  const batchStatusUrl = groupId ? `${GROUPS_API_URL}/${groupId}/batch-status?userId=${authService.getClientId()}` : null;
+  // Función para guardar preferencias en localStorage
+  const savePreferences = useCallback((limit, statusFilter) => {
+    try {
+      localStorage.setItem('callMonitor_limit', limit.toString());
+      localStorage.setItem('callMonitor_statusFilter', statusFilter);
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+    }
+  }, []);
+
+  // Estados de paginación - inicializar con preferencias guardadas usando función inicializadora
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(() => {
+    try {
+      const savedLimit = localStorage.getItem('callMonitor_limit');
+      return savedLimit ? parseInt(savedLimit) : 10;
+    } catch {
+      return 10;
+    }
+  });
+  const [pagination, setPagination] = useState(null);
+  
+  // Estado para el filtro - inicializar con preferencias guardadas usando función inicializadora
+  const [statusFilter, setStatusFilter] = useState(() => {
+    try {
+      return localStorage.getItem('callMonitor_statusFilter') || 'all';
+    } catch {
+      return 'all';
+    }
+  }); // 'all', 'completed', 'failed', 'initiated'
+
+  // Construir URL del endpoint de estado del batch con paginación
+  const batchStatusUrl = useMemo(() => {
+    if (!groupId) return null;
+    return `${GROUPS_API_URL}/${groupId}/batch-status?userId=${authService.getClientId()}&page=${page}&limit=${limit}`;
+  }, [groupId, page, limit]);
 
   // Estados para el polling del batch
   const [isConnected, setIsConnected] = useState(false);
@@ -32,6 +69,7 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
   const fetchBatchStatus = useCallback(async () => {
     if (!batchStatusUrl) return;
 
+    setIsLoading(true);
     try {
       const response = await fetch(batchStatusUrl, {
         method: 'GET',
@@ -47,32 +85,34 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
 
       const result = await response.json();
       
-             if (result.success && result.data) {
-         // Extraer datos de la nueva estructura
-         const batchCall = result.data.batchCall;
-         const group = result.data.group;
-         
-         console.log('Datos recibidos:', { batchCall, group });
-         
-         setBatchData(batchCall || group?.batchMetadata);
-         setRecipients(batchCall?.recipients || group?.batchMetadata?.recipients || []);
-         setLastUpdate(new Date());
-         setIsConnected(true);
-         setError(null);
+      if (result.success && result.data) {
+        // Extraer datos de la nueva estructura
+        const batchCall = result.data.batchCall;
+        const group = result.data.group;
+        
+        console.log('Datos recibidos:', { batchCall, group, pagination: result.pagination });
+        
+        setBatchData(batchCall || group?.batchMetadata);
+        setRecipients(batchCall?.recipients || group?.batchMetadata?.recipients || []);
+        
+        // Guardar información de paginación
+        if (result.pagination) {
+          setPagination(result.pagination);
+        }
+        
+        setLastUpdate(new Date());
+        setIsConnected(true);
+        setError(null);
 
-         // Si el batch está completado, detener el polling
-         const status = batchCall?.status || group?.batchStatus;
-         if (status === 'completed') {
-           if (pollingIntervalRef.current) {
-             clearInterval(pollingIntervalRef.current);
-             pollingIntervalRef.current = null;
-           }
-           
-           if (window.addActivityLog) {
-             window.addActivityLog('✅ Batch de llamadas completado', 'success', 8000);
-           }
-         }
-       } else {
+        // Si el batch está completado, detener el polling
+        const status = batchCall?.status || group?.batchStatus;
+        if (status === 'completed') {
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+        }
+      } else {
         throw new Error(result.message || 'Error al obtener estado del batch');
       }
     } catch (err) {
@@ -83,24 +123,23 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
       if (window.addActivityLog) {
         window.addActivityLog('❌ Error en conexión del monitor', 'error', 6000);
       }
+    } finally {
+      setIsLoading(false);
     }
   }, [batchStatusUrl]);
 
-  // Iniciar polling cuando hay groupId
+  // Iniciar polling cuando hay groupId, limit o statusFilter cambian (NO cuando cambia page)
   useEffect(() => {
     if (groupId) {
       // Primera consulta inmediata
       fetchBatchStatus();
       
-      // Mostrar log de conexión
-      if (window.addActivityLog) {
-        window.addActivityLog('📡 Conectado al monitor en tiempo real', 'info', 5000);
-      }
+
 
       // Configurar polling cada 3 segundos
       pollingIntervalRef.current = setInterval(fetchBatchStatus, 3000);
 
-      // Cleanup al desmontar o cambiar groupId
+      // Cleanup al desmontar o cambiar groupId, limit o statusFilter
       return () => {
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
@@ -108,7 +147,27 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
         }
       };
     }
-  }, [groupId, fetchBatchStatus]);
+  }, [groupId, limit, statusFilter, fetchBatchStatus]);
+
+  // Guardar preferencias cuando cambian limit o statusFilter
+  useEffect(() => {
+    savePreferences(limit, statusFilter);
+  }, [limit, statusFilter, savePreferences]);
+
+  // Resetear a página 1 cuando cambia el límite o el filtro
+  useEffect(() => {
+    setPage(1);
+  }, [limit, statusFilter]);
+
+  // Actualizar datos cuando cambia la página (hacer petición inmediata sin reiniciar polling)
+  useEffect(() => {
+    if (groupId && batchStatusUrl) {
+      // Hacer una petición inmediata cuando cambia la página
+      // El polling continuará con la nueva página automáticamente porque batchStatusUrl se actualiza
+      fetchBatchStatus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   // Función para reconectar manualmente
   const reconnect = useCallback(() => {
@@ -157,27 +216,58 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
      return { total, called, completed, failed, inProgress };
    }, [batchData, recipients, totalUsers, users.length, callStatuses]);
 
+  // Función para extraer el nombre del cliente
+  const getClientName = useCallback((recipient) => {
+    // Intentar obtener el nombre de dynamic_variables
+    const dynamicVars = recipient?.conversation_initiation_client_data?.dynamic_variables;
+    if (dynamicVars?.name) {
+      return dynamicVars.name;
+    }
+    
+    // Fallback al número de teléfono
+    return recipient?.phone_number || 'Cliente desconocido';
+  }, []);
+
   const recentCalls = useMemo(() => {
     if (recipients.length > 0) {
-      // Usar datos de recipients del batch
-      return recipients
-        .map((recipient) => ({
-          recipient,
-          user: {
-            id: recipient.id,
-            name: `Cliente ${recipient.phone_number}`,
-            phone: recipient.phone_number
-          },
-          status: {
-            status: recipient.status,
-            timestamp: new Date(recipient.updated_at_unix * 1000),
-            callId: recipient.conversation_id,
-            duration: recipient.duration_secs,
-            message: recipient.summary
+      // Usar datos de recipients del batch - ya vienen paginados del backend
+      let filtered = recipients
+        .map((recipient) => {
+          const clientName = getClientName(recipient);
+          return {
+            recipient,
+            user: {
+              id: recipient.id,
+              name: clientName,
+              phone: recipient.phone_number
+            },
+            status: {
+              status: recipient.status,
+              timestamp: new Date(recipient.updated_at_unix * 1000),
+              callId: recipient.conversation_id,
+              duration: recipient.duration_secs,
+              message: recipient.summary
+            }
+          };
+        })
+        .sort((a, b) => b.status.timestamp.getTime() - a.status.timestamp.getTime());
+
+      // Aplicar filtro de estado
+      if (statusFilter !== 'all') {
+        filtered = filtered.filter((item) => {
+          const status = item.status.status;
+          if (statusFilter === 'completed') {
+            return status === 'completed';
+          } else if (statusFilter === 'failed') {
+            return status === 'failed' || status === 'no-answer' || status === 'busy';
+          } else if (statusFilter === 'initiated') {
+            return status === 'pending' || status === 'initiated' || status === 'in-progress';
           }
-        }))
-        .sort((a, b) => b.status.timestamp.getTime() - a.status.timestamp.getTime())
-        .slice(0, 20);
+          return true;
+        });
+      }
+
+      return filtered;
     }
     
     // Fallback a datos locales
@@ -189,7 +279,7 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
       .filter((item) => item.user)
       .sort((a, b) => b.status.timestamp.getTime() - a.status.timestamp.getTime())
       .slice(0, 20);
-  }, [recipients, users, callStatuses]);
+  }, [recipients, users, callStatuses, getClientName, statusFilter]);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -225,7 +315,7 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
     }
   }
 
-  const getStatusText = (status) => {
+  const getStatusText = useCallback((status) => {
     switch (status) {
       case "pending":
         return "Pendiente"
@@ -242,112 +332,261 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
       default:
         return "Desconocido"
     }
-  }
+  }, [])
+
+  // Función para exportar a Excel los datos visibles
+  const handleExportToExcel = useCallback(() => {
+    try {
+      if (recentCalls.length === 0) {
+        if (window.addActivityLog) {
+          window.addActivityLog('⚠️ No hay datos para exportar', 'warning', 4000);
+        }
+        return;
+      }
+
+      // Preparar los datos para Excel
+      const excelData = recentCalls.map(({ user, status, recipient }) => {
+        const duration = recipient?.duration_secs 
+          ? `${Math.floor(recipient.duration_secs / 60)}:${(recipient.duration_secs % 60).toString().padStart(2, '0')}`
+          : 'N/A';
+        
+        return {
+          'Nombre': user?.name || 'N/A',
+          'Número de Teléfono': user?.phone || 'N/A',
+          'Estado de Llamada': getStatusText(status.status),
+          'Duración de la Llamada': duration,
+          'Resumen': recipient?.summary || 'N/A',
+          'Fecha y Hora': status.timestamp.toLocaleString('es-ES', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          })
+        };
+      });
+
+      // Crear workbook y worksheet
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Llamadas');
+
+      // Ajustar ancho de columnas
+      const columnWidths = [
+        { wch: 30 }, // Nombre
+        { wch: 18 }, // Número
+        { wch: 18 }, // Estado
+        { wch: 18 }, // Duración
+        { wch: 50 }, // Resumen
+        { wch: 20 }  // Fecha y Hora
+      ];
+      worksheet['!cols'] = columnWidths;
+
+      // Generar el archivo Excel
+      const now = new Date();
+      const timestamp = now.toISOString().slice(0, 19).replace(/:/g, '-');
+      const filterText = statusFilter !== 'all' ? `_${statusFilter}` : '';
+      const filename = `reporte_llamadas_monitor${filterText}_${timestamp}.xlsx`;
+
+      XLSX.writeFile(workbook, filename);
+
+      if (window.addActivityLog) {
+        window.addActivityLog('✅ Reporte Excel exportado exitosamente', 'success', 5000);
+      }
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      if (window.addActivityLog) {
+        window.addActivityLog('❌ Error al exportar Excel', 'error', 6000);
+      }
+    }
+  }, [recentCalls, statusFilter, getStatusText]);
 
   const progressPercentage = stats.total > 0 ? (stats.called / stats.total) * 100 : 0
 
   return (
     <div className="space-y-4">
-      {/* Estadísticas Compactas */}
-      <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Phone className="h-4 w-4 text-blue-600" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Total:</span>
-            <span className="font-medium text-gray-900 dark:text-white">{stats.total}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Completadas:</span>
-            <span className="font-medium text-gray-900 dark:text-white">{stats.completed}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600 dark:text-gray-400">Progreso:</span>
-            <span className="font-medium text-gray-900 dark:text-white">{progressPercentage.toFixed(0)}%</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {isConnected ? (
-            <div className="flex items-center gap-1 text-green-600">
-              <Wifi className="h-3 w-3" />
-              <span className="text-xs">Conectado</span>
+      {/* Estadísticas y Controles */}
+      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 p-3 sm:p-4 md:p-5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 md:gap-5">
+          {/* Estadísticas */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 md:gap-5 lg:gap-6 flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <Phone className="h-4 w-4 text-blue-600 flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Total:</span>
+              <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{stats.total}</span>
             </div>
-          ) : (
-            <div className="flex items-center gap-1 text-red-600">
-              <WifiOff className="h-3 w-3" />
-              <span className="text-xs">Desconectado</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Completadas:</span>
+              <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{stats.completed}</span>
             </div>
-          )}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Progreso:</span>
+              <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{progressPercentage.toFixed(0)}%</span>
+            </div>
+          </div>
+
+          {/* Controles: Filtros y Exportar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 md:gap-3 flex-shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-shrink-0">
+              <label className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap flex-shrink-0">Estado:</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[120px] sm:w-[130px] md:w-[140px] h-8 text-xs sm:text-sm flex-shrink-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="completed">Completadas</SelectItem>
+                  <SelectItem value="failed">Fallidas</SelectItem>
+                  <SelectItem value="initiated">Iniciadas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-shrink-0">
+              <label className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap flex-shrink-0">Por página:</label>
+              <Select value={limit.toString()} onValueChange={(value) => setLimit(parseInt(value))}>
+                <SelectTrigger className="w-[85px] sm:w-[90px] md:w-[100px] h-8 text-xs sm:text-sm flex-shrink-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportToExcel}
+              disabled={recentCalls.length === 0 || isLoading}
+              className="h-8 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
+            >
+              <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">Exportar Excel</span>
+              <span className="sm:hidden">Excel</span>
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Lista de llamadas recientes */}
       <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Actividad Reciente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[400px]">
-            {recentCalls.length === 0 ? (
+        <CardContent className="relative">
+          <ScrollArea className="h-[500px]">
+            {isLoading && recipients.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+                <p>Cargando datos...</p>
+              </div>
+            ) : recentCalls.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-gray-500 dark:text-gray-400">
                 <Phone className="h-12 w-12 mb-4 text-gray-400 dark:text-gray-500" />
-                <p>No hay actividad de llamadas aún</p>
+                <p>No hay actividad de llamadas {statusFilter !== 'all' ? 'con este filtro' : 'aún'}</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                                 {recentCalls.map(({ user, status, recipient }) => (
-                   <div
-                     key={`${user?.id}-${status.timestamp.getTime()}`}
-                     className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                   >
-                     <div className="flex items-center gap-3">
-                       {getStatusIcon(status.status)}
-                       <div className="flex-1">
-                         <p className="font-medium text-gray-900 dark:text-white">{user?.name}</p>
-                         <p className="text-sm text-gray-600 dark:text-gray-400">{user?.phone}</p>
-                         {recipient?.summary && (
-                           <p className="text-xs text-gray-700 dark:text-gray-300 mt-1 overflow-hidden" style={{
-                             display: '-webkit-box',
-                             WebkitLineClamp: 2,
-                             WebkitBoxOrient: 'vertical'
-                           }}>
-                             {recipient.summary}
-                           </p>
-                         )}
-                         {recipient?.duration_secs && (
-                           <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                             Duración: {Math.floor(recipient.duration_secs / 60)}:{(recipient.duration_secs % 60).toString().padStart(2, '0')}
-                           </p>
-                         )}
-                       </div>
-                     </div>
+              <div className="space-y-2 relative">
+                {isLoading && recipients.length > 0 && (
+                  <div className="sticky top-0 z-10 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 p-2 text-center mb-2 rounded-t-lg">
+                    <div className="flex items-center justify-center gap-2 text-blue-600 dark:text-blue-400 text-xs">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                      <span>Actualizando datos...</span>
+                    </div>
+                  </div>
+                )}
+                {recentCalls.map(({ user, status, recipient }) => (
+                  <div
+                    key={`${user?.id}-${status.timestamp.getTime()}`}
+                    className="flex items-center justify-between p-2 sm:p-3 border border-gray-100 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                      <div className="flex-shrink-0">
+                        {getStatusIcon(status.status)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="font-medium text-sm sm:text-base text-gray-900 dark:text-white truncate">{user?.name}</p>
+                          <Badge variant="secondary" className={`${getStatusColor(status.status)} text-xs px-1.5 py-0.5 flex-shrink-0`}>
+                            {getStatusText(status.status)}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                          <p className="truncate">{user?.phone}</p>
+                          {recipient?.duration_secs && (
+                            <span className="text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                              • {Math.floor(recipient.duration_secs / 60)}:{(recipient.duration_secs % 60).toString().padStart(2, '0')}
+                            </span>
+                          )}
+                          <span className="text-gray-500 dark:text-gray-500 whitespace-nowrap">
+                            • {status.timestamp.toLocaleTimeString()}
+                          </span>
+                        </div>
+                        {recipient?.summary && (
+                          <p className="text-xs text-gray-700 dark:text-gray-300 mt-1 overflow-hidden line-clamp-1">
+                            {recipient.summary}
+                          </p>
+                        )}
+                      </div>
+                    </div>
 
-                     <div className="text-right flex flex-col items-end gap-2">
-                       <Badge variant="secondary" className={`${getStatusColor(status.status)}`}>
-                         {getStatusText(status.status)}
-                       </Badge>
-                       <p className="text-xs text-gray-500 dark:text-gray-400">{status.timestamp.toLocaleTimeString()}</p>
-                       {recipient && recipient.transcript && (
-                         <Button
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             showCallDetails({ user, status, recipient });
-                           }}
-                           className="text-xs h-7 px-2"
-                         >
-                           Más información
-                         </Button>
-                       )}
-                     </div>
-                   </div>
-                 ))}
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      {recipient && recipient.transcript && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            showCallDetails({ user, status, recipient });
+                          }}
+                          className="text-xs h-7 px-2 whitespace-nowrap"
+                        >
+                          Ver detalles
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </ScrollArea>
-                 </CardContent>
-       </Card>
+          
+          {/* Controles de paginación */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Mostrando {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} registros
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={!pagination.hasPrevPage || page === 1}
+                  className="h-8 px-3"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Anterior
+                </Button>
+                <span className="text-sm text-gray-600 dark:text-gray-400 px-3">
+                  Página {pagination.page} de {pagination.totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={!pagination.hasNextPage || page >= pagination.totalPages}
+                  className="h-8 px-3"
+                >
+                  Siguiente
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
        {/* Modal de Detalles de Llamada */}
        {console.log('Estado del modal:', { isCallDetailsOpen, selectedCall })}
