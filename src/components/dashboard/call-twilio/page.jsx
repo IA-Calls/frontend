@@ -31,6 +31,7 @@ export default function CallDashboard({ initialView = 'groups' }) {
   const [isCallingState, setIsCallingState] = useState(false)
   const stopCallingRef = useRef(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [error, setError] = useState(null)
 
   // Estado para navegación de vistas
@@ -193,8 +194,9 @@ export default function CallDashboard({ initialView = 'groups' }) {
       }
     } finally {
       setIsLoading(false)
+      setIsInitialLoading(false)
     }
-  }, [toast])
+  }, [toast, isInitialLoading])
 
   // Crear o actualizar grupo
   const saveGroup = useCallback(async (formData = null) => {
@@ -744,8 +746,8 @@ export default function CallDashboard({ initialView = 'groups' }) {
     }
   }, [toast])
 
-  const handleConfirmDelete = useCallback(() => {
-    deleteGroup(deleteConfirmDialog.groupId)
+  const handleConfirmDelete = useCallback((groupId) => {
+    deleteGroup(groupId || deleteConfirmDialog.groupId)
   }, [deleteGroup, deleteConfirmDialog.groupId])
 
   const handleCloseDeleteModal = useCallback(() => {
@@ -1190,11 +1192,15 @@ export default function CallDashboard({ initialView = 'groups' }) {
       })
     }
   }, [allUsers, callStatuses, toast])
-  // Filtrar grupos por búsqueda
+  // Filtrar grupos por búsqueda y por isActive (excluir grupos inactivos)
   const filteredGroups = useMemo(() => {
-    if (!searchTerm.trim()) return groups
+    // Primero filtrar grupos activos (isActive !== false)
+    const activeGroups = groups.filter(group => group.isActive !== false)
+    
+    // Luego aplicar filtro de búsqueda si existe
+    if (!searchTerm.trim()) return activeGroups
 
-    return groups.filter(group =>
+    return activeGroups.filter(group =>
       group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       group.description.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -1315,45 +1321,24 @@ export default function CallDashboard({ initialView = 'groups' }) {
 
                 {/* Contenedor con Scroll Interno */}
                 <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(100vh - 280px)' }}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6 min-w-0">
-                    {/* Opción "Todos los grupos" */}
-                    <Card
-                      className="cursor-pointer transition-all duration-200 hover:shadow-md border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 overflow-hidden bg-white dark:bg-gray-800"
-                      onClick={() => handleGroupSelect(null)}
-                    >
-                      <CardContent className="p-4 sm:p-5 overflow-hidden">
-                        <div className="flex items-center gap-3 mb-3 min-w-0">
-                          <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Users className="h-6 w-6 text-gray-600 dark:text-gray-300" />
-                          </div>
-                          <div className="flex-1 min-w-0 overflow-hidden">
-                            <h3 className="font-semibold text-lg text-gray-900 dark:text-white line-clamp-1 truncate">Todos los Grupos</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">Vista general</p>
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2 break-words">Ver todos los clientes de todos los grupos en una vista unificada</p>
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 min-w-0">
-                          <div className="flex gap-2 w-full sm:w-auto min-w-0">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleExportReport()
-                              }}
-                              className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium flex-1 sm:flex-initial min-h-[40px] sm:min-h-[44px] max-w-full overflow-hidden"
-                            >
-                              <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1.5 md:mr-2 flex-shrink-0" />
-                              <span className="truncate">Exportar</span>
-                            </Button>
-                          </div>
-                        
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Grupos existentes */}
-                    {filteredGroups.map((group) => (
+                  {isInitialLoading ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <RefreshCw className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400 mb-4" />
+                      <p className="text-gray-600 dark:text-gray-400 font-medium">Cargando grupos...</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">Por favor espera un momento</p>
+                    </div>
+                  ) : filteredGroups.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <FolderOpen className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+                      <p className="text-gray-600 dark:text-gray-400 font-medium">No hay grupos disponibles</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                        {searchTerm ? 'No se encontraron grupos con ese nombre' : 'Crea tu primer grupo para comenzar'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6 min-w-0">
+                      {/* Grupos existentes */}
+                      {filteredGroups.map((group) => (
                       <Card
                         key={group.id}
                         className="cursor-pointer transition-all duration-200 hover:shadow-md border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 overflow-hidden bg-white dark:bg-gray-800"
@@ -1416,39 +1401,11 @@ export default function CallDashboard({ initialView = 'groups' }) {
                             </div>
                           </div>
                           <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2 break-words">{group.description || 'Sin descripción'}</p>
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
-                            <div className="flex gap-2 sm:gap-2.5 w-full sm:w-auto min-w-0">
-                              <Button
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleCallGroup(group)
-                                }}
-                                disabled={isCallingState || !group.clients || group.clients.length === 0 || !group.agentId}
-                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium flex-1 sm:flex-initial min-h-[40px] sm:min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed transition-all max-w-full overflow-hidden"
-                              >
-                                <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1.5 md:mr-2 flex-shrink-0" />
-                                <span className="truncate">Llamar</span>
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleExportGroupReport(group)
-                                }}
-                                className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium flex-1 sm:flex-initial min-h-[40px] sm:min-h-[44px] transition-all max-w-full overflow-hidden"
-                              >
-                                <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1.5 md:mr-2 flex-shrink-0" />
-                                <span className="truncate">Exportar</span>
-                              </Button>
-                            </div>
-
-                          </div>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -2033,6 +1990,8 @@ export default function CallDashboard({ initialView = 'groups' }) {
           onClose={handleCloseDeleteModal}
           onConfirm={handleConfirmDelete}
           groupName={deleteConfirmDialog.groupName}
+          groups={groups}
+          selectedGroupId={deleteConfirmDialog.groupId}
           isLoading={isDeletingGroup}
         />
 
