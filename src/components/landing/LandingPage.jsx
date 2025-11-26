@@ -37,9 +37,8 @@ export const LandingPage = ({ onLoginClick }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Verificar localStorage primero, luego preferencia del sistema
+    // Verificar localStorage primero, si no hay tema guardado, usar modo claro por defecto
     const savedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
     if (savedTheme) {
       setIsDarkMode(savedTheme === 'dark');
@@ -49,10 +48,10 @@ export const LandingPage = ({ onLoginClick }) => {
         document.documentElement.classList.remove('dark');
       }
     } else {
-      setIsDarkMode(systemPrefersDark);
-      if (systemPrefersDark) {
-        document.documentElement.classList.add('dark');
-      }
+      // Por defecto, modo claro
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -203,6 +202,14 @@ export const LandingPage = ({ onLoginClick }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-slate-800 dark:text-slate-200 overflow-hidden">
+      <style>{`
+        @media (min-width: 475px) {
+          .xs\\:inline { display: inline !important; }
+          .xs\\:hidden { display: none !important; }
+          .xs\\:text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+          .xs\\:text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+        }
+      `}</style>
       {/* Header con navegación */}
       <motion.header 
         initial={{ y: -100, opacity: 0 }}
@@ -210,18 +217,18 @@ export const LandingPage = ({ onLoginClick }) => {
         transition={{ duration: 0.8 }}
         className="fixed top-0 left-0 right-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
             <motion.div 
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-1 sm:space-x-2 min-w-0"
               whileHover={{ scale: 1.05 }}
             >
               <img 
                 src={isDarkMode ? logoBlanco : logoNegro} 
                 alt="NextVoice" 
-                className="h-8 w-auto"
+                className="h-6 w-auto sm:h-8 flex-shrink-0"
               />
-              <span className="text-xl font-bold text-slate-900 dark:text-white">
+              <span className="text-base sm:text-xl font-bold text-slate-900 dark:text-white truncate">
                 NextVoice
               </span>
             </motion.div>
@@ -254,19 +261,19 @@ export const LandingPage = ({ onLoginClick }) => {
               </button>
             </nav>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Dark Mode Toggle */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={toggleDarkMode}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0"
                 title={isDarkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
               >
                 {isDarkMode ? (
-                  <Sun className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+                  <Sun className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700 dark:text-slate-300" />
                 ) : (
-                  <Moon className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+                  <Moon className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700 dark:text-slate-300" />
                 )}
               </motion.button>
 
@@ -274,7 +281,7 @@ export const LandingPage = ({ onLoginClick }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleDemoClick}
-                className="hidden sm:block px-4 py-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium"
+                className="hidden sm:block px-3 sm:px-4 py-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-medium text-sm sm:text-base whitespace-nowrap"
               >
                 Demo Gratuita
               </motion.button>
@@ -283,9 +290,10 @@ export const LandingPage = ({ onLoginClick }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onLoginClick}
-                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                className="px-3 sm:px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl text-xs sm:text-sm md:text-base whitespace-nowrap flex-shrink-0"
               >
-                Iniciar Sesión
+                <span className="hidden xs:inline">Iniciar Sesión</span>
+                <span className="xs:hidden">Entrar</span>
               </motion.button>
 
               {/* Mobile menu button */}
@@ -372,7 +380,7 @@ export const LandingPage = ({ onLoginClick }) => {
           <div className="absolute top-40 left-40 w-80 h-80 bg-slate-200 dark:bg-slate-700/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
@@ -393,7 +401,7 @@ export const LandingPage = ({ onLoginClick }) => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.4 }}
-              className="text-5xl md:text-7xl font-bold leading-tight"
+              className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight px-2"
             >
               <span className="text-slate-900 dark:text-white">
                 El Futuro de la
@@ -408,7 +416,7 @@ export const LandingPage = ({ onLoginClick }) => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.6 }}
-              className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed font-light"
+              className="text-base xs:text-lg sm:text-xl md:text-2xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed font-light px-4"
             >
               Potencia tu negocio con IA conversacional avanzada, automatización inteligente y analytics en tiempo real. 
               Conecta con tus clientes de manera personalizada a escala masiva.
@@ -418,26 +426,26 @@ export const LandingPage = ({ onLoginClick }) => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.8 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+              className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center w-full px-4"
             >
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleDemoClick}
-                className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg font-semibold text-lg text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-2"
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg font-semibold text-base sm:text-lg text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
               >
-                <span>Agendar Demo Gratuita</span>
-                <ArrowRight className="h-5 w-5" />
+                <span className="whitespace-nowrap">Agendar Demo Gratuita</span>
+                <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
               </motion.button>
               
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => scrollToSection('process')}
-                className="px-8 py-4 bg-white dark:bg-slate-800 backdrop-blur-sm rounded-lg font-semibold text-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 flex items-center space-x-2"
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white dark:bg-slate-800 backdrop-blur-sm rounded-lg font-semibold text-base sm:text-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 flex items-center justify-center space-x-2"
               >
-                <Play className="h-5 w-5" />
-                <span>Ver Proceso</span>
+                <Play className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                <span className="whitespace-nowrap">Ver Proceso</span>
               </motion.button>
             </motion.div>
           </motion.div>
@@ -465,14 +473,14 @@ export const LandingPage = ({ onLoginClick }) => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-12 sm:py-16 md:py-20 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-8"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8"
           >
             {stats.map((stat, index) => (
               <motion.div
@@ -483,10 +491,10 @@ export const LandingPage = ({ onLoginClick }) => {
                 viewport={{ once: true }}
                 className="text-center"
               >
-                <div className="text-3xl md:text-4xl font-bold text-blue-600 dark:text-blue-400">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 dark:text-blue-400">
                   {stat.number}
                 </div>
-                <div className="text-slate-600 dark:text-slate-400 text-sm md:text-base mt-2 font-medium">
+                <div className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm md:text-base mt-1 sm:mt-2 font-medium px-1">
                   {stat.label}
                 </div>
               </motion.div>
@@ -496,27 +504,27 @@ export const LandingPage = ({ onLoginClick }) => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="features" className="py-12 sm:py-16 md:py-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-8 sm:mb-12 md:mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 px-2">
               <span className="text-slate-900 dark:text-white">
                 ¿Por qué NextVoice?
               </span>
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto font-light">
+            <p className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto font-light px-4">
               Combinamos la última tecnología de IA con una plataforma intuitiva para transformar 
               la manera en que te conectas con tus clientes.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
@@ -539,26 +547,26 @@ export const LandingPage = ({ onLoginClick }) => {
       </section>
 
       {/* Process Section */}
-      <section id="process" className="py-20 bg-slate-50 dark:bg-slate-800/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="process" className="py-12 sm:py-16 md:py-20 bg-slate-50 dark:bg-slate-800/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-8 sm:mb-12 md:mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 px-2">
               <span className="text-slate-900 dark:text-white">
                 ¿Cómo Funciona?
               </span>
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto font-light">
+            <p className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto font-light px-4">
               En solo 3 pasos simples, transforma tu comunicación empresarial con tecnología de vanguardia.
             </p>
           </motion.div>
 
-          <div className="space-y-12">
+          <div className="space-y-8 sm:space-y-10 md:space-y-12">
             {processSteps.map((step, index) => (
               <motion.div
                 key={index}
@@ -566,12 +574,12 @@ export const LandingPage = ({ onLoginClick }) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.2 }}
                 viewport={{ once: true }}
-                className={`flex flex-col lg:flex-row items-center gap-8 ${
+                className={`flex flex-col lg:flex-row items-center gap-4 sm:gap-6 md:gap-8 ${
                   index % 2 === 1 ? 'lg:flex-row-reverse' : ''
                 }`}
               >
-                <div className="lg:w-1/2">
-                  <div className="p-8 bg-white dark:bg-slate-800 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg">
+                <div className="w-full lg:w-1/2">
+                  <div className="p-4 sm:p-6 md:p-8 bg-white dark:bg-slate-800 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg">
                     <div className="flex items-center mb-6">
                       <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mr-4">
                         {step.icon}
@@ -619,26 +627,26 @@ export const LandingPage = ({ onLoginClick }) => {
       </section>
 
       {/* Benefits Section */}
-      <section id="benefits" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="benefits" className="py-12 sm:py-16 md:py-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-8 sm:mb-12 md:mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 px-2">
               <span className="text-slate-900 dark:text-white">
                 Beneficios Clave
               </span>
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto font-light">
+            <p className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto font-light px-4">
               Descubre cómo NextVoice puede transformar tu negocio y mejorar la experiencia de tus clientes.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
             {benefits.map((benefit, index) => (
               <motion.div
                 key={index}
@@ -660,26 +668,26 @@ export const LandingPage = ({ onLoginClick }) => {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-slate-50 dark:bg-slate-800/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="pricing" className="py-12 sm:py-16 md:py-20 bg-slate-50 dark:bg-slate-800/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-8 sm:mb-12 md:mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 px-2">
               <span className="text-slate-900 dark:text-white">
                 Planes y Precios
               </span>
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto font-light">
+            <p className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto font-light px-4">
               Elige el plan que mejor se adapte a las necesidades de tu negocio.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {[
               {
                 name: "Starter",
@@ -783,21 +791,21 @@ export const LandingPage = ({ onLoginClick }) => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="space-y-8"
+            className="space-y-6 sm:space-y-8"
           >
-            <h2 className="text-4xl md:text-5xl font-bold">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold px-2">
               <span className="text-slate-900 dark:text-white">
                 ¿Listo para Transformar tu Negocio?
               </span>
             </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto font-light">
+            <p className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto font-light px-4">
               Únete a cientos de empresas que ya están revolucionando su comunicación 
               con NextVoice. Agenda tu demo gratuita hoy mismo.
             </p>
@@ -813,20 +821,20 @@ export const LandingPage = ({ onLoginClick }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleDemoClick}
-                className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg font-semibold text-lg text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-2"
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg font-semibold text-base sm:text-lg text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
               >
-                <span>Agendar Demo Gratuita</span>
-                <ArrowRight className="h-5 w-5" />
+                <span className="whitespace-nowrap">Agendar Demo Gratuita</span>
+                <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
               </motion.button>
               
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onLoginClick}
-                className="px-8 py-4 bg-white dark:bg-slate-800 backdrop-blur-sm rounded-lg font-semibold text-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 flex items-center space-x-2"
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white dark:bg-slate-800 backdrop-blur-sm rounded-lg font-semibold text-base sm:text-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 flex items-center justify-center space-x-2"
               >
-                <span>Acceder a la Plataforma</span>
-                <ArrowRight className="h-5 w-5" />
+                <span className="whitespace-nowrap">Acceder a la Plataforma</span>
+                <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
               </motion.button>
             </motion.div>
           </motion.div>

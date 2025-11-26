@@ -499,20 +499,29 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
                 {recentCalls.map(({ user, status, recipient }) => (
                   <div
                     key={`${user?.id}-${status.timestamp.getTime()}`}
-                    className="flex items-center justify-between p-2 sm:p-3 border border-gray-100 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    onClick={() => {
+                      if (recipient && recipient.transcript) {
+                        showCallDetails({ user, status, recipient });
+                      }
+                    }}
+                    className={`flex items-center justify-between p-2 sm:p-3 border border-gray-100 dark:border-gray-700 rounded-lg transition-colors ${
+                      recipient && recipient.transcript 
+                        ? 'hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer' 
+                        : 'cursor-default'
+                    }`}
                   >
                     <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                       <div className="flex-shrink-0">
                         {getStatusIcon(status.status)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
+                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                           <p className="font-medium text-sm sm:text-base text-gray-900 dark:text-white truncate">{user?.name}</p>
                           <Badge variant="secondary" className={`${getStatusColor(status.status)} text-xs px-1.5 py-0.5 flex-shrink-0`}>
                             {getStatusText(status.status)}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 flex-wrap">
                           <p className="truncate">{user?.phone}</p>
                           {recipient?.duration_secs && (
                             <span className="text-blue-600 dark:text-blue-400 whitespace-nowrap">
@@ -533,17 +542,10 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
 
                     <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                       {recipient && recipient.transcript && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            showCallDetails({ user, status, recipient });
-                          }}
-                          className="text-xs h-7 px-2 whitespace-nowrap"
-                        >
-                          Ver detalles
-                        </Button>
+                        <div className="text-xs text-blue-600 dark:text-blue-400 whitespace-nowrap flex items-center gap-1">
+                          <span className="hidden sm:inline">Ver detalles</span>
+                          <ChevronRight className="h-4 w-4" />
+                        </div>
                       )}
                     </div>
                   </div>
@@ -592,7 +594,7 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
        {console.log('Estado del modal:', { isCallDetailsOpen, selectedCall })}
        
        {isCallDetailsOpen && selectedCall && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center">
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
            {/* Overlay */}
            <div 
              className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm"
@@ -600,52 +602,52 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
            />
            
            {/* Modal Content */}
-           <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+           <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-6xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
              {/* Header */}
-             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-               <div className="flex items-center gap-2">
-                 <Phone className="h-6 w-6 text-blue-600" />
-                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Detalles de la Llamada</h2>
+             <div className="flex items-center justify-between p-3 sm:p-4 md:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+               <div className="flex items-center gap-2 min-w-0">
+                 <Phone className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
+                 <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 dark:text-white truncate">Detalles de la Llamada</h2>
                </div>
                <Button
                  variant="ghost"
                  size="sm"
                  onClick={closeCallDetails}
-                 className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700"
+                 className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
                >
                  <X className="h-4 w-4" />
                </Button>
              </div>
              
-             <p className="px-6 pb-4 text-gray-600 dark:text-gray-400 text-sm">
+             <p className="px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex-shrink-0">
                Información completa de la conversación y audio de la llamada
              </p>
 
              {/* Content */}
-             <div className="flex gap-6 p-6 h-[calc(90vh-140px)]">
+             <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6 p-3 sm:p-4 md:p-6 flex-1 overflow-hidden min-h-0">
                {/* Panel izquierdo - Información básica y resumen */}
-               <div className="w-1/3 space-y-4 overflow-y-auto">
+               <div className="w-full lg:w-1/3 space-y-3 sm:space-y-4 overflow-y-auto flex-shrink-0 lg:flex-shrink">
                  {/* Información básica */}
-                 <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                   <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Información del Cliente</h3>
+                 <div className="bg-gray-50 dark:bg-gray-700 p-3 sm:p-4 rounded-lg">
+                   <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 sm:mb-3">Información del Cliente</h3>
                    <div className="space-y-2">
                      <div>
-                       <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Nombre</p>
-                       <p className="text-gray-900 dark:text-white">{selectedCall.user.name}</p>
+                       <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Nombre</p>
+                       <p className="text-sm sm:text-base text-gray-900 dark:text-white break-words">{selectedCall.user.name}</p>
                      </div>
                      <div>
-                       <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Teléfono</p>
-                       <p className="text-gray-900 dark:text-white">{selectedCall.user.phone}</p>
+                       <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Teléfono</p>
+                       <p className="text-sm sm:text-base text-gray-900 dark:text-white break-words">{selectedCall.user.phone}</p>
                      </div>
                      <div>
-                       <p className="text-sm font-medium text-gray-600">Estado</p>
-                       <Badge variant="secondary" className={`${getStatusColor(selectedCall.status.status)}`}>
+                       <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Estado</p>
+                       <Badge variant="secondary" className={`${getStatusColor(selectedCall.status.status)} text-xs`}>
                          {getStatusText(selectedCall.status.status)}
                        </Badge>
                      </div>
                      <div>
-                       <p className="text-sm font-medium text-gray-600">Duración</p>
-                       <p className="text-gray-900">
+                       <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Duración</p>
+                       <p className="text-sm sm:text-base text-gray-900 dark:text-white">
                          {Math.floor(selectedCall.recipient.duration_secs / 60)}:{(selectedCall.recipient.duration_secs % 60).toString().padStart(2, '0')}
                        </p>
                      </div>
@@ -654,21 +656,21 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
 
                  {/* Resumen de la conversación */}
                  {selectedCall.recipient.summary && (
-                   <div className="bg-blue-50 p-4 rounded-lg">
-                     <h3 className="font-semibold text-gray-900 mb-3">Resumen de la Conversación</h3>
-                     <p className="text-sm text-gray-800 leading-relaxed">{selectedCall.recipient.summary}</p>
+                   <div className="bg-blue-50 dark:bg-blue-900/20 p-3 sm:p-4 rounded-lg">
+                     <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 sm:mb-3">Resumen de la Conversación</h3>
+                     <p className="text-xs sm:text-sm text-gray-800 dark:text-gray-200 leading-relaxed break-words">{selectedCall.recipient.summary}</p>
                    </div>
                  )}
 
                  {/* Audio de la llamada */}
                  {selectedCall.recipient.audio_url && (
-                   <div className="bg-gray-50 p-4 rounded-lg">
-                     <h3 className="font-semibold text-gray-900 mb-3">Audio de la Llamada</h3>
+                   <div className="bg-gray-50 dark:bg-gray-700 p-3 sm:p-4 rounded-lg">
+                     <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 sm:mb-3">Audio de la Llamada</h3>
                      <audio controls className="w-full mb-2">
                        <source src={selectedCall.recipient.audio_url} type="audio/mpeg" />
                        Tu navegador no soporta el elemento de audio.
                      </audio>
-                     <p className="text-xs text-gray-500">
+                     <p className="text-xs text-gray-500 dark:text-gray-400">
                        Tamaño: {(selectedCall.recipient.audio_size / 1024 / 1024).toFixed(2)} MB
                      </p>
                    </div>
@@ -676,35 +678,35 @@ export function CallMonitor({ users, callStatuses, totalUsers = 0, groupId = nul
                </div>
 
                {/* Panel derecho - Transcripción */}
-               <div className="flex-1 bg-gray-50 rounded-lg p-4 overflow-y-auto">
-                 <h3 className="font-semibold text-gray-900 mb-4">Transcripción de la Conversación</h3>
+               <div className="flex-1 bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4 overflow-y-auto min-h-0">
+                 <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Transcripción de la Conversación</h3>
                  {selectedCall.recipient.transcript && selectedCall.recipient.transcript.length > 0 ? (
-                   <div className="space-y-4">
+                   <div className="space-y-3 sm:space-y-4">
                      {selectedCall.recipient.transcript.map((message, index) => (
                        <div
                          key={index}
-                         className={`flex gap-3 ${
+                         className={`flex gap-2 sm:gap-3 ${
                            message.role === 'user' ? 'justify-end' : 'justify-start'
                          }`}
                        >
                          <div
-                           className={`max-w-[80%] p-3 rounded-lg shadow-sm ${
+                           className={`max-w-[85%] sm:max-w-[80%] p-2 sm:p-3 rounded-lg shadow-sm ${
                              message.role === 'user'
                                ? 'bg-blue-600 text-white'
-                               : 'bg-white text-gray-900 border border-gray-200'
+                               : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600'
                            }`}
                          >
                            <p className="text-xs font-medium mb-1 opacity-75">
                              {message.role === 'user' ? 'Cliente' : 'Agente'}
                            </p>
-                           <p className="text-sm leading-relaxed">{message.message}</p>
+                           <p className="text-xs sm:text-sm leading-relaxed break-words">{message.message}</p>
                          </div>
                        </div>
                      ))}
                    </div>
                  ) : (
-                   <div className="text-center text-gray-500 py-8">
-                     <p>No hay transcripción disponible</p>
+                   <div className="text-center text-gray-500 dark:text-gray-400 py-6 sm:py-8">
+                     <p className="text-sm">No hay transcripción disponible</p>
                    </div>
                  )}
                </div>

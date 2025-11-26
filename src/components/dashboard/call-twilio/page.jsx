@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
-import { Phone, Users,RefreshCw, Zap, Target, Download, Search, Plus, Edit, Trash2, FolderOpen, CheckCircle, ArrowLeft, X, Star, Heart, Clock} from "lucide-react"
+import { Phone, Users,RefreshCw, Zap, Target, Download, Search, Plus, Edit, Trash2, FolderOpen, CheckCircle, ArrowLeft, X, Star, Heart, Clock, RotateCw, Ban} from "lucide-react"
 import { Button } from "./components/ui/button.tsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.tsx"
 import { CallMonitor } from "./components/call-monitor.jsx"
@@ -21,6 +21,7 @@ const CLIENTS_PENDING_API_URL = config.CLIENTS_PENDING_API_URL
 const GROUPS_API_URL = config.GROUPS_API_URL
 const OUTBOUND_CALL_PROXY_API_URL = config.OUTBOUND_CALL_PROXY_API_URL
 const CLIENTS_INTERESTED_API_URL = config.CLIENTS_INTERESTED_API_URL
+const BATCH_CALLS_API_URL = config.getApiUrl('/api/batch-calls')
 
 export default function CallDashboard({ initialView = 'groups' }) {
   // Estados principales
@@ -196,7 +197,7 @@ export default function CallDashboard({ initialView = 'groups' }) {
       setIsLoading(false)
       setIsInitialLoading(false)
     }
-  }, [toast, isInitialLoading])
+  }, [toast])
 
   // Crear o actualizar grupo
   const saveGroup = useCallback(async (formData = null) => {
@@ -996,6 +997,142 @@ export default function CallDashboard({ initialView = 'groups' }) {
     }
   }, [toast, groups, selectedGroup])
 
+  // Cancelar batch call
+  const cancelBatchCall = useCallback(async (batchId, groupId) => {
+    if (!batchId) {
+      toast({
+        title: "⚠️ Error",
+        description: "No hay un batch activo para cancelar.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const response = await fetch(`${BATCH_CALLS_API_URL}/${batchId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authService.getToken() && { 'Authorization': `Bearer ${authService.getToken()}` })
+        }
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        // Mostrar log de éxito
+        if (window.addActivityLog) {
+          window.addActivityLog(`✅ Batch cancelado exitosamente`, 'success', 8000)
+        }
+
+        toast({
+          title: "✅ Batch cancelado",
+          description: result.message || "El batch se canceló correctamente.",
+        })
+
+        // Actualizar el grupo para reflejar el cambio
+        setTimeout(() => {
+          fetchGroups()
+        }, 500)
+      } else {
+        // Mostrar log de error
+        if (window.addActivityLog) {
+          window.addActivityLog(`❌ ${result.message || 'Error al cancelar batch'}`, 'error', 8000)
+        }
+
+        toast({
+          title: "❌ Error",
+          description: result.message || 'No se pudo cancelar el batch',
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Error canceling batch call:', error)
+
+      // Mostrar log de error
+      if (window.addActivityLog) {
+        window.addActivityLog('❌ Error de conexión al cancelar batch', 'error', 8000)
+      }
+
+      toast({
+        title: "❌ Error de conexión",
+        description: error.message || "No se pudo conectar con el servidor.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [toast, fetchGroups])
+
+  // Reintentar batch call
+  const retryBatchCall = useCallback(async (batchId, groupId) => {
+    if (!batchId) {
+      toast({
+        title: "⚠️ Error",
+        description: "No hay un batch para reintentar.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const response = await fetch(`${BATCH_CALLS_API_URL}/${batchId}/retry`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authService.getToken() && { 'Authorization': `Bearer ${authService.getToken()}` })
+        }
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        // Mostrar log de éxito
+        if (window.addActivityLog) {
+          window.addActivityLog(`✅ Batch reiniciado exitosamente`, 'success', 8000)
+        }
+
+        toast({
+          title: "✅ Batch reiniciado",
+          description: result.message || "El batch se reinició correctamente.",
+        })
+
+        // Actualizar el grupo para reflejar el cambio
+        setTimeout(() => {
+          fetchGroups()
+        }, 500)
+      } else {
+        // Mostrar log de error
+        if (window.addActivityLog) {
+          window.addActivityLog(`❌ ${result.message || 'Error al reiniciar batch'}`, 'error', 8000)
+        }
+
+        toast({
+          title: "❌ Error",
+          description: result.message || 'No se pudo reiniciar el batch',
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Error retrying batch call:', error)
+
+      // Mostrar log de error
+      if (window.addActivityLog) {
+        window.addActivityLog('❌ Error de conexión al reiniciar batch', 'error', 8000)
+      }
+
+      toast({
+        title: "❌ Error de conexión",
+        description: error.message || "No se pudo conectar con el servidor.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [toast, fetchGroups])
+
   // Eliminar cliente
   const handleDeleteClient = useCallback(async (groupId, clientId) => {
     try {
@@ -1192,6 +1329,30 @@ export default function CallDashboard({ initialView = 'groups' }) {
       })
     }
   }, [allUsers, callStatuses, toast])
+
+  // Función helper para obtener el color y texto del estado del batch
+  const getBatchStatusInfo = useCallback((batchStatus) => {
+    if (!batchStatus) return { color: 'gray', text: 'Sin estado', bgColor: 'bg-gray-100 dark:bg-gray-700', textColor: 'text-gray-800 dark:text-gray-300' }
+    
+    const status = batchStatus.toLowerCase()
+    switch (status) {
+      case 'completed':
+        return { color: 'green', text: 'Completado', bgColor: 'bg-green-100 dark:bg-green-900/30', textColor: 'text-green-800 dark:text-green-400' }
+      case 'in_progress':
+      case 'in-progress':
+        return { color: 'blue', text: 'En progreso', bgColor: 'bg-blue-100 dark:bg-blue-900/30', textColor: 'text-blue-800 dark:text-blue-400' }
+      case 'cancelled':
+      case 'canceled':
+        return { color: 'orange', text: 'Cancelado', bgColor: 'bg-orange-100 dark:bg-orange-900/30', textColor: 'text-orange-800 dark:text-orange-400' }
+      case 'pending':
+        return { color: 'yellow', text: 'Pendiente', bgColor: 'bg-yellow-100 dark:bg-yellow-900/30', textColor: 'text-yellow-800 dark:text-yellow-400' }
+      case 'failed':
+        return { color: 'red', text: 'Fallido', bgColor: 'bg-red-100 dark:bg-red-900/30', textColor: 'text-red-800 dark:text-red-400' }
+      default:
+        return { color: 'gray', text: batchStatus, bgColor: 'bg-gray-100 dark:bg-gray-700', textColor: 'text-gray-800 dark:text-gray-300' }
+    }
+  }, [])
+
   // Filtrar grupos por búsqueda y por isActive (excluir grupos inactivos)
   const filteredGroups = useMemo(() => {
     // Primero filtrar grupos activos (isActive !== false)
@@ -1462,6 +1623,29 @@ export default function CallDashboard({ initialView = 'groups' }) {
                       <p className="text-gray-600 dark:text-gray-400 text-sm mt-0.5 line-clamp-1">
                         {selectedGroup.description || 'Sin descripción'}
                       </p>
+                      
+                      {/* Estado del Batch - Estético y Responsive */}
+                      {selectedGroup.batchId && selectedGroup.batchStatus && (
+                        <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Estado del batch:</span>
+                            <Badge 
+                              className={`${getBatchStatusInfo(selectedGroup.batchStatus).bgColor} ${getBatchStatusInfo(selectedGroup.batchStatus).textColor} border-0 text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5`}
+                            >
+                              {selectedGroup.batchStatus === 'in_progress' || selectedGroup.batchStatus === 'in-progress' ? (
+                                <RefreshCw className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin flex-shrink-0" />
+                              ) : selectedGroup.batchStatus === 'completed' ? (
+                                <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                              ) : selectedGroup.batchStatus === 'cancelled' || selectedGroup.batchStatus === 'canceled' ? (
+                                <Ban className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                              ) : selectedGroup.batchStatus === 'failed' ? (
+                                <X className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                              ) : null}
+                              <span className="whitespace-nowrap">{getBatchStatusInfo(selectedGroup.batchStatus).text}</span>
+                            </Badge>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1483,6 +1667,37 @@ export default function CallDashboard({ initialView = 'groups' }) {
                       <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
                       Probar
                     </Button>
+                    
+                    {/* Botones de Batch - Cancelar y Repetir */}
+                    {selectedGroup.batchId && selectedGroup.batchStatus && (
+                      <>
+                        {/* Botón Cancelar - visible cuando está in_progress */}
+                        {(selectedGroup.batchStatus === 'in_progress' || selectedGroup.batchStatus === 'in-progress') && (
+                          <Button
+                            onClick={() => cancelBatchCall(selectedGroup.batchId, selectedGroup.id)}
+                            disabled={isLoading}
+                            variant="outline"
+                            className="border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-400 dark:hover:border-red-500 px-4 sm:px-5 py-2 font-medium text-sm w-full sm:w-auto h-9 sm:h-10 transition-all duration-200"
+                          >
+                            <Ban className="h-4 w-4 mr-2 flex-shrink-0" />
+                            Cancelar Batch
+                          </Button>
+                        )}
+                        
+                        {/* Botón Repetir - visible cuando está completed o cancelled */}
+                        {(selectedGroup.batchStatus === 'completed' || selectedGroup.batchStatus === 'cancelled' || selectedGroup.batchStatus === 'canceled') && (
+                          <Button
+                            onClick={() => retryBatchCall(selectedGroup.batchId, selectedGroup.id)}
+                            disabled={isLoading}
+                            variant="outline"
+                            className="border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 dark:hover:border-blue-500 px-4 sm:px-5 py-2 font-medium text-sm w-full sm:w-auto h-9 sm:h-10 transition-all duration-200"
+                          >
+                            <RotateCw className="h-4 w-4 mr-2 flex-shrink-0" />
+                            Repetir Batch
+                          </Button>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
