@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import config from '../../config/environment';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './call-twilio/components/ui/tabs.tsx';
 import { Slider } from './call-twilio/components/ui/slider.tsx';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './call-twilio/components/ui/select.tsx';
 import { cn } from '../../lib/utils';
 import { 
   Plus, 
@@ -14,7 +15,11 @@ import {
   Brain,
   Loader2,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  Sparkles,
+  Play,
+  Pause,
+  Globe
 } from 'lucide-react';
 
 export const AgentsContent = ({ user }) => {
@@ -53,6 +58,20 @@ export const AgentsContent = ({ user }) => {
   const [dragActive, setDragActive] = useState(false);
   const [voices, setVoices] = useState([]);
   const [loadingVoices, setLoadingVoices] = useState(false);
+  
+  // Estados para creación con IA
+  const [showAICreateForm, setShowAICreateForm] = useState(false);
+  const [isSubmittingAI, setIsSubmittingAI] = useState(false);
+  const [aiFormData, setAiFormData] = useState({
+    name: '',
+    prompt: '',
+    tts_voice_id: 'WOSzFvlJRm2hkYb3KA5w'
+  });
+
+  // Estado para controlar el audio que se está reproduciendo
+  const [playingPreview, setPlayingPreview] = useState(null);
+  const audioRef = useRef(null);
+  const preventSelectionRef = useRef(false);
 
   // Load voices function
   const loadVoices = useCallback(async () => {
@@ -94,6 +113,13 @@ export const AgentsContent = ({ user }) => {
       loadVoices();
     }
   }, [showCreateForm, loadVoices]);
+
+  // Load voices when AI form is opened
+  useEffect(() => {
+    if (showAICreateForm) {
+      loadVoices();
+    }
+  }, [showAICreateForm, loadVoices]);
 
   const loadAgents = async () => {
     setLoading(true);
@@ -421,6 +447,420 @@ export const AgentsContent = ({ user }) => {
     setError(null);
   };
 
+  // Función para crear agente con IA
+  const handleCreateWithAI = async (e) => {
+    e.preventDefault();
+    setIsSubmittingAI(true);
+    setError(null);
+
+    // Validar campos obligatorios
+    if (!aiFormData.name.trim()) {
+      setError('El nombre del agente es obligatorio');
+      setIsSubmittingAI(false);
+      return;
+    }
+
+    if (!aiFormData.prompt.trim()) {
+      setError('El prompt es obligatorio');
+      setIsSubmittingAI(false);
+      return;
+    }
+
+    if (!aiFormData.tts_voice_id) {
+      setError('La voz es obligatoria');
+      setIsSubmittingAI(false);
+      return;
+    }
+
+    try {
+      const agentName = aiFormData.name.trim();
+      const payload = {
+        name: agentName,
+        prompt: aiFormData.prompt.trim(),
+        tts_voice_id: aiFormData.tts_voice_id
+      };
+
+      const response = await fetch(config.getApiUrl('/api/agents/create-with-prompt'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (data.success === false || !response.ok) {
+        throw new Error(data.message || 'Error al crear el agente con IA');
+      }
+
+      // Guardar el nombre antes de resetear para el mensaje de éxito
+      const createdAgentName = agentName;
+
+      // Reset form
+      setAiFormData({
+        name: '',
+        prompt: '',
+        tts_voice_id: 'WOSzFvlJRm2hkYb3KA5w'
+      });
+      setShowAICreateForm(false);
+      setError(null);
+      
+      // Reload agents
+      await loadAgents();
+
+      // Mostrar mensaje de éxito si existe la función
+      if (window.addActivityLog) {
+        window.addActivityLog(`✅ Agente "${createdAgentName}" creado exitosamente con IA`, 'success', 6000);
+      }
+    } catch (err) {
+      setError(err.message || 'Error al crear el agente con IA');
+      console.error('Error creating agent with AI:', err);
+    } finally {
+      setIsSubmittingAI(false);
+    }
+  };
+
+  const handleAICancel = () => {
+    setShowAICreateForm(false);
+    setAiFormData({
+      name: '',
+      prompt: '',
+      tts_voice_id: 'WOSzFvlJRm2hkYb3KA5w'
+    });
+    setError(null);
+  };
+
+  // Función helper para obtener idiomas únicos de una voz
+  const getUniqueLanguages = (voice) => {
+    if (!voice.verified_languages || voice.verified_languages.length === 0) {
+      return [];
+    }
+    const languages = new Set();
+    voice.verified_languages.forEach(lang => {
+      languages.add(lang.language);
+    });
+    return Array.from(languages);
+  };
+
+  // Función helper para obtener el preview URL para un idioma específico (preferir español, luego inglés, luego el primero)
+  const getPreviewUrl = (voice, preferredLanguage = 'es') => {
+    if (!voice.verified_languages || voice.verified_languages.length === 0) {
+      return null;
+    }
+    
+    // Buscar preview para el idioma preferido
+    const preferredLang = voice.verified_languages.find(l => l.language === preferredLanguage);
+    if (preferredLang && preferredLang.preview_url) {
+      return preferredLang.preview_url;
+    }
+    
+    // Buscar preview en inglés
+    const englishLang = voice.verified_languages.find(l => l.language === 'en');
+    if (englishLang && englishLang.preview_url) {
+      return englishLang.preview_url;
+    }
+    
+    // Usar el primer preview disponible
+    const firstLang = voice.verified_languages.find(l => l.preview_url);
+    return firstLang?.preview_url || null;
+  };
+
+  // Función para reproducir/pausar preview
+  const handlePlayPreview = (voiceId, previewUrl, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    // Marcar que no se debe seleccionar el item
+    preventSelectionRef.current = true;
+    
+    // Resetear después de un breve delay
+    setTimeout(() => {
+      preventSelectionRef.current = false;
+    }, 100);
+    
+    if (playingPreview === voiceId) {
+      // Pausar si ya está reproduciendo
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setPlayingPreview(null);
+    } else {
+      // Detener cualquier audio que esté reproduciendo
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      
+      // Reproducir nuevo audio
+      const audio = new Audio(previewUrl);
+      audioRef.current = audio;
+      setPlayingPreview(voiceId);
+      
+      audio.play().catch(err => {
+        console.error('Error playing preview:', err);
+        setPlayingPreview(null);
+      });
+      
+      audio.onended = () => {
+        setPlayingPreview(null);
+        audioRef.current = null;
+      };
+      
+      audio.onerror = () => {
+        setPlayingPreview(null);
+        audioRef.current = null;
+      };
+    }
+  };
+
+  // Limpiar audio al desmontar
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Modal de creación con IA
+  if (showAICreateForm) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-purple-600" />
+              Crear Agente con IA
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Crea un agente de forma rápida usando inteligencia artificial. Solo necesitas proporcionar el nombre, un prompt descriptivo y seleccionar la voz.
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            onClick={handleAICancel}
+            disabled={isSubmittingAI}
+          >
+            <X className="w-4 h-4 mr-2" />
+            Cerrar
+          </Button>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleCreateWithAI} className="space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Nombre del Agente *
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+                Asigna un nombre descriptivo que identifique fácilmente a este agente.
+              </p>
+              <Input
+                value={aiFormData.name}
+                onChange={(e) => setAiFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Ej: Agente de Ventas"
+                required
+                disabled={isSubmittingAI}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Prompt para la IA *
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
+                Describe el tipo de agente que quieres crear. La IA generará automáticamente la configuración completa del agente basándose en tu descripción.
+              </p>
+              <textarea
+                value={aiFormData.prompt}
+                onChange={(e) => setAiFormData(prev => ({ ...prev, prompt: e.target.value }))}
+                placeholder="Crea un agente de ventas profesional que se especialice en productos tecnológicos"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none"
+                rows="4"
+                required
+                disabled={isSubmittingAI}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Voz *
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                Selecciona la voz que utilizará el agente para comunicarse. Cada voz muestra los idiomas disponibles y puedes escuchar un preview.
+              </p>
+              {loadingVoices ? (
+                <div className="flex items-center gap-2 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Cargando voces...</span>
+                </div>
+              ) : voices.length > 0 ? (
+                <Select
+                  value={aiFormData.tts_voice_id}
+                  onValueChange={(value) => setAiFormData(prev => ({ ...prev, tts_voice_id: value }))}
+                  disabled={isSubmittingAI}
+                >
+                  <SelectTrigger className="w-full h-auto min-h-[3rem] px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                    <SelectValue>
+                      {(() => {
+                        const selectedVoice = voices.find(v => v.voice_id === aiFormData.tts_voice_id);
+                        if (!selectedVoice) return "Selecciona una voz...";
+                        return selectedVoice.name;
+                      })()}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[400px] w-full min-w-[var(--radix-select-trigger-width)]">
+                    {voices.map((voice) => {
+                      const uniqueLanguages = getUniqueLanguages(voice);
+                      const previewUrl = getPreviewUrl(voice, 'es');
+                      const isPlaying = playingPreview === voice.voice_id;
+                      
+                      return (
+                        <SelectItem
+                          key={voice.voice_id}
+                          value={voice.voice_id}
+                          className="py-3 pr-2 cursor-pointer"
+                          disabled={isSubmittingAI}
+                          onSelect={(e) => {
+                            if (preventSelectionRef.current) {
+                              e.preventDefault();
+                            }
+                          }}
+                        >
+                          <div className="flex flex-col gap-1.5 w-full -ml-6">
+                            <div className="flex items-center gap-2">
+                              <Mic className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                              <span className="font-medium text-sm">{voice.name}</span>
+                            </div>
+                            
+                            {uniqueLanguages.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-1.5 ml-6">
+                                <Globe className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                                {uniqueLanguages.map((lang) => {
+                                  const langInfo = voice.verified_languages.find(l => l.language === lang);
+                                  const accent = langInfo?.accent;
+                                  return (
+                                    <span
+                                      key={lang}
+                                      className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300"
+                                    >
+                                      {lang.toUpperCase()}{accent && ` (${accent})`}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            
+                            {previewUrl && (
+                              <button
+                                type="button"
+                                onPointerDown={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (!isSubmittingAI) {
+                                    handlePlayPreview(voice.voice_id, previewUrl, e);
+                                  }
+                                }}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (!isSubmittingAI) {
+                                    handlePlayPreview(voice.voice_id, previewUrl, e);
+                                  }
+                                }}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (!isSubmittingAI) {
+                                    handlePlayPreview(voice.voice_id, previewUrl, e);
+                                  }
+                                }}
+                                disabled={isSubmittingAI}
+                                className="flex items-center gap-1.5 text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors ml-6 mt-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {isPlaying ? (
+                                  <>
+                                    <Pause className="h-3 w-3" />
+                                    <span>Pausar preview</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play className="h-3 w-3" />
+                                    <span>Escuchar preview</span>
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-2">
+                    No hay voces disponibles. Por favor, intenta recargar.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={loadVoices}
+                    className="w-full"
+                    disabled={isSubmittingAI}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Recargar Voces
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-4">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleAICancel}
+              disabled={isSubmittingAI}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmittingAI || !aiFormData.name.trim() || !aiFormData.prompt.trim() || !aiFormData.tts_voice_id}
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0"
+            >
+              {isSubmittingAI ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creando con IA...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Crear Agente con IA
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   if (showCreateForm) {
     const isEditMode = selectedAgentId !== null;
     
@@ -700,8 +1140,8 @@ export const AgentsContent = ({ user }) => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Voz *
                     </label>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
-                      Selecciona la voz que utilizará el agente para comunicarse. Cada voz tiene características únicas de tono, acento y estilo. Las voces muestran los idiomas que soportan.
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                      Selecciona la voz que utilizará el agente para comunicarse. Cada voz muestra los idiomas disponibles y puedes escuchar un preview.
                     </p>
                     {loadingVoices ? (
                       <div className="flex items-center gap-2 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
@@ -709,19 +1149,99 @@ export const AgentsContent = ({ user }) => {
                         <span className="text-sm text-gray-500 dark:text-gray-400">Cargando voces...</span>
                       </div>
                     ) : voices.length > 0 ? (
-                      <select
+                      <Select
                         value={formData.tts_voice_id}
-                        onChange={(e) => handleInputChange('tts_voice_id', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        required
+                        onValueChange={(value) => handleInputChange('tts_voice_id', value)}
                       >
-                        <option value="">Selecciona una voz...</option>
-                        {voices.map((voice) => (
-                          <option key={voice.voice_id} value={voice.voice_id}>
-                            {voice.name} {voice.verified_languages && voice.verified_languages.length > 0 && `(${voice.verified_languages.map(l => l.language).join(', ')})`}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="w-full h-auto min-h-[3rem] px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                          <SelectValue>
+                            {(() => {
+                              const selectedVoice = voices.find(v => v.voice_id === formData.tts_voice_id);
+                              if (!selectedVoice) return "Selecciona una voz...";
+                              return selectedVoice.name;
+                            })()}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[400px] w-full min-w-[var(--radix-select-trigger-width)]">
+                          {voices.map((voice) => {
+                            const uniqueLanguages = getUniqueLanguages(voice);
+                            const previewUrl = getPreviewUrl(voice, formData.agent_language || 'es');
+                            const isPlaying = playingPreview === voice.voice_id;
+                            
+                            return (
+                              <SelectItem
+                                key={voice.voice_id}
+                                value={voice.voice_id}
+                                className="py-3 pr-2 cursor-pointer"
+                                onSelect={(e) => {
+                                  if (preventSelectionRef.current) {
+                                    e.preventDefault();
+                                  }
+                                }}
+                              >
+                                <div className="flex flex-col gap-1.5 w-full -ml-6">
+                                  <div className="flex items-center gap-2">
+                                    <Mic className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                    <span className="font-medium text-sm">{voice.name}</span>
+                                  </div>
+                                  
+                                  {uniqueLanguages.length > 0 && (
+                                    <div className="flex flex-wrap items-center gap-1.5 ml-6">
+                                      <Globe className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                                      {uniqueLanguages.map((lang) => {
+                                        const langInfo = voice.verified_languages.find(l => l.language === lang);
+                                        const accent = langInfo?.accent;
+                                        return (
+                                          <span
+                                            key={lang}
+                                            className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300"
+                                          >
+                                            {lang.toUpperCase()}{accent && ` (${accent})`}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                  
+                                  {previewUrl && (
+                                    <button
+                                      type="button"
+                                      onPointerDown={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handlePlayPreview(voice.voice_id, previewUrl, e);
+                                      }}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handlePlayPreview(voice.voice_id, previewUrl, e);
+                                      }}
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handlePlayPreview(voice.voice_id, previewUrl, e);
+                                      }}
+                                      className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors ml-6 mt-0.5"
+                                    >
+                                      {isPlaying ? (
+                                        <>
+                                          <Pause className="h-3 w-3" />
+                                          <span>Pausar preview</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Play className="h-3 w-3" />
+                                          <span>Escuchar preview</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
                     ) : (
                       <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
                         <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
@@ -886,10 +1406,20 @@ export const AgentsContent = ({ user }) => {
               Administra y configura tus agentes de IA.
             </p>
           </div>
-          <Button onClick={() => setShowCreateForm(true)}>
-            <Plus className="w-5 h-5 mr-2" />
-            Crear Agente
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => setShowAICreateForm(true)}
+              variant="secondary"
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0"
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              Crear con IA
+            </Button>
+            <Button onClick={() => setShowCreateForm(true)}>
+              <Plus className="w-5 h-5 mr-2" />
+              Crear Agente
+            </Button>
+          </div>
         </div>
       </div>
 
