@@ -44,6 +44,22 @@ const config = {
     return `${baseUrl}/api/clients/interested`;
   })(),
   
+  // WhatsApp Templates API
+  WHATSAPP_TEMPLATES_API_URL: process.env.REACT_APP_WHATSAPP_TEMPLATES_API_URL || (() => {
+    const baseUrl = process.env.REACT_APP_BACKEND_URL || 'https://api.nextvoiceia.com';
+    return `${baseUrl}/api/whatsapp/templates`;
+  })(),
+  
+  // WhatsApp Frontend API (for Chats)
+  WHATSAPP_API_URL: process.env.REACT_APP_WHATSAPP_API_URL || (() => {
+    // Default to localhost:5050 if specific env var not set, or fall back to main backend
+    if (process.env.NODE_ENV === 'development' && !process.env.REACT_APP_BACKEND_URL) {
+       return 'http://localhost:5050/api/whatsapp';
+    }
+    const baseUrl = process.env.REACT_APP_BACKEND_URL || 'https://api.nextvoiceia.com';
+    return `${baseUrl}/api/whatsapp`;
+  })(),
+  
   // Helper methods
   isDevelopment: () => config.ENV === 'development',
   isProduction: () => config.ENV === 'production',

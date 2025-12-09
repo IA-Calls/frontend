@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
-import { Phone, Users,RefreshCw, Zap, Target, Download, Search, Plus, Edit, Trash2, FolderOpen, CheckCircle, ArrowLeft, X, Star, Heart, Clock, RotateCw, Ban} from "lucide-react"
+import { Phone, Users,RefreshCw, Zap, Target, Download, Search, Plus, Edit, Trash2, FolderOpen, CheckCircle, ArrowLeft, X, Star, Heart, Clock, RotateCw, Ban, FileText} from "lucide-react"
 import { Button } from "./components/ui/button.tsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.tsx"
 import { CallMonitor } from "./components/call-monitor.jsx"
@@ -13,7 +13,8 @@ import { TestCallModal } from "./components/TestCallModal.jsx"
 import { Badge } from "./components/ui/badge.tsx"
 import { useToast } from "./use-toast.ts"
 import { ActivityLog } from "./components/ActivityLog.jsx"
-import config from "../../../config/environment.js"
+import { TemplatesSection } from "./components/TemplatesSection.jsx"
+import config from "../../../config/environment.js" 
 import { authService } from "../../../services/authService.js"
 
 // Usar configuración de entorno
@@ -36,7 +37,7 @@ export default function CallDashboard({ initialView = 'groups' }) {
   const [error, setError] = useState(null)
 
   // Estado para navegación de vistas
-  const [currentView, setCurrentView] = useState(initialView) // 'groups' | 'group-detail' | 'interested-clients'
+  const [currentView, setCurrentView] = useState(initialView) // 'groups' | 'group-detail' | 'interested-clients' | 'templates'
   
   // Actualizar currentView cuando cambie initialView
   useEffect(() => {
@@ -1447,6 +1448,14 @@ export default function CallDashboard({ initialView = 'groups' }) {
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto min-w-0">
                       <Button
                         variant="outline"
+                        onClick={() => setCurrentView('templates')}
+                        className="border-gray-300 dark:border-gray-600 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base w-full sm:w-auto min-h-[40px] sm:min-h-[44px] font-medium max-w-full overflow-hidden"
+                      >
+                        <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 sm:mr-1.5 md:mr-2 flex-shrink-0" />
+                        <span className="truncate">Plantillas</span>
+                      </Button>
+                      <Button
+                        variant="outline"
                         onClick={handleRefresh}
                         disabled={isLoading}
                         className="border-gray-300 dark:border-gray-600 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base w-full sm:w-auto min-h-[40px] sm:min-h-[44px] font-medium max-w-full overflow-hidden"
@@ -2394,6 +2403,44 @@ export default function CallDashboard({ initialView = 'groups' }) {
                 >
                   Eliminar Cliente
                 </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Vista de Plantillas */}
+        {currentView === 'templates' && (
+          <div className="w-full flex-1 flex flex-col space-y-4">
+            {/* Header de Plantillas */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-shrink-0">
+              <div className="p-4 sm:p-5 md:p-6">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <Button
+                      variant="ghost"
+                      onClick={() => setCurrentView('groups')}
+                      className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 p-2"
+                    >
+                      <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </Button>
+                    <div>
+                      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2 flex items-center gap-2">
+                        <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500" />
+                        Plantillas de WhatsApp
+                      </h1>
+                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                        Gestiona tus templates de mensajes de WhatsApp
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Contenido de Plantillas */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm w-full flex-1 overflow-hidden">
+              <div className="p-4 sm:p-5 md:p-6 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+                <TemplatesSection />
               </div>
             </div>
           </div>

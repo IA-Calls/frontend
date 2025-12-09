@@ -2,10 +2,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import config from '../../config/environment';
+import { authService } from '../../services/authService';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './call-twilio/components/ui/tabs.tsx';
 import { Slider } from './call-twilio/components/ui/slider.tsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './call-twilio/components/ui/select.tsx';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './call-twilio/components/ui/dialog.tsx';
 import { cn } from '../../lib/utils';
+import axios from 'axios';
 import { 
   Plus, 
   X, 
@@ -19,8 +22,12 @@ import {
   Sparkles,
   Play,
   Pause,
-  Globe
+  Globe,
+  MessageSquare,
+  Phone,
+  CheckCircle
 } from 'lucide-react';
+import { WhatsAppAgentsTab } from './agents/WhatsAppAgentsTab';
 
 export const AgentsContent = ({ user }) => {
   const [agents, setAgents] = useState([]);
@@ -73,15 +80,34 @@ export const AgentsContent = ({ user }) => {
   const audioRef = useRef(null);
   const preventSelectionRef = useRef(false);
 
+  // Estados para modal de prueba de llamada
+  const [showTestCallModal, setShowTestCallModal] = useState(false);
+  const [testCallAgentId, setTestCallAgentId] = useState(null);
+  const [phoneNumbers, setPhoneNumbers] = useState([]);
+  const [isLoadingPhoneNumbers, setIsLoadingPhoneNumbers] = useState(false);
+  const [selectedPhoneNumberId, setSelectedPhoneNumberId] = useState('');
+  const [isSubmittingTestCall, setIsSubmittingTestCall] = useState(false);
+  const [testCallForm, setTestCallForm] = useState({
+    recipient_name: '',
+    recipient_phone_number: '',
+    dynamic_variables: ''
+  });
+  const [testCallErrors, setTestCallErrors] = useState({});
+
   // Load voices function
   const loadVoices = useCallback(async () => {
     setLoadingVoices(true);
     try {
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error('No se encontró el token de autenticación');
+      }
+
       const response = await fetch(config.getApiUrl('/api/agents/voices'), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -125,11 +151,16 @@ export const AgentsContent = ({ user }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(config.getApiUrl('/api/agents/list'), {
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error('No se encontró el token de autenticación');
+      }
+
+      const response = await fetch(config.getApiUrl('/api/agents'), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -144,9 +175,28 @@ export const AgentsContent = ({ user }) => {
         throw new Error(data.message || 'Error al cargar agentes');
       }
 
-      // Acceder a data.data.raw_data.agents para obtener datos completos con created_at_unix_secs
-      const rawAgents = data.data?.raw_data?.agents || data.data?.agents || data.agents || [];
-      setAgents(rawAgents);
+      // Acceder a data.data.agents según la nueva estructura de la API
+      const agentsList = data.data?.agents || [];
+      
+      // Mapear los agentes para incluir created_at_unix_secs si viene en created_at
+      const mappedAgents = agentsList.map(agent => {
+        let created_at_unix_secs = null;
+        if (agent.created_at) {
+          // Si viene como ISO string, convertir a Unix timestamp
+          const date = new Date(agent.created_at);
+          created_at_unix_secs = Math.floor(date.getTime() / 1000);
+        } else if (agent.created_at_unix_secs) {
+          created_at_unix_secs = agent.created_at_unix_secs;
+        }
+        
+        return {
+          ...agent,
+          agent_id: agent.agent_id || agent.id,
+          created_at_unix_secs
+        };
+      });
+      
+      setAgents(mappedAgents);
     } catch (err) {
       setError(err.message || 'Error al cargar agentes');
       console.error('Error loading agents:', err);
@@ -241,18 +291,24 @@ export const AgentsContent = ({ user }) => {
         prompt_knowledge_base: prompt_knowledge_base
       };
 
-      const response = await fetch(config.getApiUrl('/api/create-agent'), {
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error('No se encontró el token de autenticación');
+      }
+
+      const response = await fetch(config.getApiUrl('/api/agents/create-agent'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error al crear el agente');
+      const data = await response.json();
+
+      if (data.success === false || !response.ok) {
+        throw new Error(data.message || 'Error al crear el agente');
       }
 
       // Reset form
@@ -289,11 +345,16 @@ export const AgentsContent = ({ user }) => {
     setLoadingAgent(true);
     setError(null);
     try {
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error('No se encontró el token de autenticación');
+      }
+
       const response = await fetch(config.getApiUrl(`/api/agents/${agentId}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -393,11 +454,16 @@ export const AgentsContent = ({ user }) => {
         }
       };
 
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error('No se encontró el token de autenticación');
+      }
+
       const response = await fetch(config.getApiUrl(`/api/agents/${selectedAgentId}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
@@ -480,11 +546,16 @@ export const AgentsContent = ({ user }) => {
         tts_voice_id: aiFormData.tts_voice_id
       };
 
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error('No se encontró el token de autenticación');
+      }
+
       const response = await fetch(config.getApiUrl('/api/agents/create-with-prompt'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
@@ -626,6 +697,157 @@ export const AgentsContent = ({ user }) => {
       }
     };
   }, []);
+
+  // Cargar números telefónicos cuando se abre el modal
+  useEffect(() => {
+    console.log('showTestCallModal changed to:', showTestCallModal);
+    if (showTestCallModal) {
+      loadPhoneNumbers();
+    }
+  }, [showTestCallModal]);
+
+  // Función para cargar números telefónicos
+  const loadPhoneNumbers = async () => {
+    setIsLoadingPhoneNumbers(true);
+    try {
+      const response = await axios.get(`${config.AGENTS_API_URL}/phone-numbers`, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.data.success) {
+        setPhoneNumbers(response.data.data.phoneNumbers || []);
+      } else {
+        console.error('Error loading phone numbers:', response.data.message);
+        setPhoneNumbers([]);
+      }
+    } catch (error) {
+      console.error('Error fetching phone numbers:', error);
+      setPhoneNumbers([]);
+    } finally {
+      setIsLoadingPhoneNumbers(false);
+    }
+  };
+
+  // Función para abrir el modal de prueba de llamada
+  const openTestCallModal = (agentId) => {
+    console.log('Opening test call modal for agent:', agentId);
+    setTestCallAgentId(agentId);
+    setTestCallForm({
+      recipient_name: '',
+      recipient_phone_number: '',
+      dynamic_variables: ''
+    });
+    setSelectedPhoneNumberId('');
+    setTestCallErrors({});
+    setShowTestCallModal(true);
+    console.log('Modal state set to true');
+  };
+
+  // Función para cerrar el modal de prueba de llamada
+  const closeTestCallModal = () => {
+    console.log('Closing test call modal');
+    setShowTestCallModal(false);
+    setTestCallAgentId(null);
+    setTestCallForm({
+      recipient_name: '',
+      recipient_phone_number: '',
+      dynamic_variables: ''
+    });
+    setSelectedPhoneNumberId('');
+    setTestCallErrors({});
+  };
+
+  // Función para manejar el cambio de estado del Dialog
+  const handleDialogOpenChange = (open) => {
+    console.log('Dialog open change:', open);
+    if (!open) {
+      closeTestCallModal();
+    } else {
+      setShowTestCallModal(true);
+    }
+  };
+
+  // Función para hacer la llamada de prueba
+  const handleTestCall = async (e) => {
+    e.preventDefault();
+    setIsSubmittingTestCall(true);
+    setTestCallErrors({});
+
+    // Validaciones
+    const errors = {};
+    if (!selectedPhoneNumberId) {
+      errors.phoneNumberId = 'Debes seleccionar un número telefónico';
+    }
+    if (!testCallForm.recipient_name.trim()) {
+      errors.recipient_name = 'El nombre del destinatario es obligatorio';
+    }
+    if (!testCallForm.recipient_phone_number.trim()) {
+      errors.recipient_phone_number = 'El número telefónico del destinatario es obligatorio';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setTestCallErrors(errors);
+      setIsSubmittingTestCall(false);
+      return;
+    }
+
+    try {
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error('No se encontró el token de autenticación');
+      }
+
+      // Parsear dynamic_variables si existe
+      let dynamicVars = {};
+      if (testCallForm.dynamic_variables.trim()) {
+        try {
+          dynamicVars = JSON.parse(testCallForm.dynamic_variables);
+        } catch (parseError) {
+          setTestCallErrors({ dynamic_variables: 'Las variables dinámicas deben ser un JSON válido' });
+          setIsSubmittingTestCall(false);
+          return;
+        }
+      }
+
+      const payload = {
+        agent_id: testCallAgentId,
+        agent_phone_number_id: selectedPhoneNumberId,
+        recipient_name: testCallForm.recipient_name.trim(),
+        recipient_phone_number: testCallForm.recipient_phone_number.trim(),
+        ...(Object.keys(dynamicVars).length > 0 && { dynamic_variables: dynamicVars })
+      };
+
+      const response = await fetch(config.getApiUrl('/api/agents/test-call'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (data.success === false || !response.ok) {
+        throw new Error(data.message || 'Error al realizar la llamada de prueba');
+      }
+
+      // Éxito
+      closeTestCallModal();
+      
+      // Mostrar mensaje de éxito si existe la función
+      if (window.addActivityLog) {
+        window.addActivityLog(`✅ Llamada de prueba iniciada exitosamente`, 'success', 6000);
+      }
+    } catch (err) {
+      setTestCallErrors({ submit: err.message || 'Error al realizar la llamada de prueba' });
+      console.error('Error making test call:', err);
+    } finally {
+      setIsSubmittingTestCall(false);
+    }
+  };
 
   // Modal de creación con IA
   if (showAICreateForm) {
@@ -1395,130 +1617,353 @@ export const AgentsContent = ({ user }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Gestión de Agentes
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Administra y configura tus agentes de IA.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Button 
-              onClick={() => setShowAICreateForm(true)}
-              variant="secondary"
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0"
-            >
-              <Sparkles className="w-5 h-5 mr-2" />
-              Crear con IA
-            </Button>
-            <Button onClick={() => setShowCreateForm(true)}>
-              <Plus className="w-5 h-5 mr-2" />
-              Crear Agente
-            </Button>
-          </div>
-        </div>
-      </div>
+      <Tabs defaultValue="voice" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="voice" className="flex items-center gap-2">
+            <Mic className="w-4 h-4" />
+            Agentes de Voz
+          </TabsTrigger>
+          <TabsTrigger value="whatsapp" className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" />
+            Agentes WhatsApp
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <div className="flex items-start">
-            <svg className="w-5 h-5 text-red-400 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-red-600 dark:text-red-400 mb-1">Error al cargar agentes</p>
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        <TabsContent value="voice" className="space-y-6">
+          {/* Header */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  Gestión de Agentes de Voz
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Administra y configura tus agentes de voz para llamadas.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button 
+                  onClick={() => setShowAICreateForm(true)}
+                  variant="secondary"
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0"
+                >
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Crear con IA
+                </Button>
+                <Button onClick={() => setShowCreateForm(true)}>
+                  <Plus className="w-5 h-5 mr-2" />
+                  Crear Agente
+                </Button>
+              </div>
             </div>
-            <button
-              onClick={() => setError(null)}
-              className="text-red-400 hover:text-red-600 dark:hover:text-red-300"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
-        </div>
-      )}
 
-      {/* Agents List */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        {loading ? (
-          <div className="p-8 text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-            <p className="text-gray-600 dark:text-gray-400">Cargando agentes...</p>
-          </div>
-        ) : agents.length === 0 ? (
-          <div className="p-8 text-center">
-            <Brain className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              No hay agentes creados todavía.
-            </p>
-            <Button onClick={() => setShowCreateForm(true)}>
-              <Plus className="w-5 h-5 mr-2" />
-              Crear Primer Agente
-            </Button>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Nombre
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Fecha de Creación
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {agents.map((agent) => {
-                  // Convertir Unix timestamp a fecha legible
-                  const formatDate = (unixTimestamp) => {
-                    if (!unixTimestamp) return 'N/A';
-                    const date = new Date(unixTimestamp * 1000); // Convertir segundos a milisegundos
-                    return date.toLocaleDateString('es-ES', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    });
-                  };
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-red-400 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-600 dark:text-red-400 mb-1">Error al cargar agentes</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                </div>
+                <button
+                  onClick={() => setError(null)}
+                  className="text-red-400 hover:text-red-600 dark:hover:text-red-300"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
-                  return (
-                    <tr 
-                      key={agent.agent_id} 
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-                      onClick={() => loadAgentById(agent.agent_id)}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                            <Brain className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {agent.name || 'Sin nombre'}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {formatDate(agent.created_at_unix_secs)}
-                      </td>
+          {/* Agents List */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            {loading ? (
+              <div className="p-8 text-center">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+                <p className="text-gray-600 dark:text-gray-400">Cargando agentes...</p>
+              </div>
+            ) : agents.length === 0 ? (
+              <div className="p-8 text-center">
+                <Brain className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  No hay agentes creados todavía.
+                </p>
+                <Button onClick={() => setShowCreateForm(true)}>
+                  <Plus className="w-5 h-5 mr-2" />
+                  Crear Primer Agente
+                </Button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Nombre
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Fecha de Creación
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Acciones
+                      </th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {agents.map((agent) => {
+                      // Convertir Unix timestamp a fecha legible
+                      const formatDate = (unixTimestamp) => {
+                        if (!unixTimestamp) return 'N/A';
+                        const date = new Date(unixTimestamp * 1000); // Convertir segundos a milisegundos
+                        return date.toLocaleDateString('es-ES', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        });
+                      };
+
+                      return (
+                        <tr 
+                          key={agent.agent_id} 
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <td 
+                            className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                            onClick={() => loadAgentById(agent.agent_id)}
+                          >
+                            <div className="flex items-center">
+                              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                                <Brain className="w-5 h-5 text-white" />
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {agent.name || 'Sin nombre'}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td 
+                            className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 cursor-pointer"
+                            onClick={() => loadAgentById(agent.agent_id)}
+                          >
+                            {formatDate(agent.created_at_unix_secs)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('Button clicked, agent_id:', agent.agent_id);
+                                openTestCallModal(agent.agent_id);
+                              }}
+                              className="flex items-center gap-2"
+                              type="button"
+                            >
+                              <Phone className="w-4 h-4" />
+                              Probar Llamada
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="whatsapp">
+          <WhatsAppAgentsTab />
+        </TabsContent>
+      </Tabs>
+
+      {/* Modal de Prueba de Llamada */}
+      <Dialog open={showTestCallModal} onOpenChange={handleDialogOpenChange}>
+        <DialogContent 
+          className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-xl"
+          style={{ 
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            borderRadius: '12px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            zIndex: 9999
+          }}
+        >
+          <DialogHeader className="sticky top-0 bg-white dark:bg-gray-800 z-10 pb-4 border-b border-gray-100 dark:border-gray-700">
+            <DialogTitle className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white">
+              <Phone className="w-5 h-5 text-blue-600" />
+              Probar Llamada con Agente
+            </DialogTitle>
+            <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
+              Realiza una llamada de prueba con este agente. Completa los campos requeridos y selecciona el número telefónico a usar.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleTestCall} className="space-y-6">
+            {testCallErrors.submit && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <p className="text-sm text-red-600 dark:text-red-400">{testCallErrors.submit}</p>
+              </div>
+            )}
+
+            {/* Selector de Número Telefónico */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Número Telefónico a Usar *
+              </label>
+              {isLoadingPhoneNumbers ? (
+                <div className="flex items-center gap-2 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Cargando números...</span>
+                </div>
+              ) : phoneNumbers.length > 0 ? (
+                <div className="relative">
+                  <select
+                    value={selectedPhoneNumberId}
+                    onChange={(e) => setSelectedPhoneNumberId(e.target.value)}
+                    className={`block w-full pl-4 pr-10 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors appearance-none ${
+                      testCallErrors.phoneNumberId ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                    disabled={isSubmittingTestCall}
+                  >
+                    <option value="">Selecciona un número telefónico...</option>
+                    {phoneNumbers.map((phoneNumber) => (
+                      <option key={phoneNumber.phone_number_id} value={phoneNumber.phone_number_id}>
+                        {phoneNumber.phone_number} {phoneNumber.label ? `- ${phoneNumber.label}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    {selectedPhoneNumberId ? (
+                      <Phone className="h-5 w-5 text-blue-600" />
+                    ) : (
+                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-center">
+                  <Phone className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No hay números telefónicos disponibles</p>
+                </div>
+              )}
+              {selectedPhoneNumberId && phoneNumbers.find(p => p.phone_number_id === selectedPhoneNumberId) && (
+                <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                  <p className="text-sm text-green-700 dark:text-green-400">
+                    Número seleccionado: <span className="font-medium">{phoneNumbers.find(p => p.phone_number_id === selectedPhoneNumberId)?.phone_number}</span>
+                  </p>
+                </div>
+              )}
+              {testCallErrors.phoneNumberId && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{testCallErrors.phoneNumberId}</p>
+              )}
+            </div>
+
+            {/* Nombre del Destinatario */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Nombre del Destinatario *
+              </label>
+              <Input
+                value={testCallForm.recipient_name}
+                onChange={(e) => setTestCallForm({ ...testCallForm, recipient_name: e.target.value })}
+                placeholder="Ej: Juan Pérez"
+                required
+                disabled={isSubmittingTestCall}
+                className={testCallErrors.recipient_name ? 'border-red-300' : ''}
+              />
+              {testCallErrors.recipient_name && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{testCallErrors.recipient_name}</p>
+              )}
+            </div>
+
+            {/* Número Telefónico del Destinatario */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Número Telefónico del Destinatario *
+              </label>
+              <Input
+                value={testCallForm.recipient_phone_number}
+                onChange={(e) => setTestCallForm({ ...testCallForm, recipient_phone_number: e.target.value })}
+                placeholder="Ej: +573001234567"
+                required
+                disabled={isSubmittingTestCall}
+                className={testCallErrors.recipient_phone_number ? 'border-red-300' : ''}
+              />
+              {testCallErrors.recipient_phone_number && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{testCallErrors.recipient_phone_number}</p>
+              )}
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Incluye el código de país (ej: +57 para Colombia)
+              </p>
+            </div>
+
+            {/* Variables Dinámicas (Opcional) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Variables Dinámicas (Opcional)
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                Variables personalizadas en formato JSON que se pasarán al agente durante la llamada.
+              </p>
+              <textarea
+                value={testCallForm.dynamic_variables}
+                onChange={(e) => setTestCallForm({ ...testCallForm, dynamic_variables: e.target.value })}
+                placeholder='{"name": "Juan Pérez", "category": "Cliente VIP", "custom_field": "valor personalizado"}'
+                className={`w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none ${
+                  testCallErrors.dynamic_variables ? 'border-red-300' : ''
+                }`}
+                rows="4"
+                disabled={isSubmittingTestCall}
+              />
+              {testCallErrors.dynamic_variables && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{testCallErrors.dynamic_variables}</p>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={closeTestCallModal}
+                disabled={isSubmittingTestCall}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmittingTestCall || !selectedPhoneNumberId || !testCallForm.recipient_name.trim() || !testCallForm.recipient_phone_number.trim()}
+              >
+                {isSubmittingTestCall ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Realizando llamada...
+                  </>
+                ) : (
+                  <>
+                    <Phone className="w-4 h-4 mr-2" />
+                    Realizar Llamada de Prueba
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

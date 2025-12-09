@@ -6,6 +6,9 @@ import CallDashboard from './call-twilio/page'
 import { UserManagementContent } from './UserManagementContent';
 import { GroupDocumentsContent } from './GroupDocumentsContent';
 import { AgentsContent } from './AgentsContent';
+import { Chats } from './chats/Chats';
+import { KnowledgeBaseContent } from './knowledge-base/KnowledgeBaseContent';
+import { KnowledgeItemsContent } from './knowledge-items/KnowledgeItemsContent';
 
 
 export const Dashboard = ({ user, onLogout }) => {
@@ -16,10 +19,14 @@ export const Dashboard = ({ user, onLogout }) => {
     switch (activeSection) {
       case 'dashboard':
         return <DashboardContent user={user} />;
+      case 'chats':
+        return <Chats />;
       case 'groups':
         return <CallDashboard user={user} />;
       case 'interested-clients':
         return <CallDashboard user={user} initialView="interested-clients" />;
+      case 'templates':
+        return <CallDashboard user={user} initialView="templates" />;
       case 'mass-uploads':
         return <ExcelMapper user={user} />;
       case 'user-management':
@@ -30,6 +37,10 @@ export const Dashboard = ({ user, onLogout }) => {
         return <AgentsContent user={user} />;
       case 'group-documents':
         return <GroupDocumentsContent user={user} />;
+      case 'knowledge-base':
+        return <KnowledgeBaseContent />;
+      case 'knowledge-items':
+        return <KnowledgeItemsContent />;
       default:
         return <DashboardContent user={user} />;
     }
@@ -39,10 +50,14 @@ export const Dashboard = ({ user, onLogout }) => {
     switch (activeSection) {
       case 'dashboard':
         return 'Panel de Control';
+      case 'chats':
+        return 'Chats WhatsApp';
       case 'groups':
         return 'Gestión de Grupos';
       case 'interested-clients':
         return 'Clientes Interesados';
+      case 'templates':
+        return 'Plantillas de WhatsApp';
       case 'mass-uploads':
         return 'Cargas Masivas';
       case 'user-management':
@@ -53,6 +68,10 @@ export const Dashboard = ({ user, onLogout }) => {
         return 'Gestión de Agentes'
       case 'group-documents':
         return 'Documentos de Grupos'
+      case 'knowledge-base':
+        return 'Bases de Conocimiento'
+      case 'knowledge-items':
+        return 'Retroalimentación Inteligente'
       default:
         return 'Panel de Control';
     }
