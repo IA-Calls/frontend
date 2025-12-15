@@ -18,7 +18,9 @@ import {
   ChevronRight,
   Database,
   Sparkles,
-  Zap
+  Zap,
+  Globe,
+  Share2
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import logoNegro from '../../images/logo-negro.png';
@@ -61,6 +63,14 @@ const menuSections = [
     ]
   },
   {
+    id: 'conexion-redes',
+    label: 'Conexión Redes',
+    icon: Globe,
+    items: [
+      { id: 'social-connections', label: 'Facebook', icon: Share2 },
+    ]
+  },
+  {
     id: 'administracion',
     label: 'Administración',
     icon: Settings,
@@ -84,6 +94,7 @@ export const Sidebar = ({
     llamadas: true,
     mensajeria: true,
     'configuracion-ia': true,
+    'conexion-redes': true,
     administracion: false
   });
 

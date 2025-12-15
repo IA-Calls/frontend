@@ -9,6 +9,7 @@ import { AgentsContent } from './AgentsContent';
 import { Chats } from './chats/Chats';
 import { KnowledgeBaseContent } from './knowledge-base/KnowledgeBaseContent';
 import { KnowledgeItemsContent } from './knowledge-items/KnowledgeItemsContent';
+import { SocialConnectionsContent } from './social-connections/SocialConnectionsContent';
 
 
 export const Dashboard = ({ user, onLogout }) => {
@@ -41,6 +42,8 @@ export const Dashboard = ({ user, onLogout }) => {
         return <KnowledgeBaseContent />;
       case 'knowledge-items':
         return <KnowledgeItemsContent />;
+      case 'social-connections':
+        return <SocialConnectionsContent user={user} />;
       default:
         return <DashboardContent user={user} />;
     }
@@ -72,6 +75,8 @@ export const Dashboard = ({ user, onLogout }) => {
         return 'Bases de Conocimiento'
       case 'knowledge-items':
         return 'Retroalimentación Inteligente'
+      case 'social-connections':
+        return 'Conexión de Redes Sociales'
       default:
         return 'Panel de Control';
     }

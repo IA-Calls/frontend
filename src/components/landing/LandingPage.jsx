@@ -31,7 +31,7 @@ import { DemoModal } from './DemoModal';
 import logoNegro from '../../images/logo-negro.png';
 import logoBlanco from '../../images/logo-blanco.png';
 
-export const LandingPage = ({ onLoginClick }) => {
+export const LandingPage = ({ onLoginClick, onNavigate }) => {
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -856,11 +856,31 @@ export const LandingPage = ({ onLoginClick }) => {
               </span>
             </div>
             
-            <div className="flex space-x-6 text-slate-600 dark:text-slate-400">
-              <button className="hover:text-slate-900 dark:hover:text-white transition-colors">Privacidad</button>
-              <button className="hover:text-slate-900 dark:hover:text-white transition-colors">Términos</button>
-              <button className="hover:text-slate-900 dark:hover:text-white transition-colors">Soporte</button>
-              <button className="hover:text-slate-900 dark:hover:text-white transition-colors">Contacto</button>
+            <div className="flex flex-wrap justify-center md:justify-end gap-4 sm:gap-6 text-slate-600 dark:text-slate-400">
+              <button 
+                onClick={() => onNavigate && onNavigate('privacy')}
+                className="hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                Privacidad
+              </button>
+              <button 
+                onClick={() => onNavigate && onNavigate('terms')}
+                className="hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                Términos
+              </button>
+              <a 
+                href="mailto:soporte@nextvoice.com"
+                className="hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                Soporte
+              </a>
+              <a 
+                href="mailto:contacto@nextvoice.com"
+                className="hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                Contacto
+              </a>
             </div>
           </div>
           
